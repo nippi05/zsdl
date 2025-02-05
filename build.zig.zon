@@ -1,14 +1,12 @@
 .{
     .name = "zsdl",
-
     .version = "0.0.0",
-
     .dependencies = .{
         .sdl = .{
-            .path = "libs/SDL",
+            .url = "git+https://github.com/castholm/SDL#60d237ed50e5f195ed792051385ac7dfc4e229e9",
+            .hash = "122096d834053ebbc8a8ba37dd9ac4e8f35790b7aa6e98a72807cf428c3de255dd82",
         },
     },
-
     .paths = .{
         "build.zig",
         "build.zig.zon",

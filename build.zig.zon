@@ -1,0 +1,17 @@
+.{
+    .name = "zsdl",
+
+    .version = "0.0.0",
+
+    .dependencies = .{
+        .sdl = .{
+            .path = "libs/SDL",
+        },
+    },
+
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}

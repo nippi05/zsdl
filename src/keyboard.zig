@@ -277,7 +277,7 @@ pub const Keycode = enum(u32) {
 
     pub fn fromName(name: [:0]const u8) !Keycode {
         const key = c.SDL_GetKeyFromName(name.ptr);
-        if (key == c.SDLK_UNKNOWN) return error.SDLError;
+        try errify(key != c.SDLK_UNKNOWN);
         return @enumFromInt(key);
     }
 };
@@ -545,7 +545,7 @@ pub const Scancode = enum(u32) {
 
     pub fn fromName(name: [:0]const u8) !Scancode {
         const scancode = c.SDL_GetScancodeFromName(name.ptr);
-        try errify(scancode == c.SDL_SCANCODE_UNKNOWN);
+        try errify(scancode != c.SDL_SCANCODE_UNKNOWN);
         return @enumFromInt(scancode);
     }
 };

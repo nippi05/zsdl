@@ -129,4 +129,5 @@ pub const video = @import("video.zig");
 pub const rect = @import("rect.zig");
 pub const keyboard = @import("keyboard.zig");
 pub const mouse = @import("mouse.zig");
+pub const touch = @import("touch.zig");
 pub const Error = @import("Error.zig");

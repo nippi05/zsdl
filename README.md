@@ -5,7 +5,7 @@ SDL3 wrapper for Zig 0.14.0 built on top of [castholm/SDL](https://github.com/ca
 ```sh
 zig fetch --save git+https://github.com/mdmrk/zsdl.git
 ```
-```sh
+```zig
 const zsdl = b.dependency("zsdl", .{
     .target = target,
     .optimize = optimize,

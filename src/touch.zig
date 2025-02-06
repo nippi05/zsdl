@@ -25,26 +25,30 @@ pub const Finger = extern struct {
     pressure: f32,
 };
 
+/// Get a list of registered touch devices.
+pub fn getTouchDevices() ![]Touch {
+    var count: c_int = undefined;
+    const devices = try errify(c.SDL_GetTouchDevices(&count));
+    return @ptrCast(devices[0..@intCast(count)]);
+}
+
 pub const Touch = struct {
     id: TouchID,
 
+    /// Get the touch device name as reported from the driver.
     pub fn getName(self: Touch) []const u8 {
         return std.mem.sliceTo(c.SDL_GetTouchDeviceName(self.id), 0);
     }
 
+    /// Get the type of the given touch device.
     pub fn getType(self: Touch) TouchDeviceType {
         return @enumFromInt(c.SDL_GetTouchDeviceType(self.id));
     }
 
+    /// Get a list of active fingers for a given touch device.
     pub fn getFingers(self: Touch) ![]Finger {
         var count: c_int = undefined;
         const fingers = try errify(c.SDL_GetTouchFingers(self.id, &count));
         return @ptrCast(fingers[0..@intCast(count)]);
     }
 };
-
-pub fn getTouchDevices() ![]Touch {
-    var count: c_int = undefined;
-    const devices = try errify(c.SDL_GetTouchDevices(&count));
-    return @ptrCast(devices[0..@intCast(count)]);
-}

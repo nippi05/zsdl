@@ -128,4 +128,5 @@ pub fn getAppMetadataProperty(
 pub const video = @import("video.zig");
 pub const rect = @import("rect.zig");
 pub const keyboard = @import("keyboard.zig");
+pub const mouse = @import("mouse.zig");
 pub const Error = @import("Error.zig");

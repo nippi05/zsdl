@@ -15,6 +15,11 @@ pub const Point = extern struct {
     y: c_int,
 };
 
+pub const PointF = extern struct {
+    x: f32,
+    y: f32,
+};
+
 pub const Dimension = extern struct {
     w: c_int,
     h: c_int,

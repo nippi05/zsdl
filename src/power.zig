@@ -11,6 +11,7 @@ pub const PowerState = enum(i32) {
     charged = c.SDL_POWERSTATE_CHARGED,
 };
 
+/// Get the current power supply details.
 pub fn getPowerInfo(seconds: ?*i32, percent: ?*i32) !PowerState {
     const state = c.SDL_GetPowerInfo(seconds, percent);
     try errify(state != c.SDL_POWERSTATE_ERROR);

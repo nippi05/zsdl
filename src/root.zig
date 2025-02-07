@@ -133,4 +133,5 @@ pub const touch = @import("touch.zig");
 pub const timer = @import("timer.zig");
 pub const power = @import("power.zig");
 pub const gamepad = @import("gamepad.zig");
+pub const joystick = @import("joystick.zig");
 pub const Error = @import("Error.zig");

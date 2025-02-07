@@ -18,6 +18,46 @@ pub const JoystickType = enum(u32) {
     throttle = c.SDL_JOYSTICK_TYPE_THROTTLE,
 };
 
+/// Get the implementation dependent name of a joystick.
+pub fn getNameForID(instance_id: JoystickID) ![]const u8 {
+    return std.mem.span(try errify(c.SDL_GetJoystickNameForID(instance_id)));
+}
+
+/// Get the implementation dependent path of a joystick.
+pub fn getPathForID(instance_id: JoystickID) ![]const u8 {
+    return try errify(c.SDL_GetJoystickPathForID(instance_id));
+}
+
+/// Get the player index of a joystick.
+pub fn getPlayerIndexForID(instance_id: JoystickID) i32 {
+    return c.SDL_GetJoystickPlayerIndexForID(instance_id);
+}
+
+/// Get the implementation-dependent GUID of a joystick.
+pub fn getGUIDForID(instance_id: JoystickID) c.SDL_GUID {
+    return c.SDL_GetJoystickGUIDForID(instance_id);
+}
+
+/// Get the USB vendor ID of a joystick, if available.
+pub fn getVendorForID(instance_id: JoystickID) u16 {
+    return c.SDL_GetJoystickVendorForID(instance_id);
+}
+
+/// Get the USB product ID of a joystick, if available.
+pub fn getProductForID(instance_id: JoystickID) u16 {
+    return c.SDL_GetJoystickProductForID(instance_id);
+}
+
+/// Get the product version of a joystick, if available.
+pub fn getProductVersionForID(instance_id: JoystickID) u16 {
+    return c.SDL_GetJoystickProductVersionForID(instance_id);
+}
+
+/// Get the type of a joystick, if available.
+pub fn getTypeForID(instance_id: JoystickID) JoystickType {
+    return @enumFromInt(c.SDL_GetJoystickTypeForID(instance_id));
+}
+
 pub const Joystick = struct {
     ptr: *c.SDL_Joystick,
 
@@ -179,7 +219,7 @@ pub const Joystick = struct {
     }
 
     /// Get the battery state of a joystick.
-    pub fn getPowerInfo(self: *const Joystick, percent: ?*i32) !power.PowerState {
+    pub fn getPowerInfo(self: *const Joystick, percent: ?*i32) !c.SDL_PowerState {
         const state = c.SDL_GetJoystickPowerInfo(self.ptr, percent);
         try errify(state != c.SDL_POWERSTATE_ERROR);
         return state;
@@ -202,8 +242,9 @@ pub fn hasJoystick() bool {
 }
 
 /// Get a list of currently connected joysticks.
-pub fn getJoysticks(count: ?*i32) ![]JoystickID {
-    return try errify(c.SDL_GetJoysticks(count));
+pub fn getJoysticks(count: *c_int) ![]JoystickID {
+    const joysticks = try errify(c.SDL_GetJoysticks(count));
+    return @ptrCast(joysticks[0..@intCast(count.*)]);
 }
 
 /// Attach a new virtual joystick.

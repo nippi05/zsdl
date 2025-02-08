@@ -2,6 +2,10 @@ const std = @import("std");
 const internal = @import("internal.zig");
 const c = internal.c;
 const errify = internal.errify;
+const joystick = @import("joystick.zig");
+const JoystickID = joystick.JoystickID;
+const Joystick = joystick.Joystick;
+const JoystickConnectionState = joystick.JoystickConnectionState;
 
 pub const GamepadType = enum(u32) {
     unknown = c.SDL_GAMEPAD_TYPE_UNKNOWN,
@@ -17,237 +21,448 @@ pub const GamepadType = enum(u32) {
     nintendo_switch_joycon_pair = c.SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR,
 };
 
+pub const GamepadButton = enum(i32) {
+    invalid = c.SDL_GAMEPAD_BUTTON_INVALID,
+    south = c.SDL_GAMEPAD_BUTTON_SOUTH,
+    east = c.SDL_GAMEPAD_BUTTON_EAST,
+    west = c.SDL_GAMEPAD_BUTTON_WEST,
+    north = c.SDL_GAMEPAD_BUTTON_NORTH,
+    back = c.SDL_GAMEPAD_BUTTON_BACK,
+    guide = c.SDL_GAMEPAD_BUTTON_GUIDE,
+    start = c.SDL_GAMEPAD_BUTTON_START,
+    left_stick = c.SDL_GAMEPAD_BUTTON_LEFT_STICK,
+    right_stick = c.SDL_GAMEPAD_BUTTON_RIGHT_STICK,
+    left_shoulder = c.SDL_GAMEPAD_BUTTON_LEFT_SHOULDER,
+    right_shoulder = c.SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER,
+    dpad_up = c.SDL_GAMEPAD_BUTTON_DPAD_UP,
+    dpad_down = c.SDL_GAMEPAD_BUTTON_DPAD_DOWN,
+    dpad_left = c.SDL_GAMEPAD_BUTTON_DPAD_LEFT,
+    dpad_right = c.SDL_GAMEPAD_BUTTON_DPAD_RIGHT,
+    misc1 = c.SDL_GAMEPAD_BUTTON_MISC1,
+    right_paddle1 = c.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE1,
+    left_paddle1 = c.SDL_GAMEPAD_BUTTON_LEFT_PADDLE1,
+    right_paddle2 = c.SDL_GAMEPAD_BUTTON_RIGHT_PADDLE2,
+    left_paddle2 = c.SDL_GAMEPAD_BUTTON_LEFT_PADDLE2,
+    touchpad = c.SDL_GAMEPAD_BUTTON_TOUCHPAD,
+    misc2 = c.SDL_GAMEPAD_BUTTON_MISC2,
+    misc3 = c.SDL_GAMEPAD_BUTTON_MISC3,
+    misc4 = c.SDL_GAMEPAD_BUTTON_MISC4,
+    misc5 = c.SDL_GAMEPAD_BUTTON_MISC5,
+    misc6 = c.SDL_GAMEPAD_BUTTON_MISC6,
+};
+
+pub const GamepadButtonLabel = enum(u32) {
+    unknown = c.SDL_GAMEPAD_BUTTON_LABEL_UNKNOWN,
+    a = c.SDL_GAMEPAD_BUTTON_LABEL_A,
+    b = c.SDL_GAMEPAD_BUTTON_LABEL_B,
+    x = c.SDL_GAMEPAD_BUTTON_LABEL_X,
+    y = c.SDL_GAMEPAD_BUTTON_LABEL_Y,
+    cross = c.SDL_GAMEPAD_BUTTON_LABEL_CROSS,
+    circle = c.SDL_GAMEPAD_BUTTON_LABEL_CIRCLE,
+    square = c.SDL_GAMEPAD_BUTTON_LABEL_SQUARE,
+    triangle = c.SDL_GAMEPAD_BUTTON_LABEL_TRIANGLE,
+};
+
+pub const GamepadAxis = enum(i32) {
+    invalid = c.SDL_GAMEPAD_AXIS_INVALID,
+    leftx = c.SDL_GAMEPAD_AXIS_LEFTX,
+    lefty = c.SDL_GAMEPAD_AXIS_LEFTY,
+    rightx = c.SDL_GAMEPAD_AXIS_RIGHTX,
+    righty = c.SDL_GAMEPAD_AXIS_RIGHTY,
+    left_trigger = c.SDL_GAMEPAD_AXIS_LEFT_TRIGGER,
+    right_trigger = c.SDL_GAMEPAD_AXIS_RIGHT_TRIGGER,
+};
+
 pub const Gamepad = struct {
     ptr: *c.SDL_Gamepad,
 
-    // /// Open a gamepad for use.
-    // pub fn openGamepad(SDL_JoystickID instance_id)SDL_Gamepad * {}
-
-    // /// Get the SDL_Gamepad associated with a joystick instance ID, if it has been opened.
-    // pub fn getGamepadFromID(SDL_JoystickID instance_id)SDL_Gamepad * {}
-
-    /// Get the SDL_Gamepad associated with a player index.
-    pub fn getGamepadFromPlayerIndex(player_index: c_int) !Gamepad {
+    /// Open a gamepad for use.
+    pub fn openGamepad(instance_id: JoystickID) !Gamepad {
         return .{
-            .ptr = try errify(c.SDL_GetGamepadFromPlayerIndex(player_index)),
+            .ptr = try errify(c.SDL_OpenGamepad(instance_id)),
         };
     }
 
-    /// Get the current mapping of a gamepad.
-    pub fn getMapping(self: *const Gamepad) ![]const u8 {
-        return std.mem.sliceTo(try errify(c.SDL_GetGamepadMapping(self.ptr)), 0);
+    /// Get the SDL_Gamepad associated with a joystick instance ID, if it has been opened.
+    pub fn getGamepadFromID(instance_id: JoystickID) !Gamepad {
+        return .{
+            .ptr = try errify(c.SDL_GetGamepadFromID(instance_id)),
+        };
     }
 
-    // /// Get the properties associated with an opened gamepad.
-    // pub fn getProperties(self: *const Gamepad)SDL_PropertiesID {}
+    /// Get the implementation-dependent name for an opened gamepad.
+    pub fn getName(self: *const Gamepad) ?[]const u8 {
+        if (c.SDL_GetGamepadName(self.ptr)) |name| {
+            return std.mem.span(name);
+        }
+        return null;
+    }
 
-    // /// Get the instance ID of an opened gamepad.
-    // pub fn getID(self: *const Gamepad)SDL_JoystickID {}
+    /// Get the implementation-dependent path for an opened gamepad.
+    pub fn getPath(self: *const Gamepad) ?[]const u8 {
+        if (c.SDL_GetGamepadPath(self.ptr)) |path| {
+            return std.mem.span(path);
+        }
+        return null;
+    }
 
-    // /// Get the implementation-dependent name for an opened gamepad.
-    // pub fn getName(self: *const Gamepad)[]const u8 {}
+    /// Get the type of an opened gamepad.
+    pub fn getType(self: *const Gamepad) GamepadType {
+        return @enumFromInt(c.SDL_GetGamepadType(self.ptr));
+    }
 
-    // /// Get the implementation-dependent path for an opened gamepad.
-    // pub fn getPath(self: *const Gamepad)[]const u8 {}
+    /// Get the type of an opened gamepad, ignoring any mapping override.
+    pub fn getRealType(self: *const Gamepad) GamepadType {
+        return @enumFromInt(c.SDL_GetRealGamepadType(self.ptr));
+    }
 
-    // /// Get the type of an opened gamepad.
-    // pub fn getType(self: *const Gamepad)GamepadType {}
+    /// Get the player index of an opened gamepad.
+    pub fn getPlayerIndex(self: *const Gamepad) i32 {
+        return c.SDL_GetGamepadPlayerIndex(self.ptr);
+    }
 
-    // /// Get the type of an opened gamepad, ignoring any mapping override.
-    // pub fn getRealType(self: *const Gamepad)GamepadType {}
+    /// Set the player index of an opened gamepad.
+    pub fn setPlayerIndex(self: *const Gamepad, player_index: i32) !void {
+        try errify(c.SDL_SetGamepadPlayerIndex(self.ptr, player_index));
+    }
 
-    // /// Get the player index of an opened gamepad.
-    // pub fn getPlayerIndex(self: *const Gamepad)int {}
+    /// Get the USB vendor ID of an opened gamepad, if available.
+    pub fn getVendor(self: *const Gamepad) u16 {
+        return c.SDL_GetGamepadVendor(self.ptr);
+    }
 
-    // /// Set the player index of an opened gamepad.
-    // pub fn setPlayerIndex(self: *const Gamepad, int player_index)bool {}
+    /// Get the USB product ID of an opened gamepad, if available.
+    pub fn getProduct(self: *const Gamepad) u16 {
+        return c.SDL_GetGamepadProduct(self.ptr);
+    }
 
-    // /// Get the USB vendor ID of an opened gamepad, if available.
-    // pub fn getVendor(self: *const Gamepad)u16 {}
+    /// Get the product version of an opened gamepad, if available.
+    pub fn getProductVersion(self: *const Gamepad) u16 {
+        return c.SDL_GetGamepadProductVersion(self.ptr);
+    }
 
-    // /// Get the USB product ID of an opened gamepad, if available.
-    // pub fn getProduct(self: *const Gamepad)u16 {}
+    /// Get the firmware version of an opened gamepad, if available.
+    pub fn getFirmwareVersion(self: *const Gamepad) u16 {
+        return c.SDL_GetGamepadFirmwareVersion(self.ptr);
+    }
 
-    // /// Get the product version of an opened gamepad, if available.
-    // pub fn getProductVersion(self: *const Gamepad)u16 {}
+    /// Get the serial number of an opened gamepad, if available.
+    pub fn getSerial(self: *const Gamepad) ?[]const u8 {
+        if (c.SDL_GetGamepadSerial(self.ptr)) |serial| {
+            return std.mem.span(serial);
+        }
+        return null;
+    }
 
-    // /// Get the firmware version of an opened gamepad, if available.
-    // pub fn getFirmwareVersion(self: *const Gamepad)u16 {
-    //     return c.SDL_GetGamepadFirmwareVersion(self.ptr);
-    // }
+    /// Get the Steam Input handle of an opened gamepad, if available.
+    pub fn getSteamHandle(self: *const Gamepad) u64 {
+        return c.SDL_GetGamepadSteamHandle(self.ptr);
+    }
 
-    // /// Get the serial number of an opened gamepad, if available.
-    // pub fn getSerial(self: *const Gamepad)[]const u8 {}
+    /// Get the connection state of a gamepad.
+    pub fn getConnectionState(self: *const Gamepad) !JoystickConnectionState {
+        const state: JoystickConnectionState = @enumFromInt(c.SDL_GetGamepadConnectionState(self.ptr));
+        try errify(state != .invalid);
+        return state;
+    }
 
-    // /// Get the Steam Input handle of an opened gamepad, if available.
-    // pub fn getSteamHandle(self: *const Gamepad)u64 {}
+    /// Get the battery state of a gamepad.
+    pub fn getPowerInfo(self: *const Gamepad, percent: ?*i32) c.SDL_PowerState {
+        return c.SDL_GetGamepadPowerInfo(self.ptr, percent);
+    }
 
-    // /// Get the connection state of a gamepad.
-    // pub fn getConnectionState(self: *const Gamepad)SDL_JoystickConnection{}
+    /// Check if a gamepad has been opened and is currently connected.
+    pub fn connected(self: *const Gamepad) bool {
+        return c.SDL_GamepadConnected(self.ptr);
+    }
 
-    // /// Get the battery state of a gamepad.
-    // pub fn getPowerInfo(self: *const Gamepad, int *percent)SDL_Power{}
+    /// Get the underlying joystick from a gamepad.
+    pub fn getJoystick(self: *const Gamepad) !*Joystick {
+        return try errify(c.SDL_GetGamepadJoystick(self.ptr));
+    }
 
-    // /// Check if a gamepad has been opened and is currently connected.
-    // pub fn connected(self: *const Gamepad)bool {}
+    /// Get the SDL joystick layer bindings for a gamepad.
+    pub fn getBindings(self: *const Gamepad, count: *i32) ![]*c.SDL_GamepadBinding {
+        return try errify(c.SDL_GetGamepadBindings(self.ptr, count));
+    }
 
-    // /// Get the underlying joystick from a gamepad.
-    // pub fn getJoystick(self: *const Gamepad)SDL_Joystick * {}
+    /// Query whether a gamepad has a given axis.
+    pub fn hasAxis(self: *const Gamepad, axis: GamepadAxis) bool {
+        return c.SDL_GamepadHasAxis(self.ptr, @intFromEnum(axis));
+    }
 
-    // /// Get the SDL joystick layer bindings for a gamepad.
-    // pub fn getBindings(self: *const Gamepad, int *count)SDL_GamepadBinding ** {}
+    /// Get the current state of an axis control on a gamepad.
+    pub fn getAxis(self: *const Gamepad, axis: GamepadAxis) i16 {
+        return c.SDL_GetGamepadAxis(self.ptr, @intFromEnum(axis));
+    }
 
-    // /// Query whether a gamepad has a given axis.
-    // pub fn hasAxis(self: *const Gamepad, SDL_GamepadAxis axis)bool {}
+    /// Query whether a gamepad has a given button.
+    pub fn hasButton(self: *const Gamepad, button: GamepadButton) bool {
+        return c.SDL_GamepadHasButton(self.ptr, @intFromEnum(button));
+    }
 
-    // /// Get the current state of an axis control on a gamepad.
-    // pub fn getAxis(self: *const Gamepad, SDL_GamepadAxis axis)i16 {}
+    /// Get the current state of a button on a gamepad.
+    pub fn getButton(self: *const Gamepad, button: GamepadButton) bool {
+        return c.SDL_GetGamepadButton(self.ptr, @intFromEnum(button));
+    }
 
-    // /// Query whether a gamepad has a given button.
-    // pub fn hasButton(self: *const Gamepad, SDL_GamepadButton button)bool {}
+    /// Get the label of a button on a gamepad.
+    pub fn getButtonLabel(self: *const Gamepad, button: GamepadButton) GamepadButtonLabel {
+        return @enumFromInt(c.SDL_GetGamepadButtonLabel(self.ptr, @intFromEnum(button)));
+    }
 
-    // /// Get the current state of a button on a gamepad.
-    // pub fn getButton(self: *const Gamepad, SDL_GamepadButton button)bool {}
+    /// Get the number of touchpads on a gamepad.
+    pub fn getNumTouchpads(self: *const Gamepad) i32 {
+        return c.SDL_GetNumGamepadTouchpads(self.ptr);
+    }
 
-    // /// Get the label of a button on a gamepad.
-    // pub fn getButtonLabel(self: *const Gamepad, SDL_GamepadButton button)SDL_GamepadButtonLabel {}
+    /// Get the number of supported simultaneous fingers on a touchpad on a game gamepad.
+    pub fn getNumTouchpadFingers(self: *const Gamepad, touchpad: i32) i32 {
+        return c.SDL_GetNumGamepadTouchpadFingers(self.ptr, touchpad);
+    }
 
-    // /// Get the number of touchpads on a gamepad.
-    // pub fn getNumTouchpads(self: *const Gamepad)int {}
+    /// Get the current state of a finger on a touchpad on a gamepad.
+    pub fn getTouchpadFinger(self: *const Gamepad, touchpad: i32, finger: i32, down: ?*bool, x: ?*f32, y: ?*f32, pressure: ?*f32) !void {
+        try errify(c.SDL_GetGamepadTouchpadFinger(self.ptr, touchpad, finger, down, x, y, pressure));
+    }
 
-    // /// Get the number of supported simultaneous fingers on a touchpad on a game gamepad.
-    // pub fn getNumTouchpadFingers(self: *const Gamepad, int touchpad)int {}
+    /// Return whether a gamepad has a particular sensor.
+    pub fn hasSensor(self: *const Gamepad, sensor_type: c.SDL_SensorType) bool {
+        return c.SDL_GamepadHasSensor(self.ptr, sensor_type);
+    }
 
-    // /// Get the current state of a finger on a touchpad on a gamepad.
-    // pub fn getTouchpadFinger(self: *const Gamepad, int touchpad, int finger, bool *down, f32 *x, f32 *y, f32 *pressure)bool {}
+    /// Set whether data reporting for a gamepad sensor is enabled.
+    pub fn setSensorEnabled(self: *const Gamepad, sensor_type: c.SDL_SensorType, enabled: bool) !void {
+        try errify(c.SDL_SetGamepadSensorEnabled(self.ptr, sensor_type, enabled));
+    }
 
-    // /// Return whether a gamepad has a particular sensor.
-    // pub fn hasSensor(self: *const Gamepad, SDL_SensorType type)bool {}
+    /// Query whether sensor data reporting is enabled for a gamepad.
+    pub fn sensorEnabled(self: *const Gamepad, sensor_type: c.SDL_SensorType) bool {
+        return c.SDL_GamepadSensorEnabled(self.ptr, sensor_type);
+    }
 
-    // /// Set whether data reporting for a gamepad sensor is enabled.
-    // pub fn setSensorEnabled(self: *const Gamepad, SDL_SensorType type, bool enabled)bool {}
+    /// Get the data rate (number of events per second) of a gamepad sensor.
+    pub fn getSensorDataRate(self: *const Gamepad, sensor_type: c.SDL_SensorType) f32 {
+        return c.SDL_GetGamepadSensorDataRate(self.ptr, sensor_type);
+    }
 
-    // /// Query whether sensor data reporting is enabled for a gamepad.
-    // pub fn sensorEnabled(self: *const Gamepad, SDL_SensorType type)bool {}
+    /// Get the current state of a gamepad sensor.
+    pub fn getSensorData(self: *const Gamepad, sensor_type: c.SDL_SensorType, data: [*]f32, num_values: i32) !void {
+        try errify(c.SDL_GetGamepadSensorData(self.ptr, sensor_type, data, num_values));
+    }
 
-    // /// Get the data rate (number of events per second) of a gamepad sensor.
-    // pub fn getSensorDataRate(self: *const Gamepad, SDL_SensorType type)f32 {}
+    /// Start a rumble effect on a gamepad.
+    pub fn rumble(self: *const Gamepad, low_frequency_rumble: u16, high_frequency_rumble: u16, duration_ms: u32) !void {
+        try errify(c.SDL_RumbleGamepad(self.ptr, low_frequency_rumble, high_frequency_rumble, duration_ms));
+    }
 
-    // /// Get the current state of a gamepad sensor.
-    // pub fn getSensorData(self: *const Gamepad, SDL_SensorType type, f32 *data, int num_values)bool {}
+    /// Start a rumble effect in the gamepad's triggers.
+    pub fn rumbleTriggers(self: *const Gamepad, left_rumble: u16, right_rumble: u16, duration_ms: u32) !void {
+        try errify(c.SDL_RumbleGamepadTriggers(self.ptr, left_rumble, right_rumble, duration_ms));
+    }
 
-    // /// Start a rumble effect on a gamepad.
-    // pub fn rumble(self: *const Gamepad, u16 low_frequency_rumble, u16 high_frequency_rumble, u32 duration_ms)bool {}
+    /// Update a gamepad's LED color.
+    pub fn setLED(self: *const Gamepad, red: u8, green: u8, blue: u8) !void {
+        try errify(c.SDL_SetGamepadLED(self.ptr, red, green, blue));
+    }
 
-    // /// Start a rumble effect in the gamepad's triggers.
-    // pub fn rumbleTriggers(self: *const Gamepad, u16 left_rumble, u16 right_rumble, u32 duration_ms)bool {}
+    /// Send a gamepad specific effect packet.
+    pub fn sendEffect(self: *const Gamepad, data: *const anyopaque, size: i32) !void {
+        try errify(c.SDL_SendGamepadEffect(self.ptr, data, size));
+    }
 
-    // /// Update a gamepad's LED color.
-    // pub fn setLED(self: *const Gamepad, Uint8 red, Uint8 green, Uint8 blue)bool {}
+    /// Close a gamepad previously opened with SDL_OpenGamepad().
+    pub fn close(self: *const Gamepad) void {
+        c.SDL_CloseGamepad(self.ptr);
+    }
 
-    // /// Send a gamepad specific effect packet.
-    // pub fn sendEffect(self: *const Gamepad, const void *data, int size)bool {}
+    /// Return the sfSymbolsName for a given button on a gamepad on Apple platforms.
+    pub fn getAppleSFSymbolsNameForButton(self: *const Gamepad, button: GamepadButton) ?[]const u8 {
+        if (c.SDL_GetGamepadAppleSFSymbolsNameForButton(self.ptr, button)) |name| {
+            return std.mem.span(name);
+        }
+        return null;
+    }
 
-    // /// Close a gamepad previously opened with SDL_OpenGamepad().
-    // pub fn close(self: *const Gamepad)void {}
-
-    // /// Return the sfSymbolsName for a given button on a gamepad on Apple platforms.
-    // pub fn getAppleSFSymbolsNameForButton(self: *const Gamepad, SDL_GamepadButton button)[]const u8 {}
-
-    // /// Return the sfSymbolsName for a given axis on a gamepad on Apple platforms.
-    // pub fn getAppleSFSymbolsNameForAxis(self: *const Gamepad, SDL_GamepadAxis axis)[]const u8 {}
-
-    // /// Return the sfSymbolsName for a given axis on a gamepad on Apple platforms.
-    // pub fn getAppleSFSymbolsNameForAxis(self: *const Gamepad, SDL_GamepadAxis axis)[]const u8 {}
-
+    /// Return the sfSymbolsName for a given axis on a gamepad on Apple platforms.
+    pub fn getAppleSFSymbolsNameForAxis(self: *const Gamepad, axis: GamepadAxis) ?[]const u8 {
+        if (c.SDL_GetGamepadAppleSFSymbolsNameForAxis(self.ptr, axis)) |name| {
+            return std.mem.span(name);
+        }
+        return null;
+    }
 };
 
-// /// Add support for gamepads that SDL is unaware of or change the binding of an existing gamepad.
-// pub fn addGamepadMapping(const char *mapping)int {}
+// Module-level functions
 
-// /// Load a set of gamepad mappings from an SDL_IOStream.
-// pub fn addGamepadMappingsFromIO(SDL_IOStream *src, bool closeio)int {}
+/// Add support for gamepads that SDL is unaware of or change the binding of an existing gamepad.
+pub fn addGamepadMapping(mapping: [*:0]const u8) !void {
+    const result = c.SDL_AddGamepadMapping(mapping);
+    if (result == -1) return error.SdlError;
+}
 
-// /// Load a set of gamepad mappings from a file.
-// pub fn addGamepadMappingsFromFile(const char *file)int {}
+/// Load a set of gamepad mappings from an SDL_IOStream.
+pub fn addGamepadMappingsFromIO(src: *c.SDL_IOStream, closeio: bool) !i32 {
+    const result = c.SDL_AddGamepadMappingsFromIO(src, closeio);
+    if (result == -1) return error.SdlError;
+    return result;
+}
 
-// /// Reinitialize the SDL mapping database to its initial state.
-// pub fn reloadGamepadMappings() bool {}
+/// Load a set of gamepad mappings from a file.
+pub fn addGamepadMappingsFromFile(file: [*:0]const u8) !i32 {
+    const result = c.SDL_AddGamepadMappingsFromFile(file);
+    if (result == -1) return error.SdlError;
+    return result;
+}
 
-// /// Get the current gamepad mappings.
-// pub fn getGamepadMappings(int *count)char ** {}
+/// Reinitialize the SDL mapping database to its initial state.
+pub fn reloadGamepadMappings() !void {
+    try errify(c.SDL_ReloadGamepadMappings());
+}
 
-// /// Get the gamepad mapping string for a given GUID.
-// pub fn getGamepadMappingForGUID(SDL_GUID guid)char * {}
+/// Get the current gamepad mappings.
+pub fn getGamepadMappings(count: ?*i32) ![*][*:0]u8 {
+    return try errify(c.SDL_GetGamepadMappings(count));
+}
 
-// /// Set the current mapping of a joystick or gamepad.
-// pub fn setGamepadMapping(SDL_JoystickID instance_id, const char *mapping)bool {}
+/// Get the gamepad mapping string for a given GUID.
+pub fn getGamepadMappingForGUID(guid: c.SDL_GUID) ![]const u8 {
+    const result = try errify(c.SDL_GetGamepadMappingForGUID(guid));
+    return std.mem.span(result);
+}
 
-// /// Return whether a gamepad is currently connected.
-// pub fn hasGamepad() bool {}
+/// Set the current mapping of a joystick or gamepad.
+pub fn setGamepadMapping(instance_id: JoystickID, mapping: ?[*:0]const u8) !void {
+    try errify(c.SDL_SetGamepadMapping(instance_id, mapping));
+}
 
-// /// Get a list of currently connected gamepads.
-// pub fn getGamepads(int *count)SDL_JoystickID * {}
+/// Return whether a gamepad is currently connected.
+pub fn hasGamepad() bool {
+    return c.SDL_HasGamepad();
+}
 
-// /// Check if the given joystick is supported by the gamepad interface.
-// pub fn isGamepad(SDL_JoystickID instance_id)bool {}
+/// Get a list of currently connected gamepads.
+pub fn getGamepads(count: ?*i32) ![*]JoystickID {
+    return try errify(c.SDL_GetGamepads(count));
+}
 
-// /// Get the implementation dependent name of a gamepad.
-// pub fn getGamepadNameForID(SDL_JoystickID instance_id)const char * {}
+/// Check if the given joystick is supported by the gamepad interface.
+pub fn isGamepad(instance_id: JoystickID) bool {
+    return c.SDL_IsGamepad(instance_id);
+}
 
-// /// Get the implementation dependent path of a gamepad.
-// pub fn getGamepadPathForID(SDL_JoystickID instance_id)const char * {}
+/// Get the implementation dependent name of a gamepad.
+pub fn getGamepadNameForID(instance_id: JoystickID) ?[]const u8 {
+    if (c.SDL_GetGamepadNameForID(instance_id)) |name| {
+        return std.mem.span(name);
+    }
+    return null;
+}
 
-// /// Get the player index of a gamepad.
-// pub fn getGamepadPlayerIndexForID(SDL_JoystickID instance_id)int {}
+/// Get the implementation dependent path of a gamepad.
+pub fn getGamepadPathForID(instance_id: JoystickID) ?[]const u8 {
+    if (c.SDL_GetGamepadPathForID(instance_id)) |path| {
+        return std.mem.span(path);
+    }
+    return null;
+}
 
-// /// Get the implementation-dependent GUID of a gamepad.
-// pub fn getGamepadGUIDForID(SDL_JoystickID instance_id)SDL_GUID {}
+/// Get the player index of a gamepad.
+pub fn getGamepadPlayerIndexForID(instance_id: JoystickID) i32 {
+    return c.SDL_GetGamepadPlayerIndexForID(instance_id);
+}
 
-// /// Get the USB vendor ID of a gamepad, if available.
-// pub fn getGamepadVendorForID(SDL_JoystickID instance_id)u16 {}
+/// Get the implementation-dependent GUID of a gamepad.
+pub fn getGamepadGUIDForID(instance_id: JoystickID) c.SDL_GUID {
+    return c.SDL_GetGamepadGUIDForID(instance_id);
+}
 
-// /// Get the USB product ID of a gamepad, if available.
-// pub fn getGamepadProductForID(SDL_JoystickID instance_id)u16 {}
+/// Get the USB vendor ID of a gamepad, if available.
+pub fn getGamepadVendorForID(instance_id: JoystickID) u16 {
+    return c.SDL_GetGamepadVendorForID(instance_id);
+}
 
-// /// Get the product version of a gamepad, if available.
-// pub fn getGamepadProductVersionForID(SDL_JoystickID instance_id)u16 {}
+/// Get the USB product ID of a gamepad, if available.
+pub fn getGamepadProductForID(instance_id: JoystickID) u16 {
+    return c.SDL_GetGamepadProductForID(instance_id);
+}
 
-// /// Get the type of a gamepad.
-// pub fn getGamepadTypeForID(SDL_JoystickID instance_id)GamepadType {}
+/// Get the product version of a gamepad, if available.
+pub fn getGamepadProductVersionForID(instance_id: JoystickID) u16 {
+    return c.SDL_GetGamepadProductVersionForID(instance_id);
+}
 
-// /// Get the type of a gamepad, ignoring any mapping override.
-// pub fn getRealGamepadTypeForID(SDL_JoystickID instance_id)GamepadType {}
+/// Get the type of a gamepad.
+pub fn getGamepadTypeForID(instance_id: JoystickID) GamepadType {
+    return @enumFromInt(c.SDL_GetGamepadTypeForID(instance_id));
+}
 
-// /// Get the mapping of a gamepad.
-// pub fn getGamepadMappingForID(SDL_JoystickID instance_id)char * {}
+/// Get the type of a gamepad, ignoring any mapping override.
+pub fn getRealGamepadTypeForID(instance_id: JoystickID) GamepadType {
+    return @enumFromInt(c.SDL_GetRealGamepadTypeForID(instance_id));
+}
 
-// /// Set the state of gamepad event processing.
-// pub fn setGamepadEventsEnabled(bool enabled)void {}
+/// Get the mapping of a gamepad.
+pub fn getGamepadMappingForID(instance_id: JoystickID) ![]const u8 {
+    const result = try errify(c.SDL_GetGamepadMappingForID(instance_id));
+    return std.mem.span(result);
+}
 
-// /// Query the state of gamepad event processing.
-// pub fn gamepadEventsEnabled() bool {}
+/// Set the state of gamepad event processing.
+pub fn setGamepadEventsEnabled(enabled: bool) void {
+    c.SDL_SetGamepadEventsEnabled(enabled);
+}
 
-// /// Manually pump gamepad updates if not using the loop.
-// pub fn updateGamepads() void {}
+/// Query the state of gamepad event processing.
+pub fn gamepadEventsEnabled() bool {
+    return c.SDL_GamepadEventsEnabled();
+}
 
-// /// Convert a string into GamepadType enum.
-// pub fn getGamepadTypeFromString(const char *str)GamepadType {}
+/// Manually pump gamepad updates if not using the loop.
+pub fn updateGamepads() void {
+    c.SDL_UpdateGamepads();
+}
 
-// /// Convert from an GamepadType enum to a string.
-// pub fn getGamepadStringForType(GamepadType type)const char * {}
+/// Convert a string into GamepadType enum.
+pub fn getGamepadTypeFromString(str: [*:0]const u8) GamepadType {
+    return @enumFromInt(c.SDL_GetGamepadTypeFromString(str));
+}
 
-// /// Convert a string into SDL_GamepadAxis enum.
-// pub fn getGamepadAxisFromString(const char *str)SDL_GamepadAxis {}
+/// Convert from an GamepadType enum to a string.
+pub fn getGamepadStringForType(gamepad_type: GamepadType) ?[]const u8 {
+    if (c.SDL_GetGamepadStringForType(@intFromEnum(gamepad_type))) |str| {
+        return std.mem.span(str);
+    }
+    return null;
+}
 
-// /// Convert from an SDL_GamepadAxis enum to a string.
-// pub fn getGamepadStringForAxis(SDL_GamepadAxis axis)const char * {}
+/// Convert a string into SDL_GamepadAxis enum.
+pub fn getGamepadAxisFromString(str: [*:0]const u8) GamepadAxis {
+    return @enumFromInt(c.SDL_GetGamepadAxisFromString(str));
+}
 
-// /// Convert a string into an SDL_GamepadButton enum.
-// pub fn getGamepadButtonFromString(const char *str)SDL_GamepadButton {}
+/// Convert from an SDL_GamepadAxis enum to a string.
+pub fn getGamepadStringForAxis(axis: GamepadAxis) ?[]const u8 {
+    if (c.SDL_GetGamepadStringForAxis(axis)) |str| {
+        return std.mem.span(str);
+    }
+    return null;
+}
 
-// /// Convert from an SDL_GamepadButton enum to a string.
-// pub fn getGamepadStringForButton(SDL_GamepadButton button)const char * {}
+/// Convert a string into an SDL_GamepadButton enum.
+pub fn getGamepadButtonFromString(str: [*:0]const u8) GamepadButton {
+    return @enumFromInt(c.SDL_GetGamepadButtonFromString(str));
+}
 
-// /// Get the label of a button on a gamepad.
-// pub fn getGamepadButtonLabelForType(GamepadType type, SDL_GamepadButton button)SDL_GamepadButtonLabel {}
+/// Convert from an SDL_GamepadButton enum to a string.
+pub fn getGamepadStringForButton(button: GamepadButton) ?[]const u8 {
+    if (c.SDL_GetGamepadStringForButton(button)) |str| {
+        return std.mem.span(str);
+    }
+    return null;
+}
+
+/// Get the label of a button on a gamepad.
+pub fn getGamepadButtonLabelForType(gamepad_type: GamepadType, button: GamepadButton) GamepadButtonLabel {
+    return c.SDL_GetGamepadButtonLabelForType(@intFromEnum(gamepad_type), button);
+}

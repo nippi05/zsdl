@@ -3,6 +3,7 @@ const internal = @import("internal.zig");
 const c = internal.c;
 const errify = internal.errify;
 const power = @import("power.zig");
+const PowerState = power.PowerState;
 
 pub const JoystickID = c.SDL_JoystickID;
 pub const JoystickType = enum(u32) {
@@ -16,6 +17,12 @@ pub const JoystickType = enum(u32) {
     drum_kit = c.SDL_JOYSTICK_TYPE_DRUM_KIT,
     arcade_pad = c.SDL_JOYSTICK_TYPE_ARCADE_PAD,
     throttle = c.SDL_JOYSTICK_TYPE_THROTTLE,
+};
+pub const JoystickConnectionState = enum(i32) {
+    invalid = c.SDL_JOYSTICK_CONNECTION_INVALID,
+    unknown = c.SDL_JOYSTICK_CONNECTION_UNKNOWN,
+    wired = c.SDL_JOYSTICK_CONNECTION_WIRED,
+    wireless = c.SDL_JOYSTICK_CONNECTION_WIRELESS,
 };
 
 /// Get the implementation dependent name of a joystick.
@@ -212,16 +219,16 @@ pub const Joystick = struct {
     }
 
     /// Get the connection state of a joystick.
-    pub fn getConnectionState(self: *const Joystick) !c.SDL_JoystickConnectionState {
-        const state = c.SDL_GetJoystickConnectionState(self.ptr);
-        try errify(state != c.SDL_JOYSTICK_CONNECTION_INVALID);
+    pub fn getConnectionState(self: *const Joystick) !JoystickConnectionState {
+        const state: JoystickConnectionState = @enumFromInt(c.SDL_GetJoystickConnectionState(self.ptr));
+        try errify(state != .invalid);
         return state;
     }
 
     /// Get the battery state of a joystick.
-    pub fn getPowerInfo(self: *const Joystick, percent: ?*i32) !c.SDL_PowerState {
-        const state = c.SDL_GetJoystickPowerInfo(self.ptr, percent);
-        try errify(state != c.SDL_POWERSTATE_ERROR);
+    pub fn getPowerInfo(self: *const Joystick, percent: ?*i32) !PowerState {
+        const state: PowerState = @enumFromInt(c.SDL_GetJoystickPowerInfo(self.ptr, percent));
+        try errify(state != .@"error");
         return state;
     }
 };

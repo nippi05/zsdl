@@ -1,0 +1,76 @@
+const std = @import("std");
+const c = @import("internal.zig").c;
+const internal = @import("internal.zig");
+const errify = internal.errify;
+
+/// Put UTF-8 text into the clipboard.
+pub fn setClipboardText(text: [*:0]const u8) !void {
+    try errify(c.SDL_SetClipboardText(text));
+}
+
+/// Get UTF-8 text from the clipboard.
+pub fn getClipboardText() ![*:0]u8 {
+    const text = c.SDL_GetClipboardText();
+    try errify(text != null);
+    return text;
+}
+
+/// Query whether the clipboard exists and contains a non-empty text string.
+pub fn hasClipboardText() bool {
+    return c.SDL_HasClipboardText();
+}
+
+/// Put UTF-8 text into the primary selection.
+pub fn setPrimarySelectionText(text: [*:0]const u8) !void {
+    try errify(c.SDL_SetPrimarySelectionText(text));
+}
+
+/// Get UTF-8 text from the primary selection.
+pub fn getPrimarySelectionText() ![*:0]u8 {
+    const text = c.SDL_GetPrimarySelectionText();
+    try errify(text != null);
+    return text;
+}
+
+/// Query whether the primary selection exists and contains a non-empty text string.
+pub fn hasPrimarySelectionText() bool {
+    return c.SDL_HasPrimarySelectionText();
+}
+
+/// Offer clipboard data to the OS.
+pub fn setClipboardData(
+    callback: c.SDL_ClipboardDataCallback,
+    cleanup: c.SDL_ClipboardCleanupCallback,
+    userdata: ?*anyopaque,
+    mime_types: [*c][*c]const u8,
+    num_mime_types: usize,
+) !void {
+    try errify(c.SDL_SetClipboardData(callback, cleanup, userdata, mime_types, num_mime_types));
+}
+
+/// Clear the clipboard data.
+pub fn clearClipboardData() !void {
+    try errify(c.SDL_ClearClipboardData());
+}
+
+/// Get the data from clipboard for a given mime type.
+pub fn getClipboardData(mime_type: [*:0]const u8) ![]const u8 {
+    var size: usize = undefined;
+    const data = c.SDL_GetClipboardData(mime_type, &size);
+    try errify(data != null);
+    return @as([*]const u8, @ptrCast(data))[0..size];
+}
+
+/// Query whether there is data in the clipboard for the provided mime type.
+pub fn hasClipboardData(mime_type: [*:0]const u8) bool {
+    return c.SDL_HasClipboardData(mime_type);
+}
+
+/// Retrieve the list of mime types available in the clipboard.
+pub fn getClipboardMimeTypes() ![]const [*c]const u8 { //FIXME ?
+    var num_mime_types: usize = undefined;
+    const types = try errify(c.SDL_GetClipboardMimeTypes(&num_mime_types));
+
+    const slice = types[0..num_mime_types];
+    return slice;
+}

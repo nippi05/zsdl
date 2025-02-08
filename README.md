@@ -26,9 +26,9 @@ exe.root_module.addImport("zsdl", zsdl.module("zsdl"));
 | Keyboard | 🧪 |
 | Mouse | 🧪 |
 | Touch | ✅ |
-| Gamepad | ❌ |
+| Gamepad | 🧪 |
 | Joystick | 🧪 |
-| Haptic | ❌ |
+| Haptic | 🧪 |
 | Audio | ❌ |
 | Gpu | ❌ |
 | Clipboard | ❌ |

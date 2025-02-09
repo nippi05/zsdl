@@ -137,4 +137,5 @@ pub const haptic = @import("haptic.zig");
 pub const camera = @import("camera.zig");
 pub const joystick = @import("joystick.zig");
 pub const clipboard = @import("clipboard.zig");
+pub const dialog = @import("dialog.zig");
 pub const Error = @import("Error.zig");

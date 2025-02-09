@@ -31,8 +31,8 @@ exe.root_module.addImport("zsdl", zsdl.module("zsdl"));
 | Haptic | 🧪 |
 | Audio | ❌ |
 | Gpu | ❌ |
-| Clipboard | ❌ |
-| Dialog | ❌ |
+| Clipboard | ✅ |
+| Dialog | ✅ |
 | Filesystem | ❌ |
 | Iostream | ❌ |
 | Atomic | ❌ |

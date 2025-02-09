@@ -9,10 +9,9 @@ pub fn setClipboardText(text: [*:0]const u8) !void {
 }
 
 /// Get UTF-8 text from the clipboard.
-pub fn getClipboardText() ![*:0]u8 {
-    const text = c.SDL_GetClipboardText();
-    try errify(text != null);
-    return text;
+pub fn getClipboardText() ![]const u8 {
+    const text = try errify(c.SDL_GetClipboardText());
+    return std.mem.span(text);
 }
 
 /// Query whether the clipboard exists and contains a non-empty text string.
@@ -26,10 +25,9 @@ pub fn setPrimarySelectionText(text: [*:0]const u8) !void {
 }
 
 /// Get UTF-8 text from the primary selection.
-pub fn getPrimarySelectionText() ![*:0]u8 {
-    const text = c.SDL_GetPrimarySelectionText();
-    try errify(text != null);
-    return text;
+pub fn getPrimarySelectionText() ![]const u8 {
+    const text = try errify(c.SDL_GetPrimarySelectionText());
+    return std.mem.span(text);
 }
 
 /// Query whether the primary selection exists and contains a non-empty text string.

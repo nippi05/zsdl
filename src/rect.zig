@@ -10,12 +10,14 @@ pub const Rectangle = c.SDL_Rect; // = extern struct {
 //     h: c_int,
 // };
 
+pub const FRect = c.SDL_FRect;
+
 pub const Point = extern struct {
     x: c_int,
     y: c_int,
 };
 
-pub const PointF = extern struct {
+pub const FPoint = extern struct {
     x: f32,
     y: f32,
 };

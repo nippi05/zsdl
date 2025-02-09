@@ -139,4 +139,5 @@ pub const joystick = @import("joystick.zig");
 pub const clipboard = @import("clipboard.zig");
 pub const dialog = @import("dialog.zig");
 pub const pixels = @import("pixels.zig");
+pub const render = @import("render.zig");
 pub const Error = @import("Error.zig");

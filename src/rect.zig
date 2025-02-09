@@ -17,11 +17,7 @@ pub const Point = extern struct {
     y: c_int,
 };
 
-pub const FPoint = extern struct {
-    x: f32,
-    y: f32,
-};
-
+pub const FPoint = c.SDL_FPoint;
 pub const Dimension = extern struct {
     w: c_int,
     h: c_int,

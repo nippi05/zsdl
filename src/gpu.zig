@@ -22,6 +22,11 @@ pub const StencilOpState = extern struct {
     compare_op: CompareOp,
 };
 
+pub const ShaderStage = enum(u32) {
+    vertex = c.SDL_GPU_SHADERSTAGE_VERTEX,
+    fragment = c.SDL_GPU_SHADERSTAGE_FRAGMENT,
+};
+
 pub const DepthStencilState = extern struct {
     compare_op: CompareOp,
     back_stencil_state: StencilOpState,
@@ -85,22 +90,6 @@ pub const GraphicsPipelineTargetInfo = extern struct {
     padding1: u8 = 0,
     padding2: u8 = 0,
     padding3: u8 = 0,
-};
-
-pub const Filter = enum(u32) {
-    nearest = c.SDL_GPU_FILTER_NEAREST,
-    linear = c.SDL_GPU_FILTER_LINEAR,
-};
-
-pub const SamplerMipmapMode = enum(u32) {
-    nearest = c.SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
-    linear = c.SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
-};
-
-pub const SamplerAddressMode = enum(u32) {
-    repeat = c.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
-    mirrored_repeat = c.SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT,
-    clamp_to_edge = c.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 };
 
 pub const BlendOp = enum(u32) {
@@ -237,7 +226,7 @@ pub const VertexInputState = extern struct {
     vertex_attributes: [*]const VertexAttribute,
     num_vertex_attributes: u32,
 
-    pub fn init(
+    pub fn toSdl(
         buffer_descriptions: []const VertexBufferDescription,
         attributes: []const VertexAttribute,
     ) VertexInputState {
@@ -321,101 +310,118 @@ pub const GraphicsPipelineCreateInfo = extern struct {
     }
 };
 
+pub const Filter = enum(u32) {
+    nearest = c.SDL_GPU_FILTER_NEAREST,
+    linear = c.SDL_GPU_FILTER_LINEAR,
+};
+
+pub const SamplerMipmapMode = enum(u32) {
+    nearest = c.SDL_GPU_SAMPLERMIPMAPMODE_NEAREST,
+    linear = c.SDL_GPU_SAMPLERMIPMAPMODE_LINEAR,
+};
+
+pub const SamplerAddressMode = enum(u32) {
+    repeat = c.SDL_GPU_SAMPLERADDRESSMODE_REPEAT,
+    mirrored_repeat = c.SDL_GPU_SAMPLERADDRESSMODE_MIRRORED_REPEAT,
+    clamp_to_edge = c.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
+};
+
 pub const SamplerCreateInfo = extern struct {
-    min_filter: u32,
-    mag_filter: u32,
-    mip_filter: u32,
-    address_mode_u: u32,
-    address_mode_v: u32,
-    address_mode_w: u32,
+    min_filter: Filter,
+    mag_filter: Filter,
+    mipmap_mode: SamplerMipmapMode,
+    address_mode_u: SamplerAddressMode,
+    address_mode_v: SamplerAddressMode,
+    address_mode_w: SamplerAddressMode,
     mip_lod_bias: f32,
     max_anisotropy: f32,
+    compare_op: CompareOp,
     min_lod: f32,
     max_lod: f32,
-    compare_op: u32,
-    border_color: [4]f32,
+    enable_anisotropy: bool,
+    enable_compare: bool,
+    padding1: u8 = 0,
+    padding2: u8 = 0,
 
     pub fn init(
-        min_filter: u32,
-        mag_filter: u32,
-        mip_filter: u32,
-        address_mode_u: u32,
-        address_mode_v: u32,
-        address_mode_w: u32,
+        min_filter: Filter,
+        mag_filter: Filter,
+        mipmap_mode: SamplerMipmapMode,
+        address_mode_u: SamplerAddressMode,
+        address_mode_v: SamplerAddressMode,
+        address_mode_w: SamplerAddressMode,
         mip_lod_bias: f32,
         max_anisotropy: f32,
+        compare_op: CompareOp,
         min_lod: f32,
         max_lod: f32,
-        compare_op: CompareOp,
-        border_color: [4]f32,
+        enable_anisotropy: bool,
+        enable_compare: bool,
     ) SamplerCreateInfo {
         return .{
             .min_filter = min_filter,
             .mag_filter = mag_filter,
-            .mip_filter = mip_filter,
+            .mipmap_mode = mipmap_mode,
             .address_mode_u = address_mode_u,
             .address_mode_v = address_mode_v,
             .address_mode_w = address_mode_w,
             .mip_lod_bias = mip_lod_bias,
             .max_anisotropy = max_anisotropy,
+            .compare_op = compare_op,
             .min_lod = min_lod,
             .max_lod = max_lod,
-            .compare_op = @intFromEnum(compare_op),
-            .border_color = border_color,
+            .enable_anisotropy = enable_anisotropy,
+            .enable_compare = enable_compare,
+            .padding1 = 0,
+            .padding2 = 0,
         };
     }
 };
 
 pub const ShaderCreateInfo = extern struct {
-    format: u32,
     code: [*]const u8,
-    code_size: usize,
-    entry_point: ?[*:0]const u8,
+    entry_point: [*:0]const u8,
+    format: ShaderFormat,
+    stage: ShaderStage,
+    num_samplers: u32,
+    num_storage_textures: u32,
+    num_storage_buffers: u32,
+    num_uniform_buffers: u32,
 
-    pub fn init(format: ShaderFormat, code: []const u8, entry_point: ?[*:0]const u8) ShaderCreateInfo {
+    pub fn init(
+        code: []const u8,
+        entry_point: [*:0]const u8,
+        format: ShaderFormat,
+        stage: ShaderStage,
+        num_samplers: u32,
+        num_storage_textures: u32,
+        num_storage_buffers: u32,
+        num_uniform_buffers: u32,
+    ) c.SDL_GPUShaderCreateInfo {
         return .{
-            .format = format.toInt(),
-            .code = code.ptr,
-            .code_size = code.len,
+            .code = code,
+            .code_len = code.len,
             .entry_point = entry_point,
+            .format = format,
+            .stage = stage,
+            .num_samplers = num_samplers,
+            .num_storage_textures = num_storage_textures,
+            .num_storage_buffers = num_storage_buffers,
+            .num_uniform_buffers = num_uniform_buffers,
         };
     }
 };
 
 pub const TextureCreateInfo = extern struct {
-    format: u32,
-    texture_type: u32,
+    type: TextureType,
+    format: TextureFormat,
+    usage: TextureUsageFlags,
     width: u32,
     height: u32,
-    depth: u32,
-    mip_levels: u32,
-    array_length: u32,
-    sample_count: u32,
-    usage: u32,
-
-    pub fn init(
-        format: TextureFormat,
-        texture_type: TextureType,
-        width: u32,
-        height: u32,
-        depth: u32,
-        mip_levels: u32,
-        array_length: u32,
-        sample_count: SampleCount,
-        usage: TextureUsageFlags,
-    ) TextureCreateInfo {
-        return .{
-            .format = @intFromEnum(format),
-            .texture_type = @intFromEnum(texture_type),
-            .width = width,
-            .height = height,
-            .depth = depth,
-            .mip_levels = mip_levels,
-            .array_length = array_length,
-            .sample_count = @intFromEnum(sample_count),
-            .usage = usage.toInt(),
-        };
-    }
+    layer_count_or_depth: u32,
+    num_levels: u32,
+    sample_count: SampleCount,
+    props: c.SDL_PropertiesID,
 };
 
 pub const MemoryFlags = packed struct {
@@ -437,15 +443,13 @@ pub const MemoryFlags = packed struct {
 };
 
 pub const BufferCreateInfo = extern struct {
-    size: usize,
-    usage: u32,
-    memory_flags: u32,
+    size: u32,
+    usage: BufferUsageFlags,
 
-    pub fn init(size: usize, usage: BufferUsageFlags, memory_flags: MemoryFlags) BufferCreateInfo {
+    pub fn toSdl(self: *const BufferCreateInfo) c.SDL_GPUBufferCreateInfo {
         return .{
-            .size = size,
-            .usage = usage.toInt(),
-            .memory_flags = memory_flags.toInt(),
+            .size = self.size,
+            .usage = self.usage.toInt(),
         };
     }
 };
@@ -514,7 +518,7 @@ pub const ShaderFormat = packed struct {
     metallib: bool = false,
     _padding: u26 = 0,
 
-    pub fn toInt(self: *const ShaderFormat) ShaderFormat {
+    pub fn toInt(self: *const ShaderFormat) c.SDL_GPUShaderFormat {
         return (if (self.private) c.SDL_GPU_SHADERFORMAT_PRIVATE else 0) |
             (if (self.spirv) c.SDL_GPU_SHADERFORMAT_SPIRV else 0) |
             (if (self.dxbc) c.SDL_GPU_SHADERFORMAT_DXBC else 0) |
@@ -523,7 +527,7 @@ pub const ShaderFormat = packed struct {
             (if (self.metallib) c.SDL_GPU_SHADERFORMAT_METALLIB else 0);
     }
 
-    pub fn fromInt(flags: ShaderFormat) ShaderFormat {
+    pub fn fromInt(flags: c.SDL_GPUShaderFormat) ShaderFormat {
         return .{
             .private = flags & c.SDL_GPU_SHADERFORMAT_PRIVATE != 0,
             .spirv = flags & c.SDL_GPU_SHADERFORMAT_SPIRV != 0,
@@ -536,85 +540,149 @@ pub const ShaderFormat = packed struct {
 };
 
 pub const TextureFormat = enum(u32) {
-    unknown = c.SDL_GPU_TEXTUREFORMAT_UNKNOWN,
+    invalid = c.SDL_GPU_TEXTUREFORMAT_INVALID,
+    a8_unorm = c.SDL_GPU_TEXTUREFORMAT_A8_UNORM,
     r8_unorm = c.SDL_GPU_TEXTUREFORMAT_R8_UNORM,
-    r8_snorm = c.SDL_GPU_TEXTUREFORMAT_R8_SNORM,
-    r8_uint = c.SDL_GPU_TEXTUREFORMAT_R8_UINT,
-    r8_sint = c.SDL_GPU_TEXTUREFORMAT_R8_SINT,
+    r8g8_unorm = c.SDL_GPU_TEXTUREFORMAT_R8G8_UNORM,
+    r8g8b8a8_unorm = c.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM,
     r16_unorm = c.SDL_GPU_TEXTUREFORMAT_R16_UNORM,
+    r16g16_unorm = c.SDL_GPU_TEXTUREFORMAT_R16G16_UNORM,
+    r16g16b16a16_unorm = c.SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UNORM,
+    r10g10b10a2_unorm = c.SDL_GPU_TEXTUREFORMAT_R10G10B10A2_UNORM,
+    b5g6r5_unorm = c.SDL_GPU_TEXTUREFORMAT_B5G6R5_UNORM,
+    b5g5r5a1_unorm = c.SDL_GPU_TEXTUREFORMAT_B5G5R5A1_UNORM,
+    b4g4r4a4_unorm = c.SDL_GPU_TEXTUREFORMAT_B4G4R4A4_UNORM,
+    b8g8r8a8_unorm = c.SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM,
+    bc1_rgba_unorm = c.SDL_GPU_TEXTUREFORMAT_BC1_RGBA_UNORM,
+    bc2_rgba_unorm = c.SDL_GPU_TEXTUREFORMAT_BC2_RGBA_UNORM,
+    bc3_rgba_unorm = c.SDL_GPU_TEXTUREFORMAT_BC3_RGBA_UNORM,
+    bc4_r_unorm = c.SDL_GPU_TEXTUREFORMAT_BC4_R_UNORM,
+    bc5_rg_unorm = c.SDL_GPU_TEXTUREFORMAT_BC5_RG_UNORM,
+    bc7_rgba_unorm = c.SDL_GPU_TEXTUREFORMAT_BC7_RGBA_UNORM,
+    bc6h_rgb_float = c.SDL_GPU_TEXTUREFORMAT_BC6H_RGB_FLOAT,
+    bc6h_rgb_ufloat = c.SDL_GPU_TEXTUREFORMAT_BC6H_RGB_UFLOAT,
+    r8_snorm = c.SDL_GPU_TEXTUREFORMAT_R8_SNORM,
+    r8g8_snorm = c.SDL_GPU_TEXTUREFORMAT_R8G8_SNORM,
+    r8g8b8a8_snorm = c.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_SNORM,
     r16_snorm = c.SDL_GPU_TEXTUREFORMAT_R16_SNORM,
-    r16_uint = c.SDL_GPU_TEXTUREFORMAT_R16_UINT,
-    r16_sint = c.SDL_GPU_TEXTUREFORMAT_R16_SINT,
+    r16g16_snorm = c.SDL_GPU_TEXTUREFORMAT_R16G16_SNORM,
+    r16g16b16a16_snorm = c.SDL_GPU_TEXTUREFORMAT_R16G16B16A16_SNORM,
     r16_float = c.SDL_GPU_TEXTUREFORMAT_R16_FLOAT,
-    r32_uint = c.SDL_GPU_TEXTUREFORMAT_R32_UINT,
-    r32_sint = c.SDL_GPU_TEXTUREFORMAT_R32_SINT,
+    r16g16_float = c.SDL_GPU_TEXTUREFORMAT_R16G16_FLOAT,
+    r16g16b16a16_float = c.SDL_GPU_TEXTUREFORMAT_R16G16B16A16_FLOAT,
     r32_float = c.SDL_GPU_TEXTUREFORMAT_R32_FLOAT,
-    rg8_unorm = c.SDL_GPU_TEXTUREFORMAT_RG8_UNORM,
-    rg8_snorm = c.SDL_GPU_TEXTUREFORMAT_RG8_SNORM,
-    rg8_uint = c.SDL_GPU_TEXTUREFORMAT_RG8_UINT,
-    rg8_sint = c.SDL_GPU_TEXTUREFORMAT_RG8_SINT,
-    rg16_unorm = c.SDL_GPU_TEXTUREFORMAT_RG16_UNORM,
-    rg16_snorm = c.SDL_GPU_TEXTUREFORMAT_RG16_SNORM,
-    rg16_uint = c.SDL_GPU_TEXTUREFORMAT_RG16_UINT,
-    rg16_sint = c.SDL_GPU_TEXTUREFORMAT_RG16_SINT,
-    rg16_float = c.SDL_GPU_TEXTUREFORMAT_RG16_FLOAT,
-    rg32_uint = c.SDL_GPU_TEXTUREFORMAT_RG32_UINT,
-    rg32_sint = c.SDL_GPU_TEXTUREFORMAT_RG32_SINT,
-    rg32_float = c.SDL_GPU_TEXTUREFORMAT_RG32_FLOAT,
-    rgb8_unorm = c.SDL_GPU_TEXTUREFORMAT_RGB8_UNORM,
-    rgb8_snorm = c.SDL_GPU_TEXTUREFORMAT_RGB8_SNORM,
-    rgb8_uint = c.SDL_GPU_TEXTUREFORMAT_RGB8_UINT,
-    rgb8_sint = c.SDL_GPU_TEXTUREFORMAT_RGB8_SINT,
-    rgb16_unorm = c.SDL_GPU_TEXTUREFORMAT_RGB16_UNORM,
-    rgb16_snorm = c.SDL_GPU_TEXTUREFORMAT_RGB16_SNORM,
-    rgb16_uint = c.SDL_GPU_TEXTUREFORMAT_RGB16_UINT,
-    rgb16_sint = c.SDL_GPU_TEXTUREFORMAT_RGB16_SINT,
-    rgb16_float = c.SDL_GPU_TEXTUREFORMAT_RGB16_FLOAT,
-    rgb32_uint = c.SDL_GPU_TEXTUREFORMAT_RGB32_UINT,
-    rgb32_sint = c.SDL_GPU_TEXTUREFORMAT_RGB32_SINT,
-    rgb32_float = c.SDL_GPU_TEXTUREFORMAT_RGB32_FLOAT,
-    rgba8_unorm = c.SDL_GPU_TEXTUREFORMAT_RGBA8_UNORM,
-    rgba8_snorm = c.SDL_GPU_TEXTUREFORMAT_RGBA8_SNORM,
-    rgba8_uint = c.SDL_GPU_TEXTUREFORMAT_RGBA8_UINT,
-    rgba8_sint = c.SDL_GPU_TEXTUREFORMAT_RGBA8_SINT,
-    rgba16_unorm = c.SDL_GPU_TEXTUREFORMAT_RGBA16_UNORM,
-    rgba16_snorm = c.SDL_GPU_TEXTUREFORMAT_RGBA16_SNORM,
-    rgba16_uint = c.SDL_GPU_TEXTUREFORMAT_RGBA16_UINT,
-    rgba16_sint = c.SDL_GPU_TEXTUREFORMAT_RGBA16_SINT,
-    rgba16_float = c.SDL_GPU_TEXTUREFORMAT_RGBA16_FLOAT,
-    rgba32_uint = c.SDL_GPU_TEXTUREFORMAT_RGBA32_UINT,
-    rgba32_sint = c.SDL_GPU_TEXTUREFORMAT_RGBA32_SINT,
-    rgba32_float = c.SDL_GPU_TEXTUREFORMAT_RGBA32_FLOAT,
-    depth16_unorm = c.SDL_GPU_TEXTUREFORMAT_DEPTH16_UNORM,
-    depth32_float = c.SDL_GPU_TEXTUREFORMAT_DEPTH32_FLOAT,
-    depth24_unorm_stencil8 = c.SDL_GPU_TEXTUREFORMAT_DEPTH24_UNORM_STENCIL8,
-    depth32_float_stencil8 = c.SDL_GPU_TEXTUREFORMAT_DEPTH32_FLOAT_STENCIL8,
+    r32g32_float = c.SDL_GPU_TEXTUREFORMAT_R32G32_FLOAT,
+    r32g32b32a32_float = c.SDL_GPU_TEXTUREFORMAT_R32G32B32A32_FLOAT,
+    r11g11b10_ufloat = c.SDL_GPU_TEXTUREFORMAT_R11G11B10_UFLOAT,
+    r8_uint = c.SDL_GPU_TEXTUREFORMAT_R8_UINT,
+    r8g8_uint = c.SDL_GPU_TEXTUREFORMAT_R8G8_UINT,
+    r8g8b8a8_uint = c.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UINT,
+    r16_uint = c.SDL_GPU_TEXTUREFORMAT_R16_UINT,
+    r16g16_uint = c.SDL_GPU_TEXTUREFORMAT_R16G16_UINT,
+    r16g16b16a16_uint = c.SDL_GPU_TEXTUREFORMAT_R16G16B16A16_UINT,
+    r32_uint = c.SDL_GPU_TEXTUREFORMAT_R32_UINT,
+    r32g32_uint = c.SDL_GPU_TEXTUREFORMAT_R32G32_UINT,
+    r32g32b32a32_uint = c.SDL_GPU_TEXTUREFORMAT_R32G32B32A32_UINT,
+    r8_int = c.SDL_GPU_TEXTUREFORMAT_R8_INT,
+    r8g8_int = c.SDL_GPU_TEXTUREFORMAT_R8G8_INT,
+    r8g8b8a8_int = c.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_INT,
+    r16_int = c.SDL_GPU_TEXTUREFORMAT_R16_INT,
+    r16g16_int = c.SDL_GPU_TEXTUREFORMAT_R16G16_INT,
+    r16g16b16a16_int = c.SDL_GPU_TEXTUREFORMAT_R16G16B16A16_INT,
+    r32_int = c.SDL_GPU_TEXTUREFORMAT_R32_INT,
+    r32g32_int = c.SDL_GPU_TEXTUREFORMAT_R32G32_INT,
+    r32g32b32a32_int = c.SDL_GPU_TEXTUREFORMAT_R32G32B32A32_INT,
+    r8g8b8a8_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_R8G8B8A8_UNORM_SRGB,
+    b8g8r8a8_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_B8G8R8A8_UNORM_SRGB,
+    bc1_rgba_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_BC1_RGBA_UNORM_SRGB,
+    bc2_rgba_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_BC2_RGBA_UNORM_SRGB,
+    bc3_rgba_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_BC3_RGBA_UNORM_SRGB,
+    bc7_rgba_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_BC7_RGBA_UNORM_SRGB,
+    d16_unorm = c.SDL_GPU_TEXTUREFORMAT_D16_UNORM,
+    d24_unorm = c.SDL_GPU_TEXTUREFORMAT_D24_UNORM,
+    d32_float = c.SDL_GPU_TEXTUREFORMAT_D32_FLOAT,
+    d24_unorm_s8_uint = c.SDL_GPU_TEXTUREFORMAT_D24_UNORM_S8_UINT,
+    d32_float_s8_uint = c.SDL_GPU_TEXTUREFORMAT_D32_FLOAT_S8_UINT,
+    astc_4x4_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_4x4_UNORM,
+    astc_5x4_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_5x4_UNORM,
+    astc_5x5_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_5x5_UNORM,
+    astc_6x5_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_6x5_UNORM,
+    astc_6x6_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_6x6_UNORM,
+    astc_8x5_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_8x5_UNORM,
+    astc_8x6_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_8x6_UNORM,
+    astc_8x8_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_8x8_UNORM,
+    astc_10x5_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x5_UNORM,
+    astc_10x6_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x6_UNORM,
+    astc_10x8_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x8_UNORM,
+    astc_10x10_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x10_UNORM,
+    astc_12x10_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_12x10_UNORM,
+    astc_12x12_unorm = c.SDL_GPU_TEXTUREFORMAT_ASTC_12x12_UNORM,
+    astc_4x4_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_4x4_UNORM_SRGB,
+    astc_5x4_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_5x4_UNORM_SRGB,
+    astc_5x5_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_5x5_UNORM_SRGB,
+    astc_6x5_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_6x5_UNORM_SRGB,
+    astc_6x6_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_6x6_UNORM_SRGB,
+    astc_8x5_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_8x5_UNORM_SRGB,
+    astc_8x6_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_8x6_UNORM_SRGB,
+    astc_8x8_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_8x8_UNORM_SRGB,
+    astc_10x5_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x5_UNORM_SRGB,
+    astc_10x6_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x6_UNORM_SRGB,
+    astc_10x8_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x8_UNORM_SRGB,
+    astc_10x10_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x10_UNORM_SRGB,
+    astc_12x10_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_12x10_UNORM_SRGB,
+    astc_12x12_unorm_srgb = c.SDL_GPU_TEXTUREFORMAT_ASTC_12x12_UNORM_SRGB,
+    astc_4x4_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_4x4_FLOAT,
+    astc_5x4_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_5x4_FLOAT,
+    astc_5x5_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_5x5_FLOAT,
+    astc_6x5_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_6x5_FLOAT,
+    astc_6x6_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_6x6_FLOAT,
+    astc_8x5_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_8x5_FLOAT,
+    astc_8x6_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_8x6_FLOAT,
+    astc_8x8_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_8x8_FLOAT,
+    astc_10x5_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x5_FLOAT,
+    astc_10x6_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x6_FLOAT,
+    astc_10x8_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x8_FLOAT,
+    astc_10x10_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_10x10_FLOAT,
+    astc_12x10_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_12x10_FLOAT,
+    astc_12x12_float = c.SDL_GPU_TEXTUREFORMAT_ASTC_12x12_FLOAT,
 };
 
 pub const TextureType = enum(u32) {
-    @"1d" = c.SDL_GPU_TEXTURETYPE_1D,
     @"2d" = c.SDL_GPU_TEXTURETYPE_2D,
+    @"2d_array" = c.SDL_GPU_TEXTURETYPE_2D_ARRAY,
     @"3d" = c.SDL_GPU_TEXTURETYPE_3D,
     cube = c.SDL_GPU_TEXTURETYPE_CUBE,
+    cube_array = c.SDL_GPU_TEXTURETYPE_CUBE_ARRAY,
 };
 
-pub const TextureUsageFlags = packed struct {
-    sampled: bool = false,
-    storage: bool = false,
-    render_target: bool = false,
-    _padding: u29 = 0,
+pub const TextureUsageFlags = extern struct {
+    sampler: bool = false,
+    color_target: bool = false,
+    depth_stencil_target: bool = false,
+    graphics_storage_read: bool = false,
+    compute_storage_read: bool = false,
+    compute_storage_write: bool = false,
+    compute_storage_simultaneous_read_write: bool = false,
 
     pub fn toInt(self: TextureUsageFlags) u32 {
-        return (if (self.sampled) c.SDL_GPU_TEXTUREUSAGE_SAMPLED else 0) |
-            (if (self.storage) c.SDL_GPU_TEXTUREUSAGE_STORAGE else 0) |
-            (if (self.render_target) c.SDL_GPU_TEXTUREUSAGE_RENDER_TARGET else 0);
+        return (if (self.sampler) c.SDL_GPU_TEXTUREUSAGE_SAMPLER else 0) |
+            (if (self.color_target) c.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET else 0) |
+            (if (self.depth_stencil_target) c.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET else 0) |
+            (if (self.graphics_storage_read) c.SDL_GPU_TEXTUREUSAGE_GRAPHICS_STORAGE_READ else 0) |
+            (if (self.compute_storage_read) c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_READ else 0) |
+            (if (self.compute_storage_write) c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_WRITE else 0) |
+            (if (self.compute_storage_simultaneous_read_write) c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_SIMULTANEOUS_READ_WRITE else 0);
     }
 
     pub fn fromInt(flags: u32) TextureUsageFlags {
         return .{
-            .sampled = (flags & c.SDL_GPU_TEXTUREUSAGE_SAMPLED) != 0,
-            .storage = (flags & c.SDL_GPU_TEXTUREUSAGE_STORAGE) != 0,
-            .render_target = (flags & c.SDL_GPU_TEXTUREUSAGE_RENDER_TARGET) != 0,
+            .sampler = flags & c.SDL_GPU_TEXTUREUSAGE_SAMPLER,
+            .color_target = flags & c.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
+            .depth_stencil_target = flags & c.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+            .graphics_storage_read = flags & c.SDL_GPU_TEXTUREUSAGE_GRAPHICS_STORAGE_READ,
+            .compute_storage_read = flags & c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_READ,
+            .compute_storage_write = flags & c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_WRITE,
+            .compute_storage_simultaneous_read_write = flags & c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_SIMULTANEOUS_READ_WRITE,
         };
     }
 };
@@ -624,7 +692,6 @@ pub const SampleCount = enum(u32) {
     @"2" = c.SDL_GPU_SAMPLECOUNT_2,
     @"4" = c.SDL_GPU_SAMPLECOUNT_4,
     @"8" = c.SDL_GPU_SAMPLECOUNT_8,
-    @"16" = c.SDL_GPU_SAMPLECOUNT_16,
 };
 
 pub const SwapchainComposition = enum(u32) {
@@ -767,37 +834,37 @@ pub const Device = struct {
     }
 
     /// Create a compute pipeline object to be used in a compute workflow
-    pub fn createComputePipeline(self: *const Device, createinfo: *const ComputePipelineCreateInfo) !*ComputePipeline {
+    pub fn createComputePipeline(self: *const Device, createinfo: ComputePipelineCreateInfo) !*ComputePipeline {
         return try errify(c.SDL_CreateGPUComputePipeline(self.ptr, createinfo));
     }
 
     /// Create a graphics pipeline object to be used in a graphics workflow
-    pub fn createGraphicsPipeline(self: *const Device, createinfo: *const GraphicsPipelineCreateInfo) !*GraphicsPipeline {
+    pub fn createGraphicsPipeline(self: *const Device, createinfo: GraphicsPipelineCreateInfo) !*GraphicsPipeline {
         return try errify(c.SDL_CreateGPUGraphicsPipeline(self.ptr, createinfo));
     }
 
     /// Create a sampler object to be used when binding textures in a graphics workflow
-    pub fn createSampler(self: *const Device, createinfo: *const SamplerCreateInfo) !*Sampler {
-        return try errify(c.SDL_CreateGPUSampler(self.ptr, createinfo));
+    pub fn createSampler(self: *const Device, createinfo: SamplerCreateInfo) !*Sampler {
+        return try errify(c.SDL_CreateGPUSampler(self.ptr, @ptrCast(&createinfo)));
     }
 
     /// Create a shader to be used when creating a graphics pipeline
     pub fn createShader(self: *const Device, createinfo: ShaderCreateInfo) !*Shader {
-        return try errify(c.SDL_CreateGPUShader(self.ptr, createinfo));
+        return try errify(c.SDL_CreateGPUShader(self.ptr, @ptrCast(&createinfo)));
     }
 
     /// Create a texture object to be used in graphics or compute workflows
-    pub fn createTexture(self: *const Device, createinfo: *const TextureCreateInfo) !*Texture {
-        return try errify(c.SDL_CreateGPUTexture(self.ptr, createinfo));
+    pub fn createTexture(self: *const Device, createinfo: TextureCreateInfo) !*Texture {
+        return try errify(c.SDL_CreateGPUTexture(self.ptr, @ptrCast(&createinfo)));
     }
 
     /// Create a buffer object to be used in graphics or compute workflows
-    pub fn createBuffer(self: *const Device, createinfo: *const BufferCreateInfo) !*Buffer {
-        return try errify(c.SDL_CreateGPUBuffer(self.ptr, createinfo));
+    pub fn createBuffer(self: *const Device, createinfo: BufferCreateInfo) !*Buffer {
+        return try errify(c.SDL_CreateGPUBuffer(self.ptr, &createinfo.toSdl()));
     }
 
     /// Create a transfer buffer to be used when uploading to or downloading from graphics resources
-    pub fn createTransferBuffer(self: *const Device, createinfo: *const TransferBufferCreateInfo) !*TransferBuffer {
+    pub fn createTransferBuffer(self: *const Device, createinfo: TransferBufferCreateInfo) !*TransferBuffer {
         return try errify(c.SDL_CreateGPUTransferBuffer(self.ptr, createinfo));
     }
 

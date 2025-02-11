@@ -1,18 +1,17 @@
-const c = @cImport({
-    @cInclude("SDL3/SDL.h");
-});
 const std = @import("std");
+
+const c = @import("c.zig").c;
 const internal = @import("internal.zig");
 const errify = internal.errify;
-const video = @import("video.zig");
-const Window = video.Window;
-const WindowFlags = video.WindowFlags;
+const pixelsl = @import("pixels.zig");
+const PixelFormat = pixelsl.PixelFormat;
 const rectl = @import("rect.zig");
 const FRect = rectl.FRect;
 const Rect = rectl.Rect;
 const FPoint = rectl.FPoint;
-const pixelsl = @import("pixels.zig");
-const PixelFormat = pixelsl.PixelFormat;
+const video = @import("video.zig");
+const Window = video.Window;
+const WindowFlags = video.WindowFlags;
 
 pub const RendererLogicalPresentation = enum(u32) {
     disabled = c.SDL_LOGICAL_PRESENTATION_DISABLED,
@@ -145,10 +144,10 @@ pub const Renderer = struct {
     }
 
     /// Create a renderer with the specified properties.
-    pub fn createWithProperties(prop: RendererProperties) !Renderer {
+    pub fn createWithProperties(props: RendererProperties) !Renderer {
         const properties = c.SDL_CreateProperties();
         defer c.SDL_DestroyProperties(properties);
-        prop.apply(properties);
+        props.apply(properties);
         const renderer = try errify(c.SDL_CreateRendererWithProperties(properties));
         return Renderer{
             .ptr = renderer,
@@ -231,7 +230,7 @@ pub const Renderer = struct {
     }
 
     /// Return whether an explicit rectangle was set as the viewport.
-    pub fn renderViewportSet(self: *const Renderer) !bool {
+    pub fn renderViewportSet(self: *const Renderer) bool {
         return c.SDL_RenderViewportSet(self.ptr);
     }
 

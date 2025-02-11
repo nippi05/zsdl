@@ -1,5 +1,5 @@
 const std = @import("std");
-const c = @import("internal.zig").c;
+const c = @import("c.zig").c;
 const internal = @import("internal.zig");
 const errify = internal.errify;
 

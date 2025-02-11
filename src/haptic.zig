@@ -1,7 +1,7 @@
 const std = @import("std");
 const internal = @import("internal.zig");
 const Joystick = @import("joystick.zig").Joystick;
-const c = internal.c;
+const c = @import("c.zig").c;
 const errify = internal.errify;
 
 pub const HapticID = c.SDL_HapticID;

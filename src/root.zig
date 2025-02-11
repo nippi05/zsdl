@@ -1,7 +1,27 @@
 const std = @import("std");
+
+pub const c = @import("c.zig").c;
+pub const MainThreadCallback = c.SDL_MainThreadCallback;
+pub const camera = @import("camera.zig");
+pub const clipboard = @import("clipboard.zig");
+pub const dialog = @import("dialog.zig");
+pub const Error = @import("Error.zig");
+pub const gamepad = @import("gamepad.zig");
+pub const gpu = @import("gpu.zig");
+pub const haptic = @import("haptic.zig");
 const internal = @import("internal.zig");
-const c = internal.c;
 const errify = internal.errify;
+pub const joystick = @import("joystick.zig");
+pub const keyboard = @import("keyboard.zig");
+pub const mouse = @import("mouse.zig");
+pub const pixels = @import("pixels.zig");
+pub const power = @import("power.zig");
+pub const rect = @import("rect.zig");
+pub const render = @import("render.zig");
+pub const surface = @import("surface.zig");
+pub const timer = @import("timer.zig");
+pub const touch = @import("touch.zig");
+pub const video = @import("video.zig");
 
 pub const InitFlags = packed struct {
     pub const everything = InitFlags{
@@ -73,8 +93,6 @@ pub fn isMainThread() bool {
     return c.SDL_IsMainThread();
 }
 
-pub const MainThreadCallback = c.SDL_MainThreadCallback;
-
 pub fn runOnMainThread() !void { // FIXME
     try errify(c.SDL_MainThreadCallback());
 }
@@ -124,20 +142,3 @@ pub fn getAppMetadataProperty(
         0,
     );
 }
-
-pub const video = @import("video.zig");
-pub const rect = @import("rect.zig");
-pub const keyboard = @import("keyboard.zig");
-pub const mouse = @import("mouse.zig");
-pub const touch = @import("touch.zig");
-pub const timer = @import("timer.zig");
-pub const power = @import("power.zig");
-pub const gamepad = @import("gamepad.zig");
-pub const haptic = @import("haptic.zig");
-pub const camera = @import("camera.zig");
-pub const joystick = @import("joystick.zig");
-pub const clipboard = @import("clipboard.zig");
-pub const dialog = @import("dialog.zig");
-pub const pixels = @import("pixels.zig");
-pub const render = @import("render.zig");
-pub const Error = @import("Error.zig");

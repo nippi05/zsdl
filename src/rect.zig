@@ -1,23 +1,22 @@
 const std = @import("std");
-const c = @cImport({
-    @cInclude("SDL3/SDL.h");
-});
 
-pub const Rectangle = c.SDL_Rect; // = extern struct {
+const c = @import("c.zig").c;
+pub const Rectangle = c.SDL_Rect;
+pub const FRect = c.SDL_FRect;
+pub const FPoint = c.SDL_FPoint;
+
+// = extern struct {
 //     x: c_int,
 //     y: c_int,
 //     w: c_int,
 //     h: c_int,
 // };
 
-pub const FRect = c.SDL_FRect;
-
 pub const Point = extern struct {
     x: c_int,
     y: c_int,
 };
 
-pub const FPoint = c.SDL_FPoint;
 pub const Dimension = extern struct {
     w: c_int,
     h: c_int,

@@ -8,7 +8,7 @@ const Dimension = rect.Dimension;
 const AspectRatio = rect.AspectRatio;
 const BordersSize = rect.BordersSize;
 const internal = @import("internal.zig");
-const c = internal.c;
+const c = @import("c.zig").c;
 const errify = internal.errify;
 
 pub fn getNumVideoDrivers() comptime_int {

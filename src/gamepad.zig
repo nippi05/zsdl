@@ -1,6 +1,6 @@
 const std = @import("std");
 const internal = @import("internal.zig");
-const c = internal.c;
+const c = @import("c.zig").c;
 const errify = internal.errify;
 const joystick = @import("joystick.zig");
 const JoystickID = joystick.JoystickID;

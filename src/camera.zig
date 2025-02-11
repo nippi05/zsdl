@@ -1,6 +1,6 @@
 const std = @import("std");
 const internal = @import("internal.zig");
-const c = internal.c;
+const c = @import("c.zig").c;
 const errify = internal.errify;
 
 pub const CameraID = c.SDL_CameraID;
@@ -11,7 +11,33 @@ pub const CameraPosition = enum(u32) {
     back_facing = c.SDL_CAMERA_POSITION_BACK_FACING,
 };
 pub const Surface = c.SDL_Surface;
-pub const PropertiesID = c.SDL_PropertiesID;
+pub const CameraProperties = struct {
+    name: ?[*:0]const u8 = null,
+    device_name: ?[*:0]const u8 = null,
+    position: ?CameraPosition = null,
+    format: ?*CameraSpec = null,
+    frame_format: ?c.SDL_PixelFormat = null,
+    frame_width: ?c_int = null,
+    frame_height: ?c_int = null,
+    frame_rate_numerator: ?c_int = null,
+    frame_rate_denominator: ?c_int = null,
+    colorspace: ?c.SDL_Colorspace = null,
+    permission_state: ?c_int = null,
+
+    fn apply(self: CameraProperties, props: c.SDL_PropertiesID) void {
+        if (self.name) |n| _ = c.SDL_SetStringProperty(props, c.SDL_PROP_CAMERA_NAME_STRING, n);
+        if (self.device_name) |dn| _ = c.SDL_SetStringProperty(props, c.SDL_PROP_CAMERA_DEVICE_NAME_STRING, dn);
+        if (self.position) |p| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_CAMERA_POSITION_NUMBER, @intFromEnum(p));
+        if (self.format) |f| _ = c.SDL_SetPointerProperty(props, c.SDL_PROP_CAMERA_FORMAT_POINTER, f);
+        if (self.frame_format) |ff| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_CAMERA_FRAME_FORMAT_NUMBER, @intFromEnum(ff));
+        if (self.frame_width) |fw| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_CAMERA_FRAME_WIDTH_NUMBER, fw);
+        if (self.frame_height) |fh| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_CAMERA_FRAME_HEIGHT_NUMBER, fh);
+        if (self.frame_rate_numerator) |frn| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_CAMERA_FRAME_RATE_NUMERATOR_NUMBER, frn);
+        if (self.frame_rate_denominator) |frd| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_CAMERA_FRAME_RATE_DENOMINATOR_NUMBER, frd);
+        if (self.colorspace) |cs| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_CAMERA_COLORSPACE_NUMBER, @intFromEnum(cs));
+        if (self.permission_state) |ps| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_CAMERA_PERMISSION_STATE_NUMBER, ps);
+    }
+};
 
 /// Get the number of built-in camera drivers
 pub fn getNumCameraDrivers() !c_int {
@@ -73,7 +99,7 @@ pub const Camera = struct {
     }
 
     /// Get the properties associated with an opened camera
-    pub fn getProperties(self: *const Camera) PropertiesID {
+    pub fn getProperties(self: *const Camera) c.SDL_PropertiesID {
         return c.SDL_GetCameraProperties(self.ptr);
     }
 

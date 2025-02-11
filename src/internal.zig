@@ -11,7 +11,3 @@ pub inline fn errify(value: anytype) error{SdlError}!switch (@typeInfo(@TypeOf(v
         else => comptime unreachable,
     };
 }
-
-pub const c = @cImport({
-    @cInclude("SDL3/SDL.h");
-});

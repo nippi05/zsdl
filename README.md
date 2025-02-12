@@ -30,7 +30,7 @@ exe.root_module.addImport("zsdl", zsdl.module("zsdl"));
 | Joystick | 🧪 |
 | Haptic | 🧪 |
 | Audio | ❌ |
-| Gpu | ❌ |
+| Gpu | 🧪 |
 | Clipboard | ✅ |
 | Dialog | ✅ |
 | Filesystem | ❌ |

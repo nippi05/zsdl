@@ -36,9 +36,6 @@ pub const DepthStencilState = extern struct {
     enable_depth_test: bool,
     enable_depth_write: bool,
     enable_stencil_test: bool,
-    padding1: u8 = 0,
-    padding2: u8 = 0,
-    padding3: u8 = 0,
 };
 
 pub const ColorTargetBlendState = extern struct {
@@ -51,8 +48,6 @@ pub const ColorTargetBlendState = extern struct {
     color_write_mask: ColorComponentFlags,
     enable_blend: bool,
     enable_color_write_mask: bool,
-    padding1: u8 = 0,
-    padding2: u8 = 0,
 };
 
 pub const ColorTargetDescription = extern struct {
@@ -64,9 +59,6 @@ pub const MultisampleState = extern struct {
     sample_count: SampleCount,
     sample_mask: u32,
     enable_mask: bool,
-    padding1: u8 = 0,
-    padding2: u8 = 0,
-    padding3: u8 = 0,
 };
 
 pub const RasterizerState = extern struct {
@@ -78,17 +70,12 @@ pub const RasterizerState = extern struct {
     depth_bias_slope_factor: f32,
     enable_depth_bias: bool,
     enable_depth_clip: bool,
-    padding1: u8 = 0,
-    padding2: u8 = 0,
 };
 
 pub const GraphicsPipelineTargetInfo = extern struct {
     color_target_descriptions: [*]const ColorTargetDescription,
     depth_stencil_format: TextureFormat,
     has_depth_stencil_target: bool,
-    padding1: u8 = 0,
-    padding2: u8 = 0,
-    padding3: u8 = 0,
 
     pub fn toSdl(self: *const GraphicsPipelineTargetInfo) GraphicsPipelineTargetInfo {
         return .{
@@ -165,7 +152,6 @@ pub const ColorComponentFlags = packed struct {
     g: bool = false,
     b: bool = false,
     a: bool = false,
-    _padding: u4 = 0,
 
     pub fn toInt(self: ColorComponentFlags) u8 {
         return (if (self.r) c.SDL_GPU_COLORCOMPONENT_R else 0) |
@@ -191,7 +177,6 @@ pub const BufferUsageFlags = packed struct {
     storage_graphics_read: bool = false,
     storage_compute_read: bool = false,
     storage_compute_write: bool = false,
-    _padding: u26 = 0,
 
     pub fn toInt(self: BufferUsageFlags) u32 {
         return (if (self.vertex) c.SDL_GPU_BUFFERUSAGE_VERTEX else 0) |
@@ -343,8 +328,6 @@ pub const SamplerCreateInfo = extern struct {
     max_lod: f32,
     enable_anisotropy: bool,
     enable_compare: bool,
-    padding1: u8 = 0,
-    padding2: u8 = 0,
 
     pub fn init(
         min_filter: Filter,
@@ -375,8 +358,6 @@ pub const SamplerCreateInfo = extern struct {
             .max_lod = max_lod,
             .enable_anisotropy = enable_anisotropy,
             .enable_compare = enable_compare,
-            .padding1 = 0,
-            .padding2 = 0,
         };
     }
 };
@@ -430,7 +411,6 @@ pub const TextureCreateInfo = extern struct {
 pub const MemoryFlags = packed struct {
     host_visible: bool = false,
     device_local: bool = false,
-    _padding: u30 = 0,
 
     pub fn toInt(self: MemoryFlags) u32 {
         return (if (self.host_visible) c.SDL_GPU_MEMORYFLAGS_HOST_VISIBLE else 0) |
@@ -519,7 +499,6 @@ pub const ShaderFormat = packed struct {
     dxil: bool = false,
     msl: bool = false,
     metallib: bool = false,
-    _padding: u26 = 0,
 
     pub fn toInt(self: *const ShaderFormat) c.SDL_GPUShaderFormat {
         return (if (self.private) c.SDL_GPU_SHADERFORMAT_PRIVATE else 0) |

@@ -6,6 +6,7 @@ pub const camera = @import("camera.zig");
 pub const clipboard = @import("clipboard.zig");
 pub const dialog = @import("dialog.zig");
 pub const Error = @import("Error.zig");
+pub const events = @import("events.zig");
 pub const gamepad = @import("gamepad.zig");
 pub const gpu = @import("gpu.zig");
 pub const haptic = @import("haptic.zig");

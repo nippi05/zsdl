@@ -24,7 +24,7 @@ exe.root_module.addImport("zsdl", zsdl.module("zsdl"));
 | Properties | ❌ |
 | Log | ❌ |
 | Video | 🧪 |
-| Events | ❌ |
+| Events | 🧪 |
 | Keyboard | 🧪 |
 | Mouse | 🧪 |
 | Touch | ✅ |

@@ -4,11 +4,17 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const zsdl = b.addModule("zsdl", .{
+    const zsdl_mod = b.addModule("zsdl", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
         .optimize = optimize,
         .link_libc = true,
+    });
+
+    const zsdl = b.addLibrary(.{
+        .root_module = zsdl_mod,
+        .linkage = .static,
+        .name = "zsdl",
     });
 
     const sdl = b.dependency("sdl", .{

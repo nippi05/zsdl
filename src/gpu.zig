@@ -5,6 +5,141 @@ const Error = @import("Error.zig");
 const internal = @import("internal.zig");
 const errify = internal.errify;
 const Window = @import("video.zig").Window;
+const FColor = @import("pixels.zig").FColor;
+const FlipMode = @import("surface.zig").FlipMode;
+
+pub const Viewport = extern struct {
+    x: f32,
+    y: f32,
+    w: f32,
+    h: f32,
+    min_depth: f32,
+    max_depth: f32,
+};
+
+pub const BufferBinding = extern struct {
+    buffer: *Buffer,
+    offset: u32,
+};
+
+pub const BufferLocation = extern struct {
+    buffer: *Buffer,
+    offset: u32,
+};
+
+pub const BufferRegion = extern struct {
+    buffer: *Buffer,
+    offset: u32,
+    size: u32,
+};
+
+pub const TextureSamplerBinding = extern struct {
+    texture: *Texture,
+    sampler: *Sampler,
+};
+
+pub const TextureLocation = extern struct {
+    texture: *Texture,
+    mip_level: u32,
+    layer: u32,
+    x: u32,
+    y: u32,
+    z: u32,
+};
+
+pub const TextureRegion = extern struct {
+    texture: *Texture,
+    mip_level: u32,
+    layer: u32,
+    x: u32,
+    y: u32,
+    z: u32,
+    w: u32,
+    h: u32,
+    d: u32,
+};
+
+pub const TextureTransferInfo = extern struct {
+    transfer_buffer: *TransferBuffer,
+    offset: u32,
+    pixels_per_row: u32,
+    rows_per_layer: u32,
+};
+
+pub const TransferBufferLocation = extern struct {
+    transfer_buffer: *TransferBuffer,
+    offset: u32,
+};
+
+pub const StorageTextureReadWriteBinding = extern struct {
+    texture: *Texture,
+    mip_level: u32,
+    layer: u32,
+    cycle: bool,
+    padding1: u8,
+    padding2: u8,
+    padding3: u8,
+};
+
+pub const StorageBufferReadWriteBinding = extern struct {
+    buffer: *Buffer,
+    cycle: bool,
+    padding1: u8,
+    padding2: u8,
+    padding3: u8,
+};
+
+pub const BlitRegion = extern struct {
+    texture: *Texture,
+    mip_level: u32,
+    layer_or_depth_plane: u32,
+    x: u32,
+    y: u32,
+    w: u32,
+    h: u32,
+};
+
+pub const ColorTargetInfo = extern struct {
+    texture: *Texture,
+    mip_level: u32,
+    layer_or_depth_plane: u32,
+    clear_color: FColor,
+    load_op: LoadOp,
+    store_op: StoreOp,
+    resolve_texture: *Texture,
+    resolve_mip_level: u32,
+    resolve_layer: u32,
+    cycle: bool,
+    cycle_resolve_texture: bool,
+    padding1: u8,
+    padding2: u8,
+};
+
+pub const DepthStencilTargetInfo = extern struct {
+    texture: *Texture,
+    clear_depth: f32,
+    load_op: LoadOp,
+    store_op: StoreOp,
+    stencil_load_op: LoadOp,
+    stencil_store_op: StoreOp,
+    cycle: bool,
+    clear_stencil: u8,
+    padding1: u8,
+    padding2: u8,
+};
+
+pub const BlitInfo = extern struct {
+    source: BlitRegion,
+    destination: BlitRegion,
+    load_op: LoadOp,
+    clear_color: FColor,
+    flip_mode: FlipMode,
+    filter: Filter,
+    cycle: bool,
+    padding1: u8,
+    padding2: u8,
+    padding3: u8,
+};
 
 pub const Fence = c.SDL_GPUFence;
 pub const Buffer = c.SDL_GPUBuffer;
@@ -147,7 +282,7 @@ pub const VertexElementFormat = enum(u32) {
     half4 = c.SDL_GPU_VERTEXELEMENTFORMAT_HALF4,
 };
 
-pub const ColorComponentFlags = packed struct {
+pub const ColorComponentFlags = extern struct {
     r: bool = false,
     g: bool = false,
     b: bool = false,
@@ -170,7 +305,7 @@ pub const ColorComponentFlags = packed struct {
     }
 };
 
-pub const BufferUsageFlags = packed struct {
+pub const BufferUsageFlags = extern struct {
     vertex: bool = false,
     index: bool = false,
     indirect: bool = false,
@@ -328,38 +463,6 @@ pub const SamplerCreateInfo = extern struct {
     max_lod: f32,
     enable_anisotropy: bool,
     enable_compare: bool,
-
-    pub fn init(
-        min_filter: Filter,
-        mag_filter: Filter,
-        mipmap_mode: SamplerMipmapMode,
-        address_mode_u: SamplerAddressMode,
-        address_mode_v: SamplerAddressMode,
-        address_mode_w: SamplerAddressMode,
-        mip_lod_bias: f32,
-        max_anisotropy: f32,
-        compare_op: CompareOp,
-        min_lod: f32,
-        max_lod: f32,
-        enable_anisotropy: bool,
-        enable_compare: bool,
-    ) SamplerCreateInfo {
-        return .{
-            .min_filter = min_filter,
-            .mag_filter = mag_filter,
-            .mipmap_mode = mipmap_mode,
-            .address_mode_u = address_mode_u,
-            .address_mode_v = address_mode_v,
-            .address_mode_w = address_mode_w,
-            .mip_lod_bias = mip_lod_bias,
-            .max_anisotropy = max_anisotropy,
-            .compare_op = compare_op,
-            .min_lod = min_lod,
-            .max_lod = max_lod,
-            .enable_anisotropy = enable_anisotropy,
-            .enable_compare = enable_compare,
-        };
-    }
 };
 
 pub const ShaderCreateInfo = extern struct {
@@ -449,23 +552,6 @@ pub const TransferBufferCreateInfo = extern struct {
     }
 };
 
-pub const BufferBinding = c.SDL_GPUBufferBinding;
-pub const BufferLocation = c.SDL_GPUBufferLocation;
-pub const BufferRegion = c.SDL_GPUBufferRegion;
-pub const TextureSamplerBinding = c.SDL_GPUTextureSamplerBinding;
-pub const TextureLocation = c.SDL_GPUTextureLocation;
-pub const TextureRegion = c.SDL_GPUTextureRegion;
-pub const TextureTransferInfo = c.SDL_GPUTextureTransferInfo;
-pub const TransferBufferLocation = c.SDL_GPUTransferBufferLocation;
-
-pub const ColorTargetInfo = c.SDL_GPUColorTargetInfo;
-pub const DepthStencilTargetInfo = c.SDL_GPUDepthStencilTargetInfo;
-pub const StorageTextureReadWriteBinding = c.SDL_GPUStorageTextureReadWriteBinding;
-pub const StorageBufferReadWriteBinding = c.SDL_GPUStorageBufferReadWriteBinding;
-
-pub const Viewport = c.SDL_GPUViewport;
-pub const BlitInfo = c.SDL_GPUBlitInfo;
-
 pub const DeviceProperties = struct {
     debug_mode: ?bool = null,
     prefer_low_power: ?bool = null,
@@ -492,7 +578,7 @@ pub const DeviceProperties = struct {
     }
 };
 
-pub const ShaderFormat = packed struct {
+pub const ShaderFormat = extern struct {
     private: bool = false,
     spirv: bool = false,
     dxbc: bool = false,
@@ -1037,8 +1123,8 @@ pub const CommandBuffer = struct {
     }
 
     /// Begin a render pass on a command buffer
-    pub fn beginRenderPass(self: *const CommandBuffer, color_target_infos: [*]const ColorTargetInfo, num_color_targets: u32, depth_stencil_target_info: ?*const DepthStencilTargetInfo) !*c.SDL_GPURenderPass {
-        const render_pass = c.SDL_BeginGPURenderPass(self.ptr, color_target_infos, num_color_targets, depth_stencil_target_info);
+    pub fn beginRenderPass(self: *const CommandBuffer, color_target_infos: [*]const ColorTargetInfo, depth_stencil_target_info: DepthStencilTargetInfo) !*c.SDL_GPURenderPass {
+        const render_pass = c.SDL_BeginGPURenderPass(self.ptr, color_target_infos, @intCast(color_target_infos.len), depth_stencil_target_info);
         try errify(render_pass != null);
         return render_pass.?;
     }

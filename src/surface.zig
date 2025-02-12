@@ -6,6 +6,17 @@ const pixels = @import("pixels.zig");
 const PixelFormat = pixels.PixelFormat;
 const rect = @import("rect.zig");
 
+pub const ScaleMode = enum(u32) {
+    nearest = c.SDL_SCALEMODE_NEAREST,
+    linear = c.SDL_SCALEMODE_LINEAR,
+};
+
+pub const FlipMode = enum(u32) {
+    none = c.SDL_FLIP_NONE,
+    horizontal = c.SDL_FLIP_HORIZONTAL,
+    vertical = c.SDL_FLIP_VERTICAL,
+};
+
 pub const Surface = struct {
     ptr: *c.SDL_Surface,
 
@@ -179,7 +190,7 @@ pub const Surface = struct {
     }
 
     /// Flips the surface vertically or horizontally.
-    pub fn flip(self: *const Surface, flip_mode: c.SDL_FlipMode) !void {
+    pub fn flip(self: *const Surface, flip_mode: FlipMode) !void {
         try errify(c.SDL_FlipSurface(self.ptr, flip_mode));
     }
 
@@ -191,7 +202,7 @@ pub const Surface = struct {
     }
 
     /// Creates a new surface identical to the existing surface, scaled to the desired size.
-    pub fn scale(self: *const Surface, width: c_int, height: c_int, scale_mode: c.SDL_ScaleMode) !Surface {
+    pub fn scale(self: *const Surface, width: c_int, height: c_int, scale_mode: ScaleMode) !Surface {
         return Surface{
             .ptr = try errify(c.SDL_ScaleSurface(self.ptr, width, height, scale_mode)),
         };
@@ -262,7 +273,7 @@ pub const Surface = struct {
         src_rect: ?rect.Rectangle,
         dst: *Surface,
         dst_rect: ?rect.Rectangle,
-        scale_mode: c.SDL_ScaleMode,
+        scale_mode: ScaleMode,
     ) !void {
         const src_rect_ptr = if (src_rect) |r| &r.toNative() else null;
         const dst_rect_ptr = if (dst_rect) |r| &r.toNative() else null;
@@ -315,12 +326,12 @@ pub const Surface = struct {
     }
 
     /// Performs a low-level surface scaled blitting only.
-    pub fn blitUncheckedScaled(self: *const Surface, src_rect: rect.Rectangle, dst: *Surface, dst_rect: rect.Rectangle, scale_mode: c.SDL_ScaleMode) !void {
+    pub fn blitUncheckedScaled(self: *const Surface, src_rect: rect.Rectangle, dst: *Surface, dst_rect: rect.Rectangle, scale_mode: ScaleMode) !void {
         try errify(c.SDL_BlitSurfaceUncheckedScaled(self.ptr, &src_rect.toNative(), dst.ptr, &dst_rect.toNative(), scale_mode));
     }
 
     /// Performs a stretched pixel copy from one surface to another.
-    pub fn stretch(self: *const Surface, src_rect: rect.Rectangle, dst: *Surface, dst_rect: rect.Rectangle, scale_mode: c.SDL_ScaleMode) !void {
+    pub fn stretch(self: *const Surface, src_rect: rect.Rectangle, dst: *Surface, dst_rect: rect.Rectangle, scale_mode: ScaleMode) !void {
         try errify(c.SDL_StretchSurface(self.ptr, &src_rect.toNative(), dst.ptr, &dst_rect.toNative(), scale_mode));
     }
 
@@ -336,7 +347,7 @@ pub const Surface = struct {
         self: *const Surface,
         src_rect: ?rect.Rectangle,
         scal: f32,
-        scale_mode: c.SDL_ScaleMode,
+        scale_mode: ScaleMode,
         dst: *Surface,
         dst_rect: ?rect.Rectangle,
     ) !void {
@@ -354,7 +365,7 @@ pub const Surface = struct {
         top_height: c_int,
         bottom_height: c_int,
         scal: f32,
-        scale_mode: c.SDL_ScaleMode,
+        scale_mode: ScaleMode,
         dst: *Surface,
         dst_rect: ?rect.Rectangle,
     ) !void {

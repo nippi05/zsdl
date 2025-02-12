@@ -1,6 +1,7 @@
 const internal = @import("internal.zig");
 const c = @import("c.zig").c;
 const errify = internal.errify;
+const errifyWithValue = internal.errifyWithValue;
 
 pub const PowerState = enum(i32) {
     @"error" = c.SDL_POWERSTATE_ERROR,
@@ -12,8 +13,9 @@ pub const PowerState = enum(i32) {
 };
 
 /// Get the current power supply details.
-pub fn getPowerInfo(seconds: ?*i32, percent: ?*i32) !PowerState {
-    const state = c.SDL_GetPowerInfo(seconds, percent);
-    try errify(state != c.SDL_POWERSTATE_ERROR);
-    return @enumFromInt(state);
+pub fn getPowerInfo(seconds: *i32, percent: *i32) !PowerState {
+    return @enumFromInt(try errifyWithValue(
+        c.SDL_GetPowerInfo(seconds, percent),
+        c.SDL_POWERSTATE_ERROR,
+    ));
 }

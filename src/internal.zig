@@ -11,3 +11,10 @@ pub inline fn errify(value: anytype) error{SdlError}!switch (@typeInfo(@TypeOf(v
         else => comptime unreachable,
     };
 }
+
+pub inline fn errifyWithValue(value: anytype, err_value: @TypeOf(value)) error{SdlError}!@TypeOf(value) {
+    if (value == err_value) {
+        return error.SdlError;
+    }
+    return value;
+}

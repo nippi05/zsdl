@@ -23,4 +23,12 @@ pub fn build(b: *std.Build) void {
     });
     const sdl_lib = sdl.artifact("SDL3");
     zsdl.linkLibrary(sdl_lib);
+
+    const docs = b.addInstallDirectory(.{
+        .source_dir = zsdl.getEmittedDocs(),
+        .install_dir = .prefix,
+        .install_subdir = "docs",
+    });
+    const docs_step = b.step("docs", "Generate library documentation");
+    docs_step.dependOn(&docs.step);
 }

@@ -4,8 +4,21 @@ on:
     branches: ["main"]
   pull_request:
     branches: ["main"]
+
+# Allow GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 env:
   ZIG_VERSION: master
+
+# Configure GitHub Pages
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
 jobs:
   build-macos:
     name: build (macos, ${{ matrix.arch }})
@@ -30,6 +43,7 @@ jobs:
           name: nitrome-${{ matrix.arch }}-macos
           path: zig-out/bin/
           retention-days: 7
+
   build-windows:
     name: build (windows, ${{ matrix.arch }})
     runs-on: ubuntu-22.04
@@ -53,6 +67,7 @@ jobs:
           name: nitrome-${{ matrix.target }}
           path: zig-out/bin/
           retention-days: 7
+
   build-linux:
     name: build (linux, ${{ matrix.arch }})
     runs-on: ubuntu-22.04
@@ -86,3 +101,27 @@ jobs:
           name: nitrome-${{ matrix.target }}
           path: zig-out/bin/
           retention-days: 7
+
+  docs:
+    name: build and deploy documentation
+    runs-on: ubuntu-latest
+    needs: [build-macos, build-windows, build-linux]
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+      - name: Build documentation
+        run: zig build docs
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: zig-out/docs
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

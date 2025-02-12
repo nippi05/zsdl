@@ -84,12 +84,20 @@ pub const RasterizerState = extern struct {
 
 pub const GraphicsPipelineTargetInfo = extern struct {
     color_target_descriptions: [*]const ColorTargetDescription,
-    num_color_targets: u32,
     depth_stencil_format: TextureFormat,
     has_depth_stencil_target: bool,
     padding1: u8 = 0,
     padding2: u8 = 0,
     padding3: u8 = 0,
+
+    pub fn toSdl(self: *const GraphicsPipelineTargetInfo) GraphicsPipelineTargetInfo {
+        return .{
+            .color_target_descriptions = self.color_target_descriptions.ptr,
+            .num_color_targets = self.color_target_descriptions.len,
+            .depth_stencil_format = self.depth_stencil_format,
+            .has_depth_stencil_target = self.has_depth_stencil_target,
+        };
+    }
 };
 
 pub const BlendOp = enum(u32) {
@@ -222,19 +230,14 @@ pub const VertexAttribute = extern struct {
 
 pub const VertexInputState = extern struct {
     vertex_buffer_descriptions: [*]const VertexBufferDescription,
-    num_vertex_buffers: u32,
     vertex_attributes: [*]const VertexAttribute,
-    num_vertex_attributes: u32,
 
-    pub fn toSdl(
-        buffer_descriptions: []const VertexBufferDescription,
-        attributes: []const VertexAttribute,
-    ) VertexInputState {
+    pub fn toSdl(self: *const VertexInputState) VertexInputState {
         return .{
-            .vertex_buffer_descriptions = buffer_descriptions.ptr,
-            .num_vertex_buffers = @intCast(buffer_descriptions.len),
-            .vertex_attributes = attributes.ptr,
-            .num_vertex_attributes = @intCast(attributes.len),
+            .vertex_buffer_descriptions = self.vertex_buffer_descriptions.ptr,
+            .num_vertex_buffers = @intCast(self.vertex_buffer_descriptions.len),
+            .vertex_attributes = self.vertex_attributes.ptr,
+            .num_vertex_attributes = @intCast(self.vertex_attributes.len),
         };
     }
 };
@@ -284,9 +287,9 @@ pub const GraphicsPipelineCreateInfo = extern struct {
     multisample_state: MultisampleState,
     depth_stencil_state: DepthStencilState,
     target_info: GraphicsPipelineTargetInfo,
-    props: c.SDL_PropertiesID,
+    props: c.SDL_PropertiesID = 0,
 
-    pub fn init(
+    pub fn toSdl(
         vertex_shader: *Shader,
         fragment_shader: *Shader,
         vertex_input_state: VertexInputState,
@@ -295,11 +298,11 @@ pub const GraphicsPipelineCreateInfo = extern struct {
         multisample_state: MultisampleState,
         depth_stencil_state: DepthStencilState,
         target_info: GraphicsPipelineTargetInfo,
-    ) GraphicsPipelineCreateInfo {
+    ) c.SDL_GPUGraphicsPipelineCreateInfo {
         return .{
             .vertex_shader = vertex_shader,
             .fragment_shader = fragment_shader,
-            .vertex_input_state = vertex_input_state,
+            .vertex_input_state = vertex_input_state.toSdl(),
             .primitive_type = primitive_type,
             .rasterizer_state = rasterizer_state,
             .multisample_state = multisample_state,
@@ -840,7 +843,7 @@ pub const Device = struct {
 
     /// Create a graphics pipeline object to be used in a graphics workflow
     pub fn createGraphicsPipeline(self: *const Device, createinfo: GraphicsPipelineCreateInfo) !*GraphicsPipeline {
-        return try errify(c.SDL_CreateGPUGraphicsPipeline(self.ptr, createinfo));
+        return try errify(c.SDL_CreateGPUGraphicsPipeline(self.ptr, createinfo.toSdl()));
     }
 
     /// Create a sampler object to be used when binding textures in a graphics workflow

@@ -1,5 +1,7 @@
 # zsdl - SDL3 wrapper for Zig
-SDL3 wrapper for Zig 0.14.0 built on top of [castholm/SDL](https://github.com/castholm/SDL)'s Zig build system implementation for SDL
+SDL3 wrapper for Zig 0.14.0 built on top of [castholm/SDL](https://github.com/castholm/SDL)'s Zig build system implementation for SDL.
+
+Check out the [documentation](https://mdmrk.github.io/zsdl/) for more info.
 
 ## Usage
 ```sh

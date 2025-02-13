@@ -31,4 +31,14 @@ pub fn build(b: *std.Build) void {
     });
     const docs_step = b.step("docs", "Generate library documentation");
     docs_step.dependOn(&docs.step);
+
+    const tests = b.addTest(.{
+        .root_source_file = b.path("test/root.zig"),
+        .target = target,
+    });
+    tests.root_module.addImport("zsdl", zsdl_mod);
+    const run_tests = b.addRunArtifact(tests);
+    const test_step = b.step("test", "Run unit tests");
+    test_step.dependOn(&zsdl.step);
+    test_step.dependOn(&run_tests.step);
 }

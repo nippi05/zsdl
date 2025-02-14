@@ -42,7 +42,7 @@ exe.root_module.addImport("zsdl", zsdl.module("zsdl"));
 | Timer | 🧪 |
 | Render | 🧪 |
 | Pixels | ✅ |
-| Surface | ❌ |
+| Surface | 🧪 |
 | Platform | ❌ |
 | Misc | ❌ |
 | Main | ❌ |

@@ -1,15 +1,20 @@
 const std = @import("std");
-const rect = @import("rect.zig");
+
+const c = @import("c.zig").c;
+pub const DisplayID = c.SDL_DisplayID;
+pub const PropertiesID = c.SDL_PropertiesID;
+pub const DisplayMode = c.SDL_DisplayMode;
+pub const WindowID = c.SDL_WindowID;
+const internal = @import("internal.zig");
+const errify = internal.errify;
 const pixels = @import("pixels.zig");
 const PixelFormat = pixels.PixelFormat;
+const rect = @import("rect.zig");
 const Rectangle = rect.Rectangle;
 const Point = rect.Point;
 const Dimension = rect.Dimension;
 const AspectRatio = rect.AspectRatio;
 const BordersSize = rect.BordersSize;
-const internal = @import("internal.zig");
-const c = @import("c.zig").c;
-const errify = internal.errify;
 
 pub fn getNumVideoDrivers() comptime_int {
     return c.SDL_GetNumVideoDrivers();
@@ -45,8 +50,6 @@ pub const DisplayProperty = union(enum) {
     }
 };
 
-pub const DisplayID = c.SDL_DisplayID;
-pub const PropertiesID = c.SDL_PropertiesID;
 pub const DisplayOrientation = enum(c_uint) {
     unknown = c.SDL_ORIENTATION_UNKNOWN,
     landscape = c.SDL_ORIENTATION_LANDSCAPE,
@@ -55,7 +58,6 @@ pub const DisplayOrientation = enum(c_uint) {
     portrait_flipped = c.SDL_ORIENTATION_PORTRAIT_FLIPPED,
 };
 
-pub const DisplayMode = c.SDL_DisplayMode;
 pub const Display = packed struct {
     id: DisplayID,
 
@@ -160,7 +162,6 @@ pub fn getPrimaryDisplay() !Display {
     };
 }
 
-pub const WindowID = c.SDL_WindowID;
 pub const WindowFlags = packed struct {
     fullscreen: bool = false,
     opengl: bool = false,
@@ -630,7 +631,7 @@ pub const gl = struct {
         }
     };
 
-    pub fn loadLibrary(path: [:0]const u8) !void {
+    pub fn loadLibrary(path: [*:0]const u8) !void {
         try errify(c.SDL_GL_LoadLibrary(path));
     }
 
@@ -642,8 +643,8 @@ pub const gl = struct {
         c.SDL_GL_UnloadLibrary();
     }
 
-    pub fn extensionSupported(extension: [:0]const u8) bool {
-        return c.SDL_GL_ExtensionSupported(extension.ptr);
+    pub fn extensionSupported(extension: [*:0]const u8) bool {
+        return c.SDL_GL_ExtensionSupported(extension);
     }
 
     pub fn resetAttributes() void {
@@ -680,22 +681,45 @@ pub const gl = struct {
         return interval;
     }
 
-    pub fn swapWindow(window: *Window) !void {
+    pub fn swapWindow(window: Window) !void {
         try errify(c.SDL_GL_SwapWindow(window));
     }
 };
-// FIXME OPENGL THINGS
 
-// pub const EGL = struct {
+pub const egl = struct {
+    pub const EGLDisplay = c.SDL_EGLDisplay;
+    pub const EGLConfig = c.SDL_EGLConfig;
+    pub const EGLSurface = c.SDL_EGLSurface;
+    pub const EGLAttribArrayCallback = c.SDL_EGLAttribArrayCallback;
+    pub const EGLIntArrayCallback = c.SDL_EGLIntArrayCallback;
 
-// SDL_FunctionPointer SDL_EGL_GetProcAddress(const char *proc);
+    pub fn getProcAddress(proc: [*:0]const u8) ?c.SDL_FunctionPointer {
+        return c.SDL_EGL_GetProcAddress(proc);
+    }
 
-// SDL_EGLDisplay SDL_EGL_GetCurrentDisplay();
+    pub fn getCurrentDisplay() !EGLDisplay {
+        return try errify(c.SDL_EGL_GetCurrentDisplay());
+    }
 
-// SDL_EGLConfig SDL_EGL_GetCurrentConfig();
+    pub fn getCurrentConfig() !EGLConfig {
+        return try errify(c.SDL_EGL_GetCurrentConfig());
+    }
 
-// SDL_EGLSurface SDL_EGL_GetWindowSurface(SDL_Window *window);
+    pub fn getWindowSurface(window: Window) !EGLSurface {
+        return try errify(c.SDL_EGL_GetWindowSurface(window.ptr));
+    }
 
-// void SDL_EGL_SetAttributeCallbacks(SDL_EGLAttribArrayCallback platformAttribCallback, SDL_EGLIntArrayCallback surfaceAttribCallback, SDL_EGLIntArrayCallback contextAttribCallback, void *userdata);
-
-// };
+    pub fn setAttributeCallbacks(
+        platform_attrib_callback: EGLAttribArrayCallback,
+        surface_attrib_callback: EGLIntArrayCallback,
+        context_attrib_callback: EGLIntArrayCallback,
+        userdata: ?*anyopaque,
+    ) void {
+        c.SDL_EGL_SetAttributeCallbacks(
+            platform_attrib_callback,
+            surface_attrib_callback,
+            context_attrib_callback,
+            userdata,
+        );
+    }
+};

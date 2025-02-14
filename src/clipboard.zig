@@ -65,10 +65,8 @@ pub fn hasClipboardData(mime_type: [*:0]const u8) bool {
 }
 
 /// Retrieve the list of mime types available in the clipboard.
-pub fn getClipboardMimeTypes() ![]const [*c]const u8 { //FIXME ?
+pub fn getClipboardMimeTypes() ![]const [*:0]const u8 {
     var num_mime_types: usize = undefined;
     const types = try errify(c.SDL_GetClipboardMimeTypes(&num_mime_types));
-
-    const slice = types[0..num_mime_types];
-    return slice;
+    return @as([*]const [*:0]const u8, @ptrCast(types))[0..@intCast(num_mime_types)];
 }

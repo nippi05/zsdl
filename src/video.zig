@@ -15,6 +15,81 @@ const Point = rect.Point;
 const Dimension = rect.Dimension;
 const AspectRatio = rect.AspectRatio;
 const BordersSize = rect.BordersSize;
+const Surface = @import("surface.zig").Surface;
+
+pub const WindowProperties = struct {
+    always_on_top: ?bool = null,
+    borderless: ?bool = null,
+    focusable: ?bool = null,
+    external_graphics_context: ?bool = null,
+    flags: ?u32 = null,
+    fullscreen: ?bool = null,
+    height: ?i32 = null,
+    hidden: ?bool = null,
+    high_pixel_density: ?bool = null,
+    maximized: ?bool = null,
+    menu: ?bool = null,
+    metal: ?bool = null,
+    minimized: ?bool = null,
+    modal: ?bool = null,
+    mouse_grabbed: ?bool = null,
+    opengl: ?bool = null,
+    parent: ?*anyopaque = null,
+    resizable: ?bool = null,
+    title: ?[*:0]const u8 = null,
+    transparent: ?bool = null,
+    tooltip: ?bool = null,
+    utility: ?bool = null,
+    vulkan: ?bool = null,
+    width: ?i32 = null,
+    x: ?i32 = null,
+    y: ?i32 = null,
+    cocoa_window: ?*anyopaque = null,
+    cocoa_view: ?*anyopaque = null,
+    wayland_surface_role_custom: ?bool = null,
+    wayland_create_egl_window: ?bool = null,
+    wayland_wl_surface: ?*anyopaque = null,
+    win32_hwnd: ?*anyopaque = null,
+    win32_pixel_format_hwnd: ?*anyopaque = null,
+    x11_window: ?u32 = null,
+
+    pub fn apply(self: WindowProperties, props: c.SDL_PropertiesID) void {
+        if (self.always_on_top) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_ALWAYS_ON_TOP_BOOLEAN, v);
+        if (self.borderless) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_BORDERLESS_BOOLEAN, v);
+        if (self.focusable) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_FOCUSABLE_BOOLEAN, v);
+        if (self.external_graphics_context) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_EXTERNAL_GRAPHICS_CONTEXT_BOOLEAN, v);
+        if (self.flags) |v| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_WINDOW_CREATE_FLAGS_NUMBER, v);
+        if (self.fullscreen) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_FULLSCREEN_BOOLEAN, v);
+        if (self.height) |v| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_WINDOW_CREATE_HEIGHT_NUMBER, v);
+        if (self.hidden) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_HIDDEN_BOOLEAN, v);
+        if (self.high_pixel_density) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_HIGH_PIXEL_DENSITY_BOOLEAN, v);
+        if (self.maximized) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_MAXIMIZED_BOOLEAN, v);
+        if (self.menu) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_MENU_BOOLEAN, v);
+        if (self.metal) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_METAL_BOOLEAN, v);
+        if (self.minimized) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_MINIMIZED_BOOLEAN, v);
+        if (self.modal) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_MODAL_BOOLEAN, v);
+        if (self.mouse_grabbed) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_MOUSE_GRABBED_BOOLEAN, v);
+        if (self.opengl) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_OPENGL_BOOLEAN, v);
+        if (self.parent) |v| _ = c.SDL_SetPointerProperty(props, c.SDL_PROP_WINDOW_CREATE_PARENT_POINTER, v);
+        if (self.resizable) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_RESIZABLE_BOOLEAN, v);
+        if (self.title) |v| _ = c.SDL_SetStringProperty(props, c.SDL_PROP_WINDOW_CREATE_TITLE_STRING, v);
+        if (self.transparent) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_TRANSPARENT_BOOLEAN, v);
+        if (self.tooltip) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_TOOLTIP_BOOLEAN, v);
+        if (self.utility) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_UTILITY_BOOLEAN, v);
+        if (self.vulkan) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_VULKAN_BOOLEAN, v);
+        if (self.width) |v| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_WINDOW_CREATE_WIDTH_NUMBER, v);
+        if (self.x) |v| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_WINDOW_CREATE_X_NUMBER, v);
+        if (self.y) |v| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_WINDOW_CREATE_Y_NUMBER, v);
+        if (self.cocoa_window) |v| _ = c.SDL_SetPointerProperty(props, c.SDL_PROP_WINDOW_CREATE_COCOA_WINDOW_POINTER, v);
+        if (self.cocoa_view) |v| _ = c.SDL_SetPointerProperty(props, c.SDL_PROP_WINDOW_CREATE_COCOA_VIEW_POINTER, v);
+        if (self.wayland_surface_role_custom) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_WAYLAND_SURFACE_ROLE_CUSTOM_BOOLEAN, v);
+        if (self.wayland_create_egl_window) |v| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_WINDOW_CREATE_WAYLAND_CREATE_EGL_WINDOW_BOOLEAN, v);
+        if (self.wayland_wl_surface) |v| _ = c.SDL_SetPointerProperty(props, c.SDL_PROP_WINDOW_CREATE_WAYLAND_WL_SURFACE_POINTER, v);
+        if (self.win32_hwnd) |v| _ = c.SDL_SetPointerProperty(props, c.SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, v);
+        if (self.win32_pixel_format_hwnd) |v| _ = c.SDL_SetPointerProperty(props, c.SDL_PROP_WINDOW_CREATE_WIN32_PIXEL_FORMAT_HWND_POINTER, v);
+        if (self.x11_window) |v| _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_WINDOW_CREATE_X11_WINDOW_NUMBER, v);
+    }
+};
 
 pub fn getNumVideoDrivers() comptime_int {
     return c.SDL_GetNumVideoDrivers();
@@ -266,9 +341,13 @@ pub const Window = struct {
         };
     }
 
-    pub fn createWithProperties(props: PropertiesID) !Window { // FIXME fix propertiesid
-        return .{
-            .ptr = try errify(c.SDL_CreateWindowWithProperties(props)),
+    pub fn createWithProperties(props: WindowProperties) !Window {
+        const properties = c.SDL_CreateProperties();
+        defer c.SDL_DestroyProperties(properties);
+        props.apply(properties);
+        const window = try errify(c.SDL_CreateWindowWithProperties(properties));
+        return Window{
+            .ptr = window,
         };
     }
 
@@ -346,7 +425,9 @@ pub const Window = struct {
         return std.mem.sliceTo(c.SDL_GetWindowTitle(self.ptr), 0);
     }
 
-    //   pub fn setIcon(self: *const Window, SDL_Surface *icon)!void{} //FIXME
+    pub fn setIcon(self: *const Window, icon: Surface) !void {
+        try errify(c.SDL_SetWindowIcon(self.ptr, icon.ptr));
+    }
 
     pub fn setPosition(self: *const Window, point: Point) !void {
         try errify(c.SDL_SetWindowPosition(self.ptr, point.x, point.y));
@@ -470,7 +551,11 @@ pub const Window = struct {
         return c.SDL_WindowHasSurface(self.ptr);
     }
 
-    //  pub fn surface * SDL_GetWindowSurface(self: *const Window)with{} // FIXME
+    pub fn getSurface(self: *const Window) Surface {
+        return .{
+            .ptr = try errify(c.SDL_GetWindowSurface(self.ptr)),
+        };
+    }
 
     pub fn setSurfaceVSync(self: *const Window, vsync: c_int) !void {
         try errify(c.SDL_SetWindowSurfaceVSync(self.ptr, vsync));
@@ -556,11 +641,17 @@ pub const Window = struct {
         try errify(c.SDL_ShowWindowSystemMenu(self.ptr, point.x, point.y));
     }
 
-    //   pub fn setHitTest(self: *const Window, SDL_HitTest callback, void *callback_data)!void{} // FIXME
+    pub fn setHitTest(self: *const Window, callback: ?c.SDL_HitTest, callback_data: ?*anyopaque) !void {
+        try errify(c.SDL_SetWindowHitTest(self.ptr, callback, callback_data));
+    }
 
-    //   pub fn setShape(self: *const Window, SDL_Surface *shape)!void{} // FIXME
+    pub fn setShape(self: *const Window, shape: Surface) !void {
+        try errify(c.SDL_SetWindowShape(self.ptr, shape.ptr));
+    }
 
-    // SDL_flashWindow(SDL_ *window, SDL_FlashOperation operation)!void{} // FIXME
+    pub fn flashWindow(self: *const Window, operation: c.SDL_FlashOperation) !void {
+        try errify(c.SDL_FlashWindow(self.ptr, operation));
+    }
 };
 
 pub fn getWindows() ![]Window {

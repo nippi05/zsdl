@@ -94,8 +94,8 @@ pub fn isMainThread() bool {
     return c.SDL_IsMainThread();
 }
 
-pub fn runOnMainThread() !void { // FIXME
-    try errify(c.SDL_MainThreadCallback());
+pub fn runOnMainThread(callback: c.SDL_MainThreadCallback, userdata: ?*anyopaque, wait_complete: bool) !void {
+    try errify(c.SDL_RunOnMainThread(callback, userdata, wait_complete));
 }
 
 pub fn setAppMetadata(

@@ -344,7 +344,7 @@ pub const WindowFlags = packed struct {
 pub const Window = struct {
     ptr: *c.SDL_Window,
 
-    /// Create an OpenGL context for an OpenGL window, and make it current.
+    /// Create a window with the specified dimensions and flags.
     pub fn create(
         title: [:0]const u8,
         width: comptime_int,

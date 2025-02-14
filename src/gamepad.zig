@@ -1,8 +1,12 @@
 const std = @import("std");
-const internal = @import("internal.zig");
+
+const GUID = @import("Guid.zig").GUID;
 const c = @import("c.zig").c;
+const internal = @import("internal.zig");
 const errify = internal.errify;
+const errifyWithValue = internal.errifyWithValue;
 const joystick = @import("joystick.zig");
+const power = @import("power.zig");
 const JoystickID = joystick.JoystickID;
 const Joystick = joystick.Joystick;
 const JoystickConnectionState = joystick.JoystickConnectionState;
@@ -77,14 +81,14 @@ pub const Gamepad = struct {
     ptr: *c.SDL_Gamepad,
 
     /// Open a gamepad for use.
-    pub fn openGamepad(instance_id: JoystickID) !Gamepad {
+    pub fn open(instance_id: JoystickID) !Gamepad {
         return .{
             .ptr = try errify(c.SDL_OpenGamepad(instance_id)),
         };
     }
 
     /// Get the SDL_Gamepad associated with a joystick instance ID, if it has been opened.
-    pub fn getGamepadFromID(instance_id: JoystickID) !Gamepad {
+    pub fn getFromID(instance_id: JoystickID) !Gamepad {
         return .{
             .ptr = try errify(c.SDL_GetGamepadFromID(instance_id)),
         };
@@ -161,14 +165,15 @@ pub const Gamepad = struct {
 
     /// Get the connection state of a gamepad.
     pub fn getConnectionState(self: *const Gamepad) !JoystickConnectionState {
-        const state: JoystickConnectionState = @enumFromInt(c.SDL_GetGamepadConnectionState(self.ptr));
-        try errify(state != .invalid);
-        return state;
+        return @enumFromInt(try errifyWithValue(
+            c.SDL_GetGamepadConnectionState(self.ptr),
+            c.SDL_JOYSTICK_CONNECTION_INVALID,
+        ));
     }
 
     /// Get the battery state of a gamepad.
-    pub fn getPowerInfo(self: *const Gamepad, percent: ?*i32) c.SDL_PowerState {
-        return c.SDL_GetGamepadPowerInfo(self.ptr, percent);
+    pub fn getPowerInfo(self: *const Gamepad, percent: *i32) power.PowerState {
+        return @enumFromInt(c.SDL_GetGamepadPowerInfo(self.ptr, percent));
     }
 
     /// Check if a gamepad has been opened and is currently connected.
@@ -293,26 +298,19 @@ pub const Gamepad = struct {
     }
 };
 
-// Module-level functions
-
 /// Add support for gamepads that SDL is unaware of or change the binding of an existing gamepad.
 pub fn addGamepadMapping(mapping: [*:0]const u8) !void {
-    const result = c.SDL_AddGamepadMapping(mapping);
-    if (result == -1) return error.SdlError;
+    try errifyWithValue(c.SDL_AddGamepadMapping(mapping), -1);
 }
 
 /// Load a set of gamepad mappings from an SDL_IOStream.
 pub fn addGamepadMappingsFromIO(src: *c.SDL_IOStream, closeio: bool) !i32 {
-    const result = c.SDL_AddGamepadMappingsFromIO(src, closeio);
-    if (result == -1) return error.SdlError;
-    return result;
+    return errifyWithValue(c.SDL_AddGamepadMappingsFromIO(src, closeio), -1);
 }
 
 /// Load a set of gamepad mappings from a file.
 pub fn addGamepadMappingsFromFile(file: [*:0]const u8) !i32 {
-    const result = c.SDL_AddGamepadMappingsFromFile(file);
-    if (result == -1) return error.SdlError;
-    return result;
+    return try errifyWithValue(c.SDL_AddGamepadMappingsFromFile(file), -1);
 }
 
 /// Reinitialize the SDL mapping database to its initial state.
@@ -321,18 +319,19 @@ pub fn reloadGamepadMappings() !void {
 }
 
 /// Get the current gamepad mappings.
-pub fn getGamepadMappings(count: ?*i32) ![*][*:0]u8 {
-    return try errify(c.SDL_GetGamepadMappings(count));
+pub fn getGamepadMappings() ![]const [*:0]const u8 {
+    var count: i32 = undefined;
+    const mappings = try errify(c.SDL_GetGamepadMappings(&count));
+    return @as([*]const [*:0]const u8, @ptrCast(mappings))[0..@intCast(count)];
 }
 
 /// Get the gamepad mapping string for a given GUID.
-pub fn getGamepadMappingForGUID(guid: c.SDL_GUID) ![]const u8 {
-    const result = try errify(c.SDL_GetGamepadMappingForGUID(guid));
-    return std.mem.span(result);
+pub fn getGamepadMappingForGUID(guid: GUID) ![]const u8 {
+    return std.mem.span(try errify(c.SDL_GetGamepadMappingForGUID(guid)));
 }
 
 /// Set the current mapping of a joystick or gamepad.
-pub fn setGamepadMapping(instance_id: JoystickID, mapping: ?[*:0]const u8) !void {
+pub fn setGamepadMapping(instance_id: JoystickID, mapping: [*:0]const u8) !void {
     try errify(c.SDL_SetGamepadMapping(instance_id, mapping));
 }
 
@@ -342,8 +341,10 @@ pub fn hasGamepad() bool {
 }
 
 /// Get a list of currently connected gamepads.
-pub fn getGamepads(count: ?*i32) ![*]JoystickID {
-    return try errify(c.SDL_GetGamepads(count));
+pub fn getGamepads() ![]JoystickID {
+    var count: i32 = undefined;
+    const joystick_id = try errify(c.SDL_GetGamepads(&count));
+    return joystick_id[0..@intCast(count)];
 }
 
 /// Check if the given joystick is supported by the gamepad interface.
@@ -404,8 +405,7 @@ pub fn getRealGamepadTypeForID(instance_id: JoystickID) GamepadType {
 
 /// Get the mapping of a gamepad.
 pub fn getGamepadMappingForID(instance_id: JoystickID) ![]const u8 {
-    const result = try errify(c.SDL_GetGamepadMappingForID(instance_id));
-    return std.mem.span(result);
+    return std.mem.span(try errify(c.SDL_GetGamepadMappingForID(instance_id)));
 }
 
 /// Set the state of gamepad event processing.
@@ -443,7 +443,7 @@ pub fn getGamepadAxisFromString(str: [*:0]const u8) GamepadAxis {
 
 /// Convert from an SDL_GamepadAxis enum to a string.
 pub fn getGamepadStringForAxis(axis: GamepadAxis) ?[]const u8 {
-    if (c.SDL_GetGamepadStringForAxis(axis)) |str| {
+    if (c.SDL_GetGamepadStringForAxis(@intFromEnum(axis))) |str| {
         return std.mem.span(str);
     }
     return null;
@@ -456,7 +456,7 @@ pub fn getGamepadButtonFromString(str: [*:0]const u8) GamepadButton {
 
 /// Convert from an SDL_GamepadButton enum to a string.
 pub fn getGamepadStringForButton(button: GamepadButton) ?[]const u8 {
-    if (c.SDL_GetGamepadStringForButton(button)) |str| {
+    if (c.SDL_GetGamepadStringForButton(@intFromEnum(button))) |str| {
         return std.mem.span(str);
     }
     return null;
@@ -464,5 +464,5 @@ pub fn getGamepadStringForButton(button: GamepadButton) ?[]const u8 {
 
 /// Get the label of a button on a gamepad.
 pub fn getGamepadButtonLabelForType(gamepad_type: GamepadType, button: GamepadButton) GamepadButtonLabel {
-    return c.SDL_GetGamepadButtonLabelForType(@intFromEnum(gamepad_type), button);
+    return @enumFromInt(c.SDL_GetGamepadButtonLabelForType(@intFromEnum(gamepad_type), @intFromEnum(button)));
 }

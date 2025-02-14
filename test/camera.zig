@@ -9,5 +9,4 @@ test "camera" {
 
     try zsdl.init(.{ .video = true, .camera = true });
     defer zsdl.quit();
-    }
 }

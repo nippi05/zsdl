@@ -2,6 +2,7 @@ const std = @import("std");
 const internal = @import("internal.zig");
 const c = @import("c.zig").c;
 const errify = internal.errify;
+const errifyWithValue = internal.errifyWithValue;
 const power = @import("power.zig");
 const PowerState = power.PowerState;
 
@@ -220,16 +221,18 @@ pub const Joystick = struct {
 
     /// Get the connection state of a joystick.
     pub fn getConnectionState(self: *const Joystick) !JoystickConnectionState {
-        const state: JoystickConnectionState = @enumFromInt(c.SDL_GetJoystickConnectionState(self.ptr));
-        try errify(state != .invalid);
-        return state;
+        return @enumFromInt(try errifyWithValue(
+            c.SDL_GetJoystickConnectionState(self.ptr),
+            c.SDL_JOYSTICK_CONNECTION_INVALID,
+        ));
     }
 
     /// Get the battery state of a joystick.
-    pub fn getPowerInfo(self: *const Joystick, percent: ?*i32) !PowerState {
-        const state: PowerState = @enumFromInt(c.SDL_GetJoystickPowerInfo(self.ptr, percent));
-        try errify(state != .@"error");
-        return state;
+    pub fn getPowerInfo(self: *const Joystick, percent: *i32) !PowerState {
+        return @enumFromInt(try errifyWithValue(
+            c.SDL_GetJoystickPowerInfo(self.ptr, percent),
+            c.SDL_POWERSTATE_ERROR,
+        ));
     }
 };
 

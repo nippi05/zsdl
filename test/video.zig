@@ -93,3 +93,14 @@ test "create window with properties" {
     const window = try Window.createWithProperties(.{ .resizable = true });
     defer window.destroy();
 }
+
+test "display" {
+    try zsdl.init(.{ .video = true });
+    defer zsdl.quit();
+
+    const window = try Window.create("lol", 100, 100, .{ .resizable = true });
+    defer window.destroy();
+
+    const display = try zsdl.video.Display.getForWindow(window);
+    std.debug.print("{any}", .{try display.getFullscreenDisplayModes()});
+}

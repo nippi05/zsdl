@@ -288,14 +288,14 @@ pub const ColorComponentFlags = extern struct {
     b: bool = false,
     a: bool = false,
 
-    pub fn toInt(self: ColorComponentFlags) u8 {
+    pub fn toInt(self: ColorComponentFlags) c.SDL_GPUColorComponentFlags {
         return (if (self.r) c.SDL_GPU_COLORCOMPONENT_R else 0) |
             (if (self.g) c.SDL_GPU_COLORCOMPONENT_G else 0) |
             (if (self.b) c.SDL_GPU_COLORCOMPONENT_B else 0) |
             (if (self.a) c.SDL_GPU_COLORCOMPONENT_A else 0);
     }
 
-    pub fn fromInt(flags: u8) ColorComponentFlags {
+    pub fn fromInt(flags: c.SDL_GPUColorComponentFlags) ColorComponentFlags {
         return .{
             .r = (flags & c.SDL_GPU_COLORCOMPONENT_R) != 0,
             .g = (flags & c.SDL_GPU_COLORCOMPONENT_G) != 0,

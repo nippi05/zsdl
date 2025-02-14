@@ -91,14 +91,17 @@ pub const WindowProperties = struct {
     }
 };
 
+/// Get the number of video drivers compiled into SDL.
 pub fn getNumVideoDrivers() comptime_int {
     return c.SDL_GetNumVideoDrivers();
 }
 
+/// Get the name of a built in video driver.
 pub fn getVideoDriver(index: comptime_int) []const u8 {
     return std.mem.sliceTo(c.SDL_GetVideoDriver(index), 0);
 }
 
+/// Get the name of the currently initialized video driver.
 pub fn getCurrentVideoDriver() []const u8 {
     return std.mem.sliceTo(c.SDL_GetCurrentVideoDriver(), 0);
 }
@@ -109,6 +112,7 @@ pub const SystemTheme = enum(c_int) {
     dark = c.SDL_SYSTEM_THEME_DARK,
 };
 
+/// Get the current system theme.
 pub fn getSystemTheme() SystemTheme {
     return @enumFromInt(c.SDL_GetSystemTheme());
 }
@@ -136,65 +140,76 @@ pub const DisplayOrientation = enum(c_uint) {
 pub const Display = packed struct {
     id: DisplayID,
 
-    pub fn getForPoint(point: *const Dimension) !Display {
+    /// Get the display containing a point.
+    pub fn getForPoint(point: Dimension) !Display {
         return .{
             .id = try errify(c.SDL_GetDisplayForPoint(@ptrCast(point))),
         };
     }
 
-    pub fn getForRect(rectangle: *const Rectangle) !Display {
+    /// Get the display primarily containing a rect.
+    pub fn getForRect(rectangle: Rectangle) !Display {
         return .{
             .id = try errify(c.SDL_GetDisplayForRect(@ptrCast(rectangle))),
         };
     }
 
-    pub fn getForWindow(window: *const Window) !Display {
+    /// Get the display associated with a window.
+    pub fn getForWindow(window: Window) !Display {
         return .{
             .id = try errify(c.SDL_GetDisplayForWindow(window.ptr)),
         };
     }
 
+    /// Get the properties associated with a display.
     pub fn getProperties(self: *const Display) !PropertiesID {
         return try errify(c.SDL_GetDisplayProperties(self.id));
     }
 
+    /// Get the name of a display in UTF-8 encoding.
     pub fn getName(self: *const Display) []const u8 {
         return std.mem.sliceTo(c.SDL_GetDisplayName(self.id), 0);
     }
 
+    /// Get the desktop area represented by a display.
     pub fn getBounds(self: *const Display) !Rectangle {
         var bounds: Rectangle = undefined;
         try errify(c.SDL_GetDisplayBounds(self.id, @ptrCast(&bounds)));
         return bounds;
     }
 
+    /// Get the usable desktop area represented by a display, in screen coordinates.
     pub fn getUsableBounds(self: *const Display) !Rectangle {
         var bounds: Rectangle = undefined;
         try errify(c.SDL_GetDisplayUsableBounds(self.id, @ptrCast(&bounds)));
         return bounds;
     }
 
+    /// Get the orientation of a display when it is unrotated.
     pub fn getNaturalOrientation(self: *const Display) DisplayOrientation {
         return @enumFromInt(c.SDL_GetNaturalDisplayOrientation(self.id));
     }
 
+    /// Get the orientation of a display.
     pub fn getCurrentOrientation(self: *const Display) DisplayOrientation {
         return @enumFromInt(c.SDL_GetCurrentDisplayOrientation(self.id));
     }
 
+    /// Get the content scale of a display.
     pub fn getContentScale(self: *const Display) f32 {
         const scale = c.SDL_GetDisplayContentScale(self.id);
         try errify(scale != 0.0);
         return scale;
     }
 
-    // pub fn getFullscreenDisplayModes(self: *const Display) ![]DisplayMode { //FIXME
-    //     var count: c_int = undefined;
-    //     var display_modes_ptr = try errify(c.SDL_GetFullscreenDisplayModes(self.id, &count));
-    //     const modes = display_modes_ptr[0..@intCast(count)];
-    //     return @ptrCast(modes[0..@intCast(count)]);
-    // }
+    /// Get a list of fullscreen display modes available on a display.
+    pub fn getFullscreenDisplayModes(self: *const Display) ![]const DisplayMode {
+        var count: c_int = undefined;
+        const display_modes_ptr = try errify(c.SDL_GetFullscreenDisplayModes(self.id, &count));
+        return @as([*]const DisplayMode, @ptrCast(display_modes_ptr))[0..@intCast(count)];
+    }
 
+    ///  Get the closest match to the requested display mode.
     pub fn getClosestFullscreenDisplayMode(
         self: *const Display,
         dimension: Dimension,
@@ -213,23 +228,27 @@ pub const Display = packed struct {
         return closest;
     }
 
+    /// Get information about the desktop's display mode.
     pub fn getDesktopDisplayMode(self: *const Display) !DisplayMode {
         const display_mode_ptr = try errify(c.SDL_GetDesktopDisplayMode(self.id));
         const display_mode = display_mode_ptr.*;
         return display_mode;
     }
 
+    /// Get information about the current display mode.
     pub fn getCurrentDisplayMode(self: *const Display) DisplayMode {
         return (try errify(c.SDL_GetCurrentDisplayMode(self.id))).*;
     }
 };
 
+/// Get a list of currently connected displays.
 pub fn getDisplays() ![]Display {
     var count: c_int = undefined;
     var display_ids = try errify(c.SDL_GetDisplays(&count));
     return @ptrCast(display_ids[0..@intCast(count)]);
 }
 
+/// Return the primary display.
 pub fn getPrimaryDisplay() !Display {
     const display_id = try errify(c.SDL_GetPrimaryDisplay());
     return .{
@@ -325,6 +344,7 @@ pub const WindowFlags = packed struct {
 pub const Window = struct {
     ptr: *c.SDL_Window,
 
+    /// Create an OpenGL context for an OpenGL window, and make it current.
     pub fn create(
         title: [:0]const u8,
         width: comptime_int,
@@ -341,6 +361,7 @@ pub const Window = struct {
         };
     }
 
+    /// Create a window with the specified properties.
     pub fn createWithProperties(props: WindowProperties) !Window {
         const properties = c.SDL_CreateProperties();
         defer c.SDL_DestroyProperties(properties);
@@ -351,36 +372,44 @@ pub const Window = struct {
         };
     }
 
+    /// Destroy a window.
     pub fn destroy(self: *const Window) void {
         c.SDL_DestroyWindow(self.ptr);
     }
 
+    /// Get the pixel density of a window.
     pub fn getPixelDensity(self: *const Window) !f32 {
         return try errify(c.SDL_GetWindowPixelDensity(self.ptr));
     }
 
+    /// Get the content display scale relative to a window's pixel size.
     pub fn getDisplayScale(self: *const Window) !f32 {
         return try errify(c.SDL_GetWindowDisplayScale(self.ptr));
     }
 
+    /// Set the display mode to use when a window is visible and fullscreen.
     pub fn setFullscreenMode(self: *const Window, mode: *const DisplayMode) !void {
         try errify(c.SDL_SetWindowFullscreenMode(self.ptr, mode));
     }
 
+    /// Query the display mode to use when a window is visible at fullscreen.
     pub fn getFullscreenMode(self: *const Window) !DisplayMode {
         return (try errify(c.SDL_GetWindowFullscreenMode(self.ptr))).*;
     }
 
+    /// Get the raw ICC profile data for the screen the window is currently on.
     pub fn getICCProfile(self: *const Window, size: *usize) !*anyopaque {
         return try errify(c.SDL_GetWindowICCProfile(self.ptr, size));
     }
 
+    /// Get the pixel format associated with the window.
     pub fn getPixelFormat(self: *const Window) !PixelFormat {
         const pixel_format: PixelFormat = @enumFromInt(c.SDL_GetWindowPixelFormat(self.ptr));
         try errify(pixel_format != .unknown);
         return pixel_format;
     }
 
+    /// Create a child popup window of the specified parent window.
     pub fn createPopup(
         parent: *const Window,
         offset_x: i32,
@@ -393,78 +422,94 @@ pub const Window = struct {
         };
     }
 
+    /// Get the numeric ID of a window.
     pub fn getID(self: *const Window) !WindowID {
         return try errify(c.SDL_GetWindowID(self.ptr));
     }
 
+    /// Get a window from a stored ID.
     pub fn getFromID(id: WindowID) !Window {
         return .{
             .ptr = try errify(c.SDL_GetWindowFromID(id)),
         };
     }
 
+    /// Get parent of a window.
     pub fn getParent(self: *const Window) !Window {
         return .{
             .ptr = try errify(c.SDL_GetWindowParent(self.ptr)),
         };
     }
 
+    /// Get the properties associated with a window.
     pub fn getProperties(self: *const Window) !PropertiesID {
         return try errify(c.SDL_GetWindowProperties(self.ptr));
     }
 
+    /// Get the window flags.
     pub fn getFlags(self: *const Window) WindowFlags {
         return WindowFlags.fromInt(c.SDL_GetWindowFlags(self.ptr));
     }
 
+    /// Set the title of a window.
     pub fn setTitle(self: *const Window, title: [:0]const u8) !void {
         try errify(c.SDL_SetWindowTitle(self.ptr, title));
     }
 
+    /// Get the title of a window.
     pub fn getTitle(self: *const Window) []const u8 {
         return std.mem.sliceTo(c.SDL_GetWindowTitle(self.ptr), 0);
     }
 
+    /// Set the icon for a window.
     pub fn setIcon(self: *const Window, icon: Surface) !void {
         try errify(c.SDL_SetWindowIcon(self.ptr, icon.ptr));
     }
 
+    /// Request that the window's position be set.
     pub fn setPosition(self: *const Window, point: Point) !void {
         try errify(c.SDL_SetWindowPosition(self.ptr, point.x, point.y));
     }
 
+    /// Get the position of a window.
     pub fn getPosition(self: *const Window) !Point {
         var point: Dimension = undefined;
         try errify(c.SDL_GetWindowPosition(self.ptr, &point.x, &point.y));
         return point;
     }
 
+    /// Request that the size of a window's client area be set.
     pub fn setSize(self: *const Window, dimension: Dimension) !void {
         try errify(c.SDL_SetWindowSize(self.ptr, dimension.w, dimension.h));
     }
 
+    /// Get the size of a window's client area.
     pub fn getSize(self: *const Window) !Dimension {
         var dimension: Dimension = undefined;
         try errify(c.SDL_GetWindowSize(self.ptr, &dimension.w, &dimension.h));
         return dimension;
     }
 
+    /// Get the safe area for this window.
     pub fn getSafeArea(self: *const Window) !Rectangle {
         var rectangle: Rectangle = undefined;
         try errify(c.SDL_GetWindowSafeArea(self.ptr, @ptrCast(&rectangle)));
         return rectangle;
     }
 
+    /// Request that the aspect ratio of a window's client area be set.
     pub fn setAspectRatio(self: *const Window, aspect_ratio: AspectRatio) !void {
         try errify(c.SDL_SetWindowAspectRatio(self.ptr, aspect_ratio.min_aspect, aspect_ratio.max_aspect));
     }
 
+    /// Get the size of a window's client area.
     pub fn getAspectRatio(self: *const Window) !AspectRatio {
         var aspect_ratio: AspectRatio = undefined;
         try errify(c.SDL_GetWindowAspectRatio(self.ptr, @ptrCast(&aspect_ratio)));
         return aspect_ratio;
     }
 
+    /// Get the size of a window's borders (decorations) around the client area.
     pub fn getBordersSize(self: *const Window) !BordersSize {
         var borders_size: BordersSize = undefined;
         try errify(c.SDL_GetWindowBordersSize(
@@ -477,124 +522,152 @@ pub const Window = struct {
         return borders_size;
     }
 
+    /// Get the size of a window's client area, in pixels.
     pub fn getSizeInPixels(self: *const Window) !Dimension {
         var dimension: Dimension = undefined;
         try errify(c.SDL_GetWindowSizeInPixels(self.ptr, &dimension.w, &dimension.h));
         return dimension;
     }
 
+    /// Set the minimum size of a window's client area.
     pub fn setMinimumSize(self: *const Window, min_dimension: Dimension) !void {
         try errify(c.SDL_SetWindowMinimumSize(self.ptr, min_dimension.w, min_dimension.h));
     }
 
+    /// Get the minimum size of a window's client area.
     pub fn getMinimumSize(self: *const Window) !Dimension {
         var dimension: Dimension = undefined;
         try errify(c.SDL_GetWindowMinimumSize(self.ptr, &dimension.w, &dimension.h));
         return dimension;
     }
 
+    /// Set the maximum size of a window's client area.
     pub fn setMaximumSize(self: *const Window, max_dimension: Dimension) !void {
         try errify(c.SDL_SetWindowMaximumSize(self.ptr, max_dimension.w, max_dimension.h));
     }
 
+    /// Get the maximum size of a window's client area.
     pub fn getMaximumSize(self: *const Window) !Dimension {
         var dimension: Dimension = undefined;
         try errify(c.SDL_GetWindowMaximumSize(self.ptr, &dimension.w, &dimension.h));
         return dimension;
     }
 
+    /// Set the border state of a window.
     pub fn setBordered(self: *const Window, bordered: bool) !void {
         try errify(c.SDL_SetWindowBordered(self.ptr, bordered));
     }
 
+    /// Set the user-resizable state of a window.
     pub fn setResizable(self: *const Window, resizable: bool) !void {
         try errify(c.SDL_SetWindowResizable(self.ptr, resizable));
     }
 
+    /// Set the window to always be above the others.
     pub fn setAlwaysOnTop(self: *const Window, on_top: bool) !void {
         try errify(c.SDL_SetWindowAlwaysOnTop(self.ptr, on_top));
     }
 
+    /// Show a window.
     pub fn show(self: *const Window) !void {
         try errify(c.SDL_ShowWindow(self.ptr));
     }
 
+    /// Hide a window.
     pub fn hide(self: *const Window) !void {
         try errify(c.SDL_HideWindow(self.ptr));
     }
 
+    /// Request that a window be raised above other windows and gain the input focus.
     pub fn raise(self: *const Window) !void {
         try errify(c.SDL_RaiseWindow(self.ptr));
     }
 
+    /// Request that the window be made as large as possible.
     pub fn maximize(self: *const Window) !void {
         try errify(c.SDL_MaximizeWindow(self.ptr));
     }
 
+    /// Request that the window be minimized to an iconic representation.
     pub fn minimize(self: *const Window) !void {
         try errify(c.SDL_MinimizeWindow(self.ptr));
     }
 
+    /// Request that the size and position of a minimized or maximized window be restored.
     pub fn restore(self: *const Window) !void {
         try errify(c.SDL_RestoreWindow(self.ptr));
     }
 
+    /// Request that the window's fullscreen state be changed.
     pub fn setFullscreen(self: *const Window, fullscreen: bool) !void {
         try errify(c.SDL_SetWindowFullscreen(self.ptr, fullscreen));
     }
 
+    /// Block until any pending window state is finalized.
     pub fn sync(self: *const Window) !void {
         try errify(c.SDL_SyncWindow(self.ptr));
     }
 
+    /// Return whether the window has a surface associated with it.
     pub fn hasSurface(self: *const Window) bool {
         return c.SDL_WindowHasSurface(self.ptr);
     }
 
+    /// Get the SDL surface associated with the window.
     pub fn getSurface(self: *const Window) Surface {
         return .{
             .ptr = try errify(c.SDL_GetWindowSurface(self.ptr)),
         };
     }
 
+    /// Toggle VSync for the window surface.
     pub fn setSurfaceVSync(self: *const Window, vsync: c_int) !void {
         try errify(c.SDL_SetWindowSurfaceVSync(self.ptr, vsync));
     }
 
+    /// Get VSync for the window surface.
     pub fn getSurfaceVSync(self: *const Window) !c_int {
         var vsync: c_int = undefined;
         try errify(c.SDL_GetWindowSurfaceVSync(self.ptr, &vsync));
         return vsync;
     }
 
+    /// Copy the window surface to the screen.
     pub fn updateSurface(self: *const Window) !void {
         try errify(c.SDL_UpdateWindowSurface(self.ptr));
     }
 
+    /// Copy areas of the window surface to the screen.
     pub fn updateSurfaceRects(self: *const Window, rects: []const Rectangle) !void {
         try errify(c.SDL_UpdateWindowSurfaceRects(self.ptr, @ptrCast(rects.ptr), @intCast(rects.len)));
     }
 
+    /// Destroy the surface associated with the window.
     pub fn destroySurface(self: *const Window) !void {
         try errify(c.SDL_DestroyWindowSurface(self.ptr));
     }
 
+    /// Set a window's keyboard grab mode.
     pub fn setKeyboardGrab(self: *const Window, grabbed: bool) !void {
         try errify(c.SDL_SetWindowKeyboardGrab(self.ptr, grabbed));
     }
 
+    /// Set a window's mouse grab mode.
     pub fn setMouseGrab(self: *const Window, grabbed: bool) !void {
         try errify(c.SDL_SetWindowMouseGrab(self.ptr, grabbed));
     }
 
+    /// Get a window's keyboard grab mode.
     pub fn getKeyboardGrab(self: *const Window) bool {
         return c.SDL_GetWindowKeyboardGrab(self.ptr);
     }
 
+    /// Get a window's mouse grab mode.
     pub fn getMouseGrab(self: *const Window) !void {
         return c.SDL_GetWindowMouseGrab(self.ptr);
     }
 
+    /// Get the window that currently has an input grab enabled.
     pub fn getGrabbedWindow() ?Window {
         if (c.SDL_GetGrabbedWindow()) |ptr| {
             return .{
@@ -604,10 +677,12 @@ pub const Window = struct {
         return null;
     }
 
+    /// Confines the cursor to the specified area of a window.
     pub fn setMouseRect(self: *const Window, rectangle: Rectangle) !void {
         try errify(c.SDL_SetWindowMouseRect(self.ptr, @ptrCast(&rectangle)));
     }
 
+    /// Get the mouse confinement rectangle of a window.
     pub fn getMouseRect(self: *const Window) ?Rectangle {
         if (c.SDL_GetWindowMouseRect(self.ptr)) |ptr| {
             return ptr.*;
@@ -615,40 +690,49 @@ pub const Window = struct {
         return null;
     }
 
+    /// Set the opacity for a window.
     pub fn setOpacity(self: *const Window, opacity: f32) !void {
         try errify(c.SDL_SetWindowOpacity(self.ptr, opacity));
     }
 
+    /// Get the opacity of a window.
     pub fn getOpacity(self: *const Window) !f32 {
         const opacity = c.SDL_GetWindowOpacity(self.ptr);
         try errify(opacity != -1);
         return opacity;
     }
 
+    /// Set the window as a child of a parent window.
     pub fn setParent(self: *const Window, parent: Window) !void {
         try errify(c.SDL_SetWindowParent(self.ptr, parent.ptr));
     }
 
+    /// Toggle the state of the window as modal.
     pub fn setModal(self: *const Window, modal: bool) !void {
         try errify(c.SDL_SetWindowModal(self.ptr, modal));
     }
 
+    /// Set whether the window may have input focus.
     pub fn setFocusable(self: *const Window, focusable: bool) !void {
         try errify(c.SDL_SetWindowFocusable(self.ptr, focusable));
     }
 
+    /// Display the system-level window menu.
     pub fn showSystemMenu(self: *const Window, point: Point) !void {
         try errify(c.SDL_ShowWindowSystemMenu(self.ptr, point.x, point.y));
     }
 
+    /// Provide a callback that decides if a window region has special properties.
     pub fn setHitTest(self: *const Window, callback: ?c.SDL_HitTest, callback_data: ?*anyopaque) !void {
         try errify(c.SDL_SetWindowHitTest(self.ptr, callback, callback_data));
     }
 
+    /// Set the shape of a transparent window.
     pub fn setShape(self: *const Window, shape: Surface) !void {
         try errify(c.SDL_SetWindowShape(self.ptr, shape.ptr));
     }
 
+    /// Request a window to demand attention from the user.
     pub fn flashWindow(self: *const Window, operation: c.SDL_FlashOperation) !void {
         try errify(c.SDL_FlashWindow(self.ptr, operation));
     }
@@ -660,14 +744,17 @@ pub fn getWindows() ![]Window {
     return @ptrCast(window_ptrs[0..@intCast(count)]);
 }
 
+/// Check whether the screensaver is currently enabled.
 pub fn screenSaverEnabled() bool {
     return c.SDL_ScreenSaverEnabled();
 }
 
+/// Allow the screen to be blanked by a screen saver.
 pub fn enableScreenSaver() !void {
     try errify(c.SDL_EnableScreenSaver());
 }
 
+/// Prevent the screen from being blanked by a screen saver.
 pub fn disableScreenSaver() !void {
     try errify(c.SDL_DisableScreenSaver());
 }
@@ -707,71 +794,86 @@ pub const gl = struct {
     pub const GLContext = struct {
         ctx: c.SDL_GLContext,
 
+        /// Create an OpenGL context for an OpenGL window, and make it current.
         pub fn create(window: Window) !GLContext {
             return .{
                 .ctx = try errify(c.SDL_GL_CreateContext(window.ptr)),
             };
         }
 
+        /// Set up an OpenGL context for rendering into an OpenGL window.
         pub fn makeCurrent(self: *const GLContext, window: Window) !void {
             try errify(c.SDL_GL_MakeCurrent(window.ptr, self.ctx));
         }
 
+        /// Delete an OpenGL context.
         pub fn destroy(self: *const GLContext) !void {
             try errify(c.SDL_GL_DestroyContext(self.ctx));
         }
     };
 
+    /// Dynamically load an OpenGL library.
     pub fn loadLibrary(path: [*:0]const u8) !void {
         try errify(c.SDL_GL_LoadLibrary(path));
     }
 
+    /// Get an OpenGL function by name.
     pub fn getProcAddress(proc: [*:0]const u8) ?*const anyopaque {
         return c.SDL_GL_GetProcAddress(proc);
     }
 
+    /// Unload the OpenGL library previously loaded by SDL_GL_LoadLibrary().
     pub fn unloadLibrary() void {
         c.SDL_GL_UnloadLibrary();
     }
 
+    /// Check if an OpenGL extension is supported for the current context.
     pub fn extensionSupported(extension: [*:0]const u8) bool {
         return c.SDL_GL_ExtensionSupported(extension);
     }
 
+    /// Reset all previously set OpenGL context attributes to their default values.
     pub fn resetAttributes() void {
         c.SDL_GL_ResetAttributes();
     }
 
+    /// Set an OpenGL window attribute before window creation.
     pub fn setAttribute(attr: GLattr, value: c_int) !void {
         try errify(c.SDL_GL_SetAttribute(@intFromEnum(attr), value));
     }
 
+    /// Get the actual value for an attribute from the current context.
     pub fn getAttribute(attr: GLattr) !c_int {
         var value: c_int = undefined;
         try errify(c.SDL_GL_GetAttribute(@intFromEnum(attr), &value));
         return value;
     }
 
+    /// Get the currently active OpenGL window.
     pub fn getCurrentWindow() !Window {
         return .{
             .ptr = try errify(c.SDL_GL_GetCurrentWindow()),
         };
     }
 
+    /// Get the currently active OpenGL context.
     pub fn getCurrentContext() GLContext {
         return c.SDL_GL_GetCurrentContext();
     }
 
+    /// Set the swap interval for the current OpenGL context.
     pub fn setSwapInterval(interval: i32) !void {
         try errify(c.SDL_GL_SetSwapInterval(interval));
     }
 
+    /// Get the swap interval for the current OpenGL context.
     pub fn getSwapInterval() !c_int {
         var interval: c_int = undefined;
         try errify(c.SDL_GL_GetSwapInterval(&interval));
         return interval;
     }
 
+    /// Update a window with OpenGL rendering.
     pub fn swapWindow(window: Window) !void {
         try errify(c.SDL_GL_SwapWindow(window));
     }
@@ -784,22 +886,27 @@ pub const egl = struct {
     pub const EGLAttribArrayCallback = c.SDL_EGLAttribArrayCallback;
     pub const EGLIntArrayCallback = c.SDL_EGLIntArrayCallback;
 
+    /// Get an EGL library function by name.
     pub fn getProcAddress(proc: [*:0]const u8) ?c.SDL_FunctionPointer {
         return c.SDL_EGL_GetProcAddress(proc);
     }
 
+    /// Get the currently active EGL display.
     pub fn getCurrentDisplay() !EGLDisplay {
         return try errify(c.SDL_EGL_GetCurrentDisplay());
     }
 
+    /// Get the currently active EGL config.
     pub fn getCurrentConfig() !EGLConfig {
         return try errify(c.SDL_EGL_GetCurrentConfig());
     }
 
+    /// Get the EGL surface associated with the window.
     pub fn getWindowSurface(window: Window) !EGLSurface {
         return try errify(c.SDL_EGL_GetWindowSurface(window.ptr));
     }
 
+    /// Sets the callbacks for defining custom EGLAttrib arrays for EGL initialization.
     pub fn setAttributeCallbacks(
         platform_attrib_callback: EGLAttribArrayCallback,
         surface_attrib_callback: EGLIntArrayCallback,

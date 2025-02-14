@@ -75,6 +75,23 @@ pub const PixelFormat = enum(u32) {
     }
 };
 
+pub const ColorSpace = enum(u32) {
+    unknown = c.SDL_COLORSPACE_UNKNOWN,
+    srgb = c.SDL_COLORSPACE_SRGB,
+    srgb_linear = c.SDL_COLORSPACE_SRGB_LINEAR,
+    hdr10 = c.SDL_COLORSPACE_HDR10,
+    jpeg = c.SDL_COLORSPACE_JPEG,
+    bt601_limited = c.SDL_COLORSPACE_BT601_LIMITED,
+    bt601_full = c.SDL_COLORSPACE_BT601_FULL,
+    bt709_limited = c.SDL_COLORSPACE_BT709_LIMITED,
+    bt709_full = c.SDL_COLORSPACE_BT709_FULL,
+    bt2020_limited = c.SDL_COLORSPACE_BT2020_LIMITED,
+    bt2020_full = c.SDL_COLORSPACE_BT2020_FULL,
+
+    pub const rgb_default: ColorSpace = c.SDL_COLORSPACE_RGB_DEFAULT;
+    pub const yuv_default: ColorSpace = c.SDL_COLORSPACE_YUV_DEFAULT;
+};
+
 pub const Color = extern struct {
     r: u8,
     g: u8,

@@ -988,17 +988,17 @@ pub const Device = struct {
     }
 
     /// Claim a window, creating a swapchain structure for it
-    pub fn claimWindow(self: *const Device, window: *const Window) !void {
+    pub fn claimWindow(self: *const Device, window: Window) !void {
         try errify(c.SDL_ClaimWindowForGPUDevice(self.ptr, window.ptr));
     }
 
     /// Unclaim a window, destroying its swapchain structure
-    pub fn releaseWindow(self: *const Device, window: *const Window) void {
+    pub fn releaseWindow(self: *const Device, window: Window) void {
         c.SDL_ReleaseWindowFromGPUDevice(self.ptr, window.ptr);
     }
 
     /// Change the swapchain parameters for the given claimed window
-    pub fn setSwapchainParameters(self: *const Device, window: *const Window, swapchain_composition: SwapchainComposition, present_mode: PresentMode) !void {
+    pub fn setSwapchainParameters(self: *const Device, window: Window, swapchain_composition: SwapchainComposition, present_mode: PresentMode) !void {
         try errify(c.SDL_SetGPUSwapchainParameters(self.ptr, window.ptr, swapchain_composition, present_mode));
     }
 
@@ -1008,7 +1008,7 @@ pub const Device = struct {
     }
 
     /// Get the texture format of the swapchain for the given window
-    pub fn getSwapchainTextureFormat(self: *const Device, window: *const Window) TextureFormat {
+    pub fn getSwapchainTextureFormat(self: *const Device, window: Window) TextureFormat {
         return c.SDL_GetGPUSwapchainTextureFormat(self.ptr, window.ptr);
     }
 

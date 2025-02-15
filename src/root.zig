@@ -70,34 +70,42 @@ pub const InitFlags = packed struct {
     }
 };
 
+/// Initialize the SDL library.
 pub fn init(flags: InitFlags) !void {
     try errify(c.SDL_Init(flags.toInt()));
 }
 
+/// Compatibility function to initialize the SDL library.
 pub fn initSubSystem(flags: InitFlags) !void {
     try errify(c.SDL_InitSubSystem(flags.toInt()));
 }
 
+/// Shut down specific SDL subsystems.
 pub fn quitSubSystem(flags: InitFlags) void {
     c.SDL_QuitSubSystem(flags.toInt());
 }
 
+/// Get a mask of the specified subsystems which are currently initialized.
 pub fn wasInit(flags: InitFlags) InitFlags {
     return InitFlags.fromInt(c.SDL_WasInit(flags.toInt()));
 }
 
+/// Clean up all initialized subsystems.
 pub fn quit() void {
     c.SDL_Quit();
 }
 
+/// Return whether this is the main thread.
 pub fn isMainThread() bool {
     return c.SDL_IsMainThread();
 }
 
+/// Call a function on the main thread during event processing.
 pub fn runOnMainThread(callback: c.SDL_MainThreadCallback, userdata: ?*anyopaque, wait_complete: bool) !void {
     try errify(c.SDL_RunOnMainThread(callback, userdata, wait_complete));
 }
 
+/// Specify basic metadata about your app.
 pub fn setAppMetadata(
     name: [:0]const u8,
     appversion: [:0]const u8,
@@ -128,6 +136,7 @@ pub const AppMetadataProperty = enum {
     }
 };
 
+/// Specify metadata about your app through a set of properties.
 pub fn setAppMetadataProperty(
     property: AppMetadataProperty,
     value: [:0]const u8,
@@ -135,6 +144,7 @@ pub fn setAppMetadataProperty(
     try errify(c.SDL_SetAppMetadataProperty(property.toString(), value));
 }
 
+/// Get metadata about your app.
 pub fn getAppMetadataProperty(
     property: AppMetadataProperty,
 ) []const u8 {

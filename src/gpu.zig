@@ -352,7 +352,7 @@ pub const VertexInputState = extern struct {
     vertex_buffer_descriptions: [*]const VertexBufferDescription,
     vertex_attributes: [*]const VertexAttribute,
 
-    pub fn toSdl(self: *const VertexInputState) VertexInputState {
+    pub fn toNative(self: *const VertexInputState) VertexInputState {
         return .{
             .vertex_buffer_descriptions = self.vertex_buffer_descriptions.ptr,
             .num_vertex_buffers = @intCast(self.vertex_buffer_descriptions.len),
@@ -409,7 +409,7 @@ pub const GraphicsPipelineCreateInfo = extern struct {
     target_info: GraphicsPipelineTargetInfo,
     props: c.SDL_PropertiesID = 0,
 
-    pub fn toSdl(
+    pub fn toNative(
         vertex_shader: *Shader,
         fragment_shader: *Shader,
         vertex_input_state: VertexInputState,
@@ -422,7 +422,7 @@ pub const GraphicsPipelineCreateInfo = extern struct {
         return .{
             .vertex_shader = vertex_shader,
             .fragment_shader = fragment_shader,
-            .vertex_input_state = vertex_input_state.toSdl(),
+            .vertex_input_state = vertex_input_state.toNative(),
             .primitive_type = primitive_type,
             .rasterizer_state = rasterizer_state,
             .multisample_state = multisample_state,
@@ -908,7 +908,7 @@ pub const Device = struct {
 
     /// Create a graphics pipeline object to be used in a graphics workflow
     pub fn createGraphicsPipeline(self: *const Device, createinfo: GraphicsPipelineCreateInfo) !*GraphicsPipeline {
-        return try errify(c.SDL_CreateGPUGraphicsPipeline(self.ptr, createinfo.toSdl()));
+        return try errify(c.SDL_CreateGPUGraphicsPipeline(self.ptr, createinfo.toNative()));
     }
 
     /// Create a sampler object to be used when binding textures in a graphics workflow

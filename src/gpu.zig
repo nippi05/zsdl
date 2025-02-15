@@ -409,25 +409,16 @@ pub const GraphicsPipelineCreateInfo = extern struct {
     target_info: GraphicsPipelineTargetInfo,
     props: c.SDL_PropertiesID = 0,
 
-    pub fn toNative(
-        vertex_shader: *Shader,
-        fragment_shader: *Shader,
-        vertex_input_state: VertexInputState,
-        primitive_type: PrimitiveType,
-        rasterizer_state: RasterizerState,
-        multisample_state: MultisampleState,
-        depth_stencil_state: DepthStencilState,
-        target_info: GraphicsPipelineTargetInfo,
-    ) c.SDL_GPUGraphicsPipelineCreateInfo {
+    pub fn toNative(self: *const GraphicsPipelineCreateInfo) c.SDL_GPUGraphicsPipelineCreateInfo {
         return .{
-            .vertex_shader = vertex_shader,
-            .fragment_shader = fragment_shader,
-            .vertex_input_state = vertex_input_state.toNative(),
-            .primitive_type = primitive_type,
-            .rasterizer_state = rasterizer_state,
-            .multisample_state = multisample_state,
-            .depth_stencil_state = depth_stencil_state,
-            .target_info = target_info,
+            .vertex_shader = self.vertex_shader,
+            .fragment_shader = self.fragment_shader,
+            .vertex_input_state = self.vertex_input_state.toNative(),
+            .primitive_type = self.primitive_type,
+            .rasterizer_state = self.rasterizer_state,
+            .multisample_state = self.multisample_state,
+            .depth_stencil_state = self.depth_stencil_state,
+            .target_info = self.target_info,
             .props = 0,
         };
     }

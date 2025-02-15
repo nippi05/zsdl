@@ -15,6 +15,30 @@ const zsdl = b.dependency("zsdl", .{
 exe.root_module.addImport("zsdl", zsdl.module("zsdl"));
 ```
 
+## Example
+```zig
+const zsdl = @import("zsdl");
+
+pub fn main() !void {
+    try zsdl.init(.{ .video = true });
+    defer zsdl.quit();
+
+    const window = try zsdl.video.Window.create(
+        "redbed",
+        1280,
+        720,
+        .{ .resizable = true },
+    );
+    defer window.destroy();
+
+    main_loop: while (true) {
+        while (zsdl.events.pollEvent()) |event| {
+            if (event == .quit) break :main_loop;
+        }
+    }
+}
+```
+
 ## Support
 | Category | Status |
 |:-|:-:|

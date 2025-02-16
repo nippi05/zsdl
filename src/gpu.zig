@@ -155,6 +155,15 @@ pub const StencilOpState = extern struct {
     pass_op: StencilOp,
     depth_fail_op: StencilOp,
     compare_op: CompareOp,
+
+    pub fn toNative(self: *const StencilOpState) c.SDL_GPUStencilOpState {
+        return .{
+            .fail_op = @intFromEnum(self.fail_op),
+            .pass_op = @intFromEnum(self.pass_op),
+            .depth_fail_op = @intFromEnum(self.depth_fail_op),
+            .compare_op = @intFromEnum(self.compare_op),
+        };
+    }
 };
 
 pub const ShaderStage = enum(u32) {
@@ -171,6 +180,19 @@ pub const DepthStencilState = extern struct {
     enable_depth_test: bool,
     enable_depth_write: bool,
     enable_stencil_test: bool,
+
+    pub fn toNative(self: *const DepthStencilState) c.SDL_GPUDepthStencilState {
+        return .{
+            .compare_op = @intFromEnum(self.compare_op),
+            .back_stencil_state = self.back_stencil_state.toNative(),
+            .front_stencil_state = self.front_stencil_state.toNative(),
+            .compare_mask = self.compare_mask,
+            .write_mask = self.write_mask,
+            .enable_depth_test = self.enable_depth_test,
+            .enable_depth_write = self.enable_depth_write,
+            .enable_stencil_test = self.enable_stencil_test,
+        };
+    }
 };
 
 pub const ColorTargetBlendState = extern struct {
@@ -183,17 +205,46 @@ pub const ColorTargetBlendState = extern struct {
     color_write_mask: ColorComponentFlags,
     enable_blend: bool,
     enable_color_write_mask: bool,
+
+    pub fn toNative(self: *const ColorTargetBlendState) c.SDL_GPUColorTargetBlendState {
+        return .{
+            .src_color_blendfactor = @intFromEnum(self.src_color_blendfactor),
+            .dst_color_blendfactor = @intFromEnum(self.dst_color_blendfactor),
+            .color_blend_op = @intFromEnum(self.color_blend_op),
+            .src_alpha_blendfactor = @intFromEnum(self.src_alpha_blendfactor),
+            .dst_alpha_blendfactor = @intFromEnum(self.dst_alpha_blendfactor),
+            .alpha_blend_op = @intFromEnum(self.alpha_blend_op),
+            .color_write_mask = self.color_write_mask.toInt(),
+            .enable_blend = self.enable_blend,
+            .enable_color_write_mask = self.enable_color_write_mask,
+        };
+    }
 };
 
 pub const ColorTargetDescription = extern struct {
     format: TextureFormat,
     blend_state: ColorTargetBlendState,
+
+    pub fn toNative(self: *const ColorTargetDescription) c.SDL_GPUColorTargetDescription {
+        return .{
+            .format = @intFromEnum(self.format),
+            .blend_state = self.blend_state.toNative(),
+        };
+    }
 };
 
 pub const MultisampleState = extern struct {
     sample_count: SampleCount,
     sample_mask: u32,
     enable_mask: bool,
+
+    pub fn toNative(self: *const MultisampleState) c.SDL_GPUMultisampleState {
+        return .{
+            .sample_count = @intFromEnum(self.sample_count),
+            .sample_mask = self.sample_mask,
+            .enable_mask = self.enable_mask,
+        };
+    }
 };
 
 pub const RasterizerState = extern struct {
@@ -205,18 +256,31 @@ pub const RasterizerState = extern struct {
     depth_bias_slope_factor: f32,
     enable_depth_bias: bool,
     enable_depth_clip: bool,
+
+    pub fn toNative(self: *const RasterizerState) c.SDL_GPURasterizerState {
+        return .{
+            .fill_mode = @intFromEnum(self.fill_mode),
+            .cull_mode = @intFromEnum(self.cull_mode),
+            .front_face = @intFromEnum(self.front_face),
+            .depth_bias_constant_factor = self.depth_bias_constant_factor,
+            .depth_bias_clamp = self.depth_bias_clamp,
+            .depth_bias_slope_factor = self.depth_bias_slope_factor,
+            .enable_depth_bias = self.enable_depth_bias,
+            .enable_depth_clip = self.enable_depth_clip,
+        };
+    }
 };
 
-pub const GraphicsPipelineTargetInfo = extern struct {
-    color_target_descriptions: [*]const ColorTargetDescription,
+pub const GraphicsPipelineTargetInfo = struct {
+    color_target_descriptions: []const ColorTargetDescription,
     depth_stencil_format: TextureFormat,
     has_depth_stencil_target: bool,
 
-    pub fn toSdl(self: *const GraphicsPipelineTargetInfo) GraphicsPipelineTargetInfo {
+    pub fn toNative(self: *const GraphicsPipelineTargetInfo) c.SDL_GPUGraphicsPipelineTargetInfo {
         return .{
-            .color_target_descriptions = self.color_target_descriptions.ptr,
-            .num_color_targets = self.color_target_descriptions.len,
-            .depth_stencil_format = self.depth_stencil_format,
+            .color_target_descriptions = @ptrCast(self.color_target_descriptions),
+            .num_color_targets = @intCast(self.color_target_descriptions.len),
+            .depth_stencil_format = @intFromEnum(self.depth_stencil_format),
             .has_depth_stencil_target = self.has_depth_stencil_target,
         };
     }
@@ -313,7 +377,7 @@ pub const BufferUsageFlags = extern struct {
     storage_compute_read: bool = false,
     storage_compute_write: bool = false,
 
-    pub fn toInt(self: BufferUsageFlags) u32 {
+    pub fn toInt(self: BufferUsageFlags) c.SDL_GPUBufferUsageFlags {
         return (if (self.vertex) c.SDL_GPU_BUFFERUSAGE_VERTEX else 0) |
             (if (self.index) c.SDL_GPU_BUFFERUSAGE_INDEX else 0) |
             (if (self.indirect) c.SDL_GPU_BUFFERUSAGE_INDIRECT else 0) |
@@ -322,7 +386,7 @@ pub const BufferUsageFlags = extern struct {
             (if (self.storage_compute_write) c.SDL_GPU_BUFFERUSAGE_COMPUTE_STORAGE_WRITE else 0);
     }
 
-    pub fn fromInt(flags: u32) BufferUsageFlags {
+    pub fn fromInt(flags: c.SDL_GPUBufferUsageFlags) BufferUsageFlags {
         return .{
             .vertex = (flags & c.SDL_GPU_BUFFERUSAGE_VERTEX) != 0,
             .index = (flags & c.SDL_GPU_BUFFERUSAGE_INDEX) != 0,
@@ -339,6 +403,15 @@ pub const VertexBufferDescription = extern struct {
     pitch: u32,
     input_rate: VertexInputRate,
     instance_step_rate: u32,
+
+    pub fn toNative(self: *const VertexBufferDescription) c.SDL_GPUVertexBufferDescription {
+        return .{
+            .slot = self.slot,
+            .pitch = self.pitch,
+            .input_rate = @intFromEnum(self.input_rate),
+            .instance_step_rate = self.instance_step_rate,
+        };
+    }
 };
 
 pub const VertexAttribute = extern struct {
@@ -346,17 +419,26 @@ pub const VertexAttribute = extern struct {
     buffer_slot: u32,
     format: VertexElementFormat,
     offset: u32,
+
+    pub fn toNative(self: *const VertexAttribute) c.SDL_GPUVertexAttribute {
+        return .{
+            .location = self.location,
+            .buffer_slot = self.buffer_slot,
+            .format = @intFromEnum(self.format),
+            .offset = self.offset,
+        };
+    }
 };
 
-pub const VertexInputState = extern struct {
-    vertex_buffer_descriptions: [*]const VertexBufferDescription,
-    vertex_attributes: [*]const VertexAttribute,
+pub const VertexInputState = struct {
+    vertex_buffer_descriptions: []const VertexBufferDescription,
+    vertex_attributes: []const VertexAttribute,
 
-    pub fn toNative(self: *const VertexInputState) VertexInputState {
+    pub fn toNative(self: *const VertexInputState) c.SDL_GPUVertexInputState {
         return .{
-            .vertex_buffer_descriptions = self.vertex_buffer_descriptions.ptr,
+            .vertex_buffer_descriptions = @ptrCast(self.vertex_buffer_descriptions),
             .num_vertex_buffers = @intCast(self.vertex_buffer_descriptions.len),
-            .vertex_attributes = self.vertex_attributes.ptr,
+            .vertex_attributes = @ptrCast(self.vertex_attributes),
             .num_vertex_attributes = @intCast(self.vertex_attributes.len),
         };
     }
@@ -364,8 +446,8 @@ pub const VertexInputState = extern struct {
 
 pub const ComputePipelineCreateInfo = extern struct {
     code_size: usize,
-    code: [*]const u8,
-    entrypoint: ?[*:0]const u8,
+    code: [*:0]const u8,
+    entrypoint: [*:0]const u8,
     format: u32,
     num_samplers: u32,
     num_readonly_storage_textures: u32,
@@ -398,7 +480,7 @@ pub const ComputePipelineCreateInfo = extern struct {
     }
 };
 
-pub const GraphicsPipelineCreateInfo = extern struct {
+pub const GraphicsPipelineCreateInfo = struct {
     vertex_shader: *Shader,
     fragment_shader: *Shader,
     vertex_input_state: VertexInputState,
@@ -414,11 +496,11 @@ pub const GraphicsPipelineCreateInfo = extern struct {
             .vertex_shader = self.vertex_shader,
             .fragment_shader = self.fragment_shader,
             .vertex_input_state = self.vertex_input_state.toNative(),
-            .primitive_type = self.primitive_type,
-            .rasterizer_state = self.rasterizer_state,
-            .multisample_state = self.multisample_state,
-            .depth_stencil_state = self.depth_stencil_state,
-            .target_info = self.target_info,
+            .primitive_type = @intFromEnum(self.primitive_type),
+            .rasterizer_state = self.rasterizer_state.toNative(),
+            .multisample_state = self.multisample_state.toNative(),
+            .depth_stencil_state = self.depth_stencil_state.toNative(),
+            .target_info = self.target_info.toNative(),
             .props = 0,
         };
     }
@@ -457,7 +539,7 @@ pub const SamplerCreateInfo = extern struct {
 };
 
 pub const ShaderCreateInfo = extern struct {
-    code: [*]const u8,
+    code: [*:0]const u8,
     entry_point: [*:0]const u8,
     format: ShaderFormat,
     stage: ShaderStage,
@@ -466,26 +548,17 @@ pub const ShaderCreateInfo = extern struct {
     num_storage_buffers: u32,
     num_uniform_buffers: u32,
 
-    pub fn init(
-        code: []const u8,
-        entry_point: [*:0]const u8,
-        format: ShaderFormat,
-        stage: ShaderStage,
-        num_samplers: u32,
-        num_storage_textures: u32,
-        num_storage_buffers: u32,
-        num_uniform_buffers: u32,
-    ) c.SDL_GPUShaderCreateInfo {
+    pub fn toNative(self: *const ShaderCreateInfo) c.SDL_GPUShaderCreateInfo {
         return .{
-            .code = code,
-            .code_len = code.len,
-            .entry_point = entry_point,
-            .format = format,
-            .stage = stage,
-            .num_samplers = num_samplers,
-            .num_storage_textures = num_storage_textures,
-            .num_storage_buffers = num_storage_buffers,
-            .num_uniform_buffers = num_uniform_buffers,
+            .code = self.code,
+            .code_len = self.code.len,
+            .entry_point = self.entry_point,
+            .format = self.format.toInt(),
+            .stage = self.stage,
+            .num_samplers = self.num_samplers,
+            .num_storage_textures = self.num_storage_textures,
+            .num_storage_buffers = self.num_storage_buffers,
+            .num_uniform_buffers = self.num_uniform_buffers,
         };
     }
 };
@@ -899,7 +972,7 @@ pub const Device = struct {
 
     /// Create a graphics pipeline object to be used in a graphics workflow
     pub fn createGraphicsPipeline(self: *const Device, createinfo: GraphicsPipelineCreateInfo) !*GraphicsPipeline {
-        return try errify(c.SDL_CreateGPUGraphicsPipeline(self.ptr, createinfo.toNative()));
+        return try errify(c.SDL_CreateGPUGraphicsPipeline(self.ptr, &createinfo.toNative()));
     }
 
     /// Create a sampler object to be used when binding textures in a graphics workflow
@@ -1009,7 +1082,7 @@ pub const Device = struct {
 
     /// Get the texture format of the swapchain for the given window
     pub fn getSwapchainTextureFormat(self: *const Device, window: Window) TextureFormat {
-        return c.SDL_GetGPUSwapchainTextureFormat(self.ptr, window.ptr);
+        return @enumFromInt(c.SDL_GetGPUSwapchainTextureFormat(self.ptr, window.ptr));
     }
 
     /// Block the thread until the GPU is completely idle

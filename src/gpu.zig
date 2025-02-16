@@ -612,10 +612,11 @@ pub const TransferBufferCreateInfo = extern struct {
     size: usize,
     usage: TransferBufferUsage,
 
-    pub fn toNative(self: *const TransferBufferCreateInfo) TransferBufferCreateInfo {
+    pub fn toNative(self: *const TransferBufferCreateInfo) c.SDL_GPUTransferBufferCreateInfo {
         return .{
             .size = self.size,
-            .memory_flags = @intFromEnum(self.usage),
+            .usage = @intFromEnum(self.usage),
+            .props = 0,
         };
     }
 };

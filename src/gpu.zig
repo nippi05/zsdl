@@ -1207,16 +1207,35 @@ pub const CommandBuffer = struct {
     }
 
     /// Begin a render pass on a command buffer
-    pub fn beginRenderPass(self: *const CommandBuffer, color_target_infos: [*]const ColorTargetInfo, depth_stencil_target_info: DepthStencilTargetInfo) !RenderPass {
+    pub fn beginRenderPass(
+        self: *const CommandBuffer,
+        color_target_infos: []const ColorTargetInfo,
+        depth_stencil_target_info: DepthStencilTargetInfo,
+    ) !RenderPass {
         return .{
-            .ptr = try errify(c.SDL_BeginGPURenderPass(self.ptr, color_target_infos, @intCast(color_target_infos.len), depth_stencil_target_info)),
+            .ptr = try errify(c.SDL_BeginGPURenderPass(
+                self.ptr,
+                @ptrCast(color_target_infos.ptr),
+                @intCast(color_target_infos.len),
+                @ptrCast(&depth_stencil_target_info),
+            )),
         };
     }
 
     /// Begin a compute pass on a command buffer
-    pub fn beginComputePass(self: *const CommandBuffer, storage_texture_bindings: [*]const StorageTextureReadWriteBinding, num_storage_texture_bindings: u32, storage_buffer_bindings: [*]const StorageBufferReadWriteBinding, num_storage_buffer_bindings: u32) !ComputePass {
+    pub fn beginComputePass(
+        self: *const CommandBuffer,
+        storage_texture_bindings: []const StorageTextureReadWriteBinding,
+        storage_buffer_bindings: []const StorageBufferReadWriteBinding,
+    ) !ComputePass {
         return .{
-            .ptr = try errify(c.SDL_BeginGPUComputePass(self.ptr, storage_texture_bindings, num_storage_texture_bindings, storage_buffer_bindings, num_storage_buffer_bindings)),
+            .ptr = try errify(c.SDL_BeginGPUComputePass(
+                self.ptr,
+                storage_texture_bindings,
+                @intCast(storage_texture_bindings.len),
+                storage_buffer_bindings,
+                @intCast(storage_buffer_bindings.len),
+            )),
         };
     }
 
@@ -1238,13 +1257,26 @@ pub const CommandBuffer = struct {
     }
 
     /// Acquire a texture to use in presentation
-    pub fn acquireSwapchainTexture(self: *const CommandBuffer, window: *const Window, swapchain_texture: **Texture, swapchain_texture_width: *u32, swapchain_texture_height: *u32) !void {
+    pub fn acquireSwapchainTexture(
+        self: *const CommandBuffer,
+        window: *const Window,
+        swapchain_texture: **Texture,
+        swapchain_texture_width: *u32,
+        swapchain_texture_height: *u32,
+    ) !void {
         try errify(c.SDL_AcquireGPUSwapchainTexture(self.ptr, window.ptr, swapchain_texture, swapchain_texture_width, swapchain_texture_height));
     }
 
     /// Wait and acquire a swapchain texture
-    pub fn waitAndAcquireSwapchainTexture(self: *const CommandBuffer, window: *const Window, swapchain_texture: **Texture, swapchain_texture_width: *u32, swapchain_texture_height: *u32) !void {
-        try errify(c.SDL_WaitAndAcquireGPUSwapchainTexture(self.ptr, window.ptr, swapchain_texture, swapchain_texture_width, swapchain_texture_height));
+    pub fn waitAndAcquireSwapchainTexture(
+        self: *const CommandBuffer,
+        window: Window,
+        swapchain_texture_width: ?*u32,
+        swapchain_texture_height: ?*u32,
+    ) !*Texture {
+        var texture: *Texture = undefined;
+        try errify(c.SDL_WaitAndAcquireGPUSwapchainTexture(self.ptr, window.ptr, @ptrCast(&texture), swapchain_texture_width, swapchain_texture_height));
+        return texture;
     }
 };
 
@@ -1386,32 +1418,32 @@ pub const CopyPass = struct {
 
     /// Upload data from a transfer buffer to a texture
     pub fn uploadToTexture(self: *const CopyPass, source: *const TextureTransferInfo, destination: *const TextureRegion, cycle: bool) void {
-        c.SDL_UploadToGPUTexture(self.ptr, source, destination, cycle);
+        c.SDL_UploadToGPUTexture(self.ptr, @ptrCast(source), @ptrCast(destination), cycle);
     }
 
     /// Upload data from a transfer buffer to a buffer
     pub fn uploadToBuffer(self: *const CopyPass, source: *const TransferBufferLocation, destination: *const BufferRegion, cycle: bool) void {
-        c.SDL_UploadToGPUBuffer(self.ptr, source, destination, cycle);
+        c.SDL_UploadToGPUBuffer(self.ptr, @ptrCast(source), @ptrCast(destination), cycle);
     }
 
     /// Perform a texture-to-texture copy
     pub fn copyTextureToTexture(self: *const CopyPass, source: *const TextureLocation, destination: *const TextureLocation, w: u32, h: u32, d: u32, cycle: bool) void {
-        c.SDL_CopyGPUTextureToTexture(self.ptr, source, destination, w, h, d, cycle);
+        c.SDL_CopyGPUTextureToTexture(self.ptr, @ptrCast(source), @ptrCast(destination), w, h, d, cycle);
     }
 
     /// Perform a buffer-to-buffer copy
     pub fn copyBufferToBuffer(self: *const CopyPass, source: *const BufferLocation, destination: *const BufferLocation, size: u32, cycle: bool) void {
-        c.SDL_CopyGPUBufferToBuffer(self.ptr, source, destination, size, cycle);
+        c.SDL_CopyGPUBufferToBuffer(self.ptr, @ptrCast(source), @ptrCast(destination), size, cycle);
     }
 
     /// Copy data from a texture to a transfer buffer on the GPU timeline
     pub fn downloadFromTexture(self: *const CopyPass, source: *const TextureRegion, destination: *const TextureTransferInfo) void {
-        c.SDL_DownloadFromGPUTexture(self.ptr, source, destination);
+        c.SDL_DownloadFromGPUTexture(self.ptr, @ptrCast(source), @ptrCast(destination));
     }
 
     /// Copy data from a buffer to a transfer buffer on the GPU timeline
     pub fn downloadFromBuffer(self: *const CopyPass, source: *const BufferRegion, destination: *const TransferBufferLocation) void {
-        c.SDL_DownloadFromGPUBuffer(self.ptr, source, destination);
+        c.SDL_DownloadFromGPUBuffer(self.ptr, @ptrCast(source), @ptrCast(destination));
     }
 
     /// End the current copy pass

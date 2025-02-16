@@ -14,6 +14,156 @@ test "graphics pipeline" {
     const lol = try device.acquireCommandBuffer();
     try lol.cancel();
 
+    const Vertex = extern struct {
+        pos: [3]f32,
+        tex_coords: [2]f32,
+        color: [3]f32,
+    };
+
+    const vertices = [_]Vertex{
+        .{ .pos = .{ -0.5, 0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 1.0, 0.0, 0.0 } },
+        .{ .pos = .{ 0.5, -0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 1.0 } },
+        .{ .pos = .{ -0.5, -0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ -0.5, 0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 0.0 } },
+        .{ .pos = .{ 0.5, 0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ 0.5, -0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 1.0 } },
+        .{ .pos = .{ -0.5, 0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 1.0, 1.0, 1.0 } },
+        .{ .pos = .{ -0.5, -0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ -0.5, -0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 1.0 } },
+        .{ .pos = .{ -0.5, 0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 1.0, 1.0, 1.0 } },
+        .{ .pos = .{ -0.5, 0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 1.0, 0.0, 0.0 } },
+        .{ .pos = .{ -0.5, -0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ -0.5, 0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 1.0 } },
+        .{ .pos = .{ 0.5, 0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ -0.5, 0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 0.0 } },
+        .{ .pos = .{ -0.5, 0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 1.0 } },
+        .{ .pos = .{ 0.5, 0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 0.0 } },
+        .{ .pos = .{ 0.5, 0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ 0.5, 0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ 0.5, -0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 1.0 } },
+        .{ .pos = .{ 0.5, -0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 1.0 } },
+        .{ .pos = .{ 0.5, 0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ 0.5, 0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 0.0 } },
+        .{ .pos = .{ 0.5, -0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 1.0 } },
+        .{ .pos = .{ 0.5, 0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 0.0 } },
+        .{ .pos = .{ -0.5, -0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 1.0 } },
+        .{ .pos = .{ 0.5, -0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 1.0 } },
+        .{ .pos = .{ 0.5, 0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 0.0 } },
+        .{ .pos = .{ -0.5, 0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 1.0, 1.0, 1.0 } },
+        .{ .pos = .{ -0.5, -0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 1.0 } },
+        .{ .pos = .{ -0.5, -0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ 0.5, -0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 1.0, 0.0, 1.0 } },
+        .{ .pos = .{ -0.5, -0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 1.0 } },
+        .{ .pos = .{ -0.5, -0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 1.0, 0.0 } },
+        .{ .pos = .{ 0.5, -0.5, -0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 0.0, 0.0, 1.0 } },
+        .{ .pos = .{ 0.5, -0.5, 0.5 }, .tex_coords = .{ 0, 0 }, .color = .{ 1.0, 0.0, 1.0 } },
+    };
+    const texture = try device.createTexture(.{
+        .type = .@"2d",
+        .format = .r8g8b8a8_unorm,
+        .width = 256,
+        .height = 256,
+        .layer_count_or_depth = 1,
+        .num_levels = 1,
+        .sample_count = .@"1",
+        .usage = .{ .sampler = true },
+        .props = 0,
+    });
+    defer device.releaseTexture(texture);
+    const sampler = try device.createSampler(.{
+        .min_filter = .nearest,
+        .mag_filter = .nearest,
+        .mipmap_mode = .nearest,
+        .address_mode_u = .clamp_to_edge,
+        .address_mode_v = .clamp_to_edge,
+        .address_mode_w = .clamp_to_edge,
+        .mip_lod_bias = 0,
+        .max_anisotropy = 1,
+        .min_lod = 0,
+        .max_lod = 0,
+        .compare_op = .equal,
+        .enable_anisotropy = true,
+        .enable_compare = false,
+    });
+    defer device.releaseSampler(sampler);
+
+    const vertices_size = @sizeOf(@TypeOf(vertices));
+    const vertex_buffer = try device.createBuffer(.{
+        .usage = .{ .vertex = true },
+        .size = vertices_size,
+    });
+    const vertex_transfer_buffer = try device.createTransferBuffer(.{
+        .usage = .upload,
+        .size = vertices_size,
+    });
+    const transfer_data_ptr = try device.mapTransferBuffer(
+        vertex_transfer_buffer,
+        false,
+    );
+    _ = zsdl.c.SDL_memcpy(transfer_data_ptr, @ptrCast(&vertices), vertices_size);
+    device.unmapTransferBuffer(vertex_transfer_buffer);
+
+    const cmdbuf = try device.acquireCommandBuffer();
+    const copy_pass = try cmdbuf.beginCopyPass();
+    copy_pass.uploadToBuffer(
+        &.{
+            .transfer_buffer = vertex_transfer_buffer,
+            .offset = 0,
+        },
+        &.{
+            .buffer = vertex_buffer,
+            .offset = 0,
+            .size = vertices_size,
+        },
+        false,
+    );
+    copy_pass.end();
+    errdefer {
+        cmdbuf.cancel() catch {};
+    }
+    const swaptex = try cmdbuf.waitAndAcquireSwapchainTexture(
+        window,
+        null,
+        null,
+    );
+    const color_target_info = [_]zsdl.gpu.ColorTargetInfo{.{
+        .texture = swaptex,
+        .mip_level = 0,
+        .layer_or_depth_plane = 0,
+        .clear_color = .{
+            .r = @as(f32, 0x18) / @as(f32, 0xFF),
+            .g = @as(f32, 0x18) / @as(f32, 0xFF),
+            .b = @as(f32, 0x18) / @as(f32, 0xFF),
+            .a = 1,
+        },
+        .load_op = .clear,
+        .store_op = .store,
+        .resolve_texture = undefined, // You'll need to provide a valid texture or null if not using resolve
+        .resolve_mip_level = 0,
+        .resolve_layer = 0,
+        .cycle = false,
+        .cycle_resolve_texture = false,
+        .padding1 = 0,
+        .padding2 = 0,
+    }};
+
+    const depth_stencil_info = zsdl.gpu.DepthStencilTargetInfo{
+        .texture = undefined, // You'll need to provide a valid depth/stencil texture
+        .clear_depth = 1.0,
+        .load_op = .clear,
+        .store_op = .store,
+        .stencil_load_op = .clear,
+        .stencil_store_op = .store,
+        .cycle = false,
+        .clear_stencil = 0,
+        .padding1 = 0,
+        .padding2 = 0,
+    };
+
+    const render_pass = try cmdbuf.beginRenderPass(&color_target_info, depth_stencil_info);
+    render_pass.end();
+    try cmdbuf.submit();
+
     const shader1 = try device.createShader(.{
         .code = "lol",
         .entry_point = "main",

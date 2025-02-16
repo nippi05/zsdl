@@ -66,6 +66,11 @@ pub const TextureTransferInfo = extern struct {
     rows_per_layer: u32,
 };
 
+pub const TransferBufferUsage = enum(u32) {
+    upload = c.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+    download = c.SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
+};
+
 pub const TransferBufferLocation = extern struct {
     transfer_buffer: *TransferBuffer,
     offset: u32,
@@ -605,12 +610,12 @@ pub const BufferCreateInfo = extern struct {
 
 pub const TransferBufferCreateInfo = extern struct {
     size: usize,
-    memory_flags: u32,
+    usage: TransferBufferUsage,
 
-    pub fn init(size: usize, memory_flags: MemoryFlags) TransferBufferCreateInfo {
+    pub fn toNative(self: *const TransferBufferCreateInfo) TransferBufferCreateInfo {
         return .{
-            .size = size,
-            .memory_flags = memory_flags.toInt(),
+            .size = self.size,
+            .memory_flags = @intFromEnum(self.usage),
         };
     }
 };

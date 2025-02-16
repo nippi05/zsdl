@@ -444,8 +444,7 @@ pub const VertexInputState = struct {
     }
 };
 
-pub const ComputePipelineCreateInfo = extern struct {
-    code_size: usize,
+pub const ComputePipelineCreateInfo = struct {
     code: [*:0]const u8,
     entrypoint: [*:0]const u8,
     format: u32,
@@ -460,22 +459,22 @@ pub const ComputePipelineCreateInfo = extern struct {
     threadcount_z: u32,
     props: c.SDL_PropertiesID,
 
-    pub fn init(code: []const u8, entrypoint: ?[*:0]const u8, format: ShaderFormat) ComputePipelineCreateInfo {
+    pub fn toNative(self: *const ComputePipelineCreateInfo) c.SDL_GPUComputePipelineCreateInfo {
         return .{
-            .code_size = code.len,
-            .code = code.ptr,
-            .entrypoint = entrypoint,
-            .format = format.toInt(),
-            .num_samplers = 0,
-            .num_readonly_storage_textures = 0,
-            .num_readonly_storage_buffers = 0,
-            .num_readwrite_storage_textures = 0,
-            .num_readwrite_storage_buffers = 0,
-            .num_uniform_buffers = 0,
-            .threadcount_x = 1,
-            .threadcount_y = 1,
-            .threadcount_z = 1,
-            .props = 0,
+            .code_size = @intCast(self.code.len),
+            .code = self.code.ptr,
+            .entrypoint = self.entrypoint,
+            .format = self.format.toInt(),
+            .num_samplers = self.num_samplers,
+            .num_readonly_storage_textures = self.num_readonly_storage_textures,
+            .num_readonly_storage_buffers = self.num_readonly_storage_buffers,
+            .num_readwrite_storage_textures = self.num_readwrite_storage_textures,
+            .num_readwrite_storage_buffers = self.num_readwrite_storage_buffers,
+            .num_uniform_buffers = self.num_uniform_buffers,
+            .threadcount_x = self.threadcount_x,
+            .threadcount_y = self.threadcount_y,
+            .threadcount_z = self.threadcount_z,
+            .props = self.props,
         };
     }
 };
@@ -538,10 +537,10 @@ pub const SamplerCreateInfo = extern struct {
     enable_compare: bool,
 };
 
-pub const ShaderCreateInfo = extern struct {
+pub const ShaderCreateInfo = struct {
     code: [*:0]const u8,
     entry_point: [*:0]const u8,
-    format: ShaderFormat,
+    format: std.meta.FieldEnum(ShaderFormat),
     stage: ShaderStage,
     num_samplers: u32,
     num_storage_textures: u32,

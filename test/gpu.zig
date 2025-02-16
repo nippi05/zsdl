@@ -14,7 +14,7 @@ test "graphics pipeline" {
     const shader1 = try device.createShader(.{
         .code = "lol",
         .entry_point = "main",
-        .format = .{ .spirv = true },
+        .format = .spirv,
         .stage = .vertex,
         .num_samplers = 1,
         .num_storage_textures = 1,

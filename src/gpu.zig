@@ -1143,18 +1143,18 @@ pub const Device = struct {
     }
 
     /// Map a transfer buffer into application address space
-    pub fn mapTransferBuffer(device: *const Device, transfer_buffer: *TransferBuffer, cycle: bool) !*anyopaque {
-        return try errify(c.SDL_MapGPUTransferBuffer(device, transfer_buffer, cycle));
+    pub fn mapTransferBuffer(self: *const Device, transfer_buffer: *TransferBuffer, cycle: bool) !*anyopaque {
+        return try errify(c.SDL_MapGPUTransferBuffer(self.ptr, transfer_buffer, cycle));
     }
 
     /// Unmap a previously mapped transfer buffer
-    pub fn unmapTransferBuffer(device: *const Device, transfer_buffer: *TransferBuffer) void {
-        c.SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
+    pub fn unmapTransferBuffer(self: *const Device, transfer_buffer: *TransferBuffer) void {
+        c.SDL_UnmapGPUTransferBuffer(self.ptr, transfer_buffer);
     }
 
     /// Block the thread until a swapchain texture is available
-    pub fn waitForSwapchain(device: *const Device, window: Window) !void {
-        try errify(c.SDL_WaitForGPUSwapchain(device, window.ptr));
+    pub fn waitForSwapchain(self: *const Device, window: Window) !void {
+        try errify(c.SDL_WaitForGPUSwapchain(self.ptr, window.ptr));
     }
 };
 

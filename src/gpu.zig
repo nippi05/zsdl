@@ -609,7 +609,7 @@ pub const BufferCreateInfo = extern struct {
 };
 
 pub const TransferBufferCreateInfo = extern struct {
-    size: usize,
+    size: u32,
     usage: TransferBufferUsage,
 
     pub fn toNative(self: *const TransferBufferCreateInfo) c.SDL_GPUTransferBufferCreateInfo {

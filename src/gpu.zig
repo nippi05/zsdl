@@ -1208,24 +1208,24 @@ pub const CommandBuffer = struct {
     }
 
     /// Begin a render pass on a command buffer
-    pub fn beginRenderPass(self: *const CommandBuffer, color_target_infos: [*]const ColorTargetInfo, depth_stencil_target_info: DepthStencilTargetInfo) !*c.SDL_GPURenderPass {
-        const render_pass = c.SDL_BeginGPURenderPass(self.ptr, color_target_infos, @intCast(color_target_infos.len), depth_stencil_target_info);
-        try errify(render_pass != null);
-        return render_pass.?;
+    pub fn beginRenderPass(self: *const CommandBuffer, color_target_infos: [*]const ColorTargetInfo, depth_stencil_target_info: DepthStencilTargetInfo) !*RenderPass {
+        return .{
+            .ptr = try errify(c.SDL_BeginGPURenderPass(self.ptr, color_target_infos, @intCast(color_target_infos.len), depth_stencil_target_info)),
+        };
     }
 
     /// Begin a compute pass on a command buffer
-    pub fn beginComputePass(self: *const CommandBuffer, storage_texture_bindings: [*]const StorageTextureReadWriteBinding, num_storage_texture_bindings: u32, storage_buffer_bindings: [*]const StorageBufferReadWriteBinding, num_storage_buffer_bindings: u32) !*c.SDL_GPUComputePass {
-        const compute_pass = c.SDL_BeginGPUComputePass(self.ptr, storage_texture_bindings, num_storage_texture_bindings, storage_buffer_bindings, num_storage_buffer_bindings);
-        try errify(compute_pass != null);
-        return compute_pass.?;
+    pub fn beginComputePass(self: *const CommandBuffer, storage_texture_bindings: [*]const StorageTextureReadWriteBinding, num_storage_texture_bindings: u32, storage_buffer_bindings: [*]const StorageBufferReadWriteBinding, num_storage_buffer_bindings: u32) !*ComputePass {
+        return .{
+            .ptr = try errify(c.SDL_BeginGPUComputePass(self.ptr, storage_texture_bindings, num_storage_texture_bindings, storage_buffer_bindings, num_storage_buffer_bindings)),
+        };
     }
 
     /// Begin a copy pass on a command buffer
-    pub fn beginCopyPass(self: *const CommandBuffer) !*c.SDL_GPUCopyPass {
-        const copy_pass = c.SDL_BeginGPUCopyPass(self.ptr);
-        try errify(copy_pass != null);
-        return copy_pass.?;
+    pub fn beginCopyPass(self: *const CommandBuffer) !*CopyPass {
+        return .{
+            .ptr = try errify(c.SDL_BeginGPUCopyPass(self.ptr)),
+        };
     }
 
     /// Generate mipmaps for the given texture

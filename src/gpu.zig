@@ -1051,7 +1051,7 @@ pub const Device = struct {
     }
 
     /// Acquire a command buffer
-    pub fn acquireCommandBuffer(self: *const Device) !*CommandBuffer {
+    pub fn acquireCommandBuffer(self: *const Device) !CommandBuffer {
         return .{
             .ptr = try errify(c.SDL_AcquireGPUCommandBuffer(self.ptr)),
         };
@@ -1207,21 +1207,21 @@ pub const CommandBuffer = struct {
     }
 
     /// Begin a render pass on a command buffer
-    pub fn beginRenderPass(self: *const CommandBuffer, color_target_infos: [*]const ColorTargetInfo, depth_stencil_target_info: DepthStencilTargetInfo) !*RenderPass {
+    pub fn beginRenderPass(self: *const CommandBuffer, color_target_infos: [*]const ColorTargetInfo, depth_stencil_target_info: DepthStencilTargetInfo) !RenderPass {
         return .{
             .ptr = try errify(c.SDL_BeginGPURenderPass(self.ptr, color_target_infos, @intCast(color_target_infos.len), depth_stencil_target_info)),
         };
     }
 
     /// Begin a compute pass on a command buffer
-    pub fn beginComputePass(self: *const CommandBuffer, storage_texture_bindings: [*]const StorageTextureReadWriteBinding, num_storage_texture_bindings: u32, storage_buffer_bindings: [*]const StorageBufferReadWriteBinding, num_storage_buffer_bindings: u32) !*ComputePass {
+    pub fn beginComputePass(self: *const CommandBuffer, storage_texture_bindings: [*]const StorageTextureReadWriteBinding, num_storage_texture_bindings: u32, storage_buffer_bindings: [*]const StorageBufferReadWriteBinding, num_storage_buffer_bindings: u32) !ComputePass {
         return .{
             .ptr = try errify(c.SDL_BeginGPUComputePass(self.ptr, storage_texture_bindings, num_storage_texture_bindings, storage_buffer_bindings, num_storage_buffer_bindings)),
         };
     }
 
     /// Begin a copy pass on a command buffer
-    pub fn beginCopyPass(self: *const CommandBuffer) !*CopyPass {
+    pub fn beginCopyPass(self: *const CommandBuffer) !CopyPass {
         return .{
             .ptr = try errify(c.SDL_BeginGPUCopyPass(self.ptr)),
         };

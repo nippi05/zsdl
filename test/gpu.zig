@@ -11,6 +11,9 @@ test "graphics pipeline" {
     const device = try zsdl.gpu.Device.create(.{ .spirv = true }, true, null);
     defer device.destroy();
 
+    const lol = try device.acquireCommandBuffer();
+    try lol.cancel();
+
     const shader1 = try device.createShader(.{
         .code = "lol",
         .entry_point = "main",

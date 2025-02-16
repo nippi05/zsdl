@@ -600,7 +600,7 @@ pub const BufferCreateInfo = extern struct {
     size: u32,
     usage: BufferUsageFlags,
 
-    pub fn toSdl(self: *const BufferCreateInfo) c.SDL_GPUBufferCreateInfo {
+    pub fn toNative(self: *const BufferCreateInfo) c.SDL_GPUBufferCreateInfo {
         return .{
             .size = self.size,
             .usage = self.usage.toInt(),
@@ -996,12 +996,12 @@ pub const Device = struct {
 
     /// Create a buffer object to be used in graphics or compute workflows
     pub fn createBuffer(self: *const Device, createinfo: BufferCreateInfo) !*Buffer {
-        return try errify(c.SDL_CreateGPUBuffer(self.ptr, &createinfo.toSdl()));
+        return try errify(c.SDL_CreateGPUBuffer(self.ptr, &createinfo.toNative()));
     }
 
     /// Create a transfer buffer to be used when uploading to or downloading from graphics resources
     pub fn createTransferBuffer(self: *const Device, createinfo: TransferBufferCreateInfo) !*TransferBuffer {
-        return try errify(c.SDL_CreateGPUTransferBuffer(self.ptr, createinfo));
+        return try errify(c.SDL_CreateGPUTransferBuffer(self.ptr, @ptrCast(createinfo.toNative())));
     }
 
     /// Set an arbitrary string constant to label a buffer

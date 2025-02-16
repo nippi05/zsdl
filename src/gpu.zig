@@ -997,12 +997,12 @@ pub const Device = struct {
 
     /// Create a buffer object to be used in graphics or compute workflows
     pub fn createBuffer(self: *const Device, createinfo: BufferCreateInfo) !*Buffer {
-        return try errify(c.SDL_CreateGPUBuffer(self.ptr, &createinfo.toNative()));
+        return try errify(c.SDL_CreateGPUBuffer(self.ptr, @ptrCast(&createinfo.toNative())));
     }
 
     /// Create a transfer buffer to be used when uploading to or downloading from graphics resources
     pub fn createTransferBuffer(self: *const Device, createinfo: TransferBufferCreateInfo) !*TransferBuffer {
-        return try errify(c.SDL_CreateGPUTransferBuffer(self.ptr, @ptrCast(createinfo.toNative())));
+        return try errify(c.SDL_CreateGPUTransferBuffer(self.ptr, @ptrCast(&createinfo.toNative())));
     }
 
     /// Set an arbitrary string constant to label a buffer

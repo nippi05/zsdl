@@ -1138,6 +1138,23 @@ pub const Device = struct {
     pub fn gdkResume(self: *const Device) void {
         c.SDL_GDKResumeGPU(self.ptr);
     }
+
+    /// Map a transfer buffer into application address space
+    pub fn mapTransferBuffer(device: *const Device, transfer_buffer: *TransferBuffer, cycle: bool) !*anyopaque {
+        const ptr = c.SDL_MapGPUTransferBuffer(device, transfer_buffer, cycle);
+        try errify(ptr != null);
+        return ptr.?;
+    }
+
+    /// Unmap a previously mapped transfer buffer
+    pub fn unmapTransferBuffer(device: *const Device, transfer_buffer: *TransferBuffer) void {
+        c.SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
+    }
+
+    /// Block the thread until a swapchain texture is available
+    pub fn waitForSwapchain(device: *const Device, window: Window) !void {
+        try errify(c.SDL_WaitForGPUSwapchain(device, window.ptr));
+    }
 };
 
 pub const CommandBuffer = struct {
@@ -1401,24 +1418,5 @@ pub const CopyPass = struct {
     /// End the current copy pass
     pub fn end(self: *const CopyPass) void {
         c.SDL_EndGPUCopyPass(self.ptr);
-    }
-};
-
-pub const Utils = struct {
-    /// Map a transfer buffer into application address space
-    pub fn mapTransferBuffer(device: *const Device, transfer_buffer: *TransferBuffer, cycle: bool) !*anyopaque {
-        const ptr = c.SDL_MapGPUTransferBuffer(device, transfer_buffer, cycle);
-        try errify(ptr != null);
-        return ptr.?;
-    }
-
-    /// Unmap a previously mapped transfer buffer
-    pub fn unmapTransferBuffer(device: *const Device, transfer_buffer: *TransferBuffer) void {
-        c.SDL_UnmapGPUTransferBuffer(device, transfer_buffer);
-    }
-
-    /// Block the thread until a swapchain texture is available
-    pub fn waitForSwapchain(device: *const Device, window: *const Window) !void {
-        try errify(c.SDL_WaitForGPUSwapchain(device, window.ptr));
     }
 };

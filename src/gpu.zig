@@ -1144,9 +1144,7 @@ pub const Device = struct {
 
     /// Map a transfer buffer into application address space
     pub fn mapTransferBuffer(device: *const Device, transfer_buffer: *TransferBuffer, cycle: bool) !*anyopaque {
-        const ptr = c.SDL_MapGPUTransferBuffer(device, transfer_buffer, cycle);
-        try errify(ptr != null);
-        return ptr.?;
+        return try errify(c.SDL_MapGPUTransferBuffer(device, transfer_buffer, cycle));
     }
 
     /// Unmap a previously mapped transfer buffer
@@ -1200,9 +1198,7 @@ pub const CommandBuffer = struct {
 
     /// Submit command buffer and acquire a fence
     pub fn submitAndAcquireFence(self: *const CommandBuffer) !*Fence {
-        const fence = c.SDL_SubmitGPUCommandBufferAndAcquireFence(self.ptr);
-        try errify(fence != null);
-        return fence.?;
+        return try errify(c.SDL_SubmitGPUCommandBufferAndAcquireFence(self.ptr));
     }
 
     /// Cancel command buffer execution

@@ -1050,8 +1050,10 @@ pub const Device = struct {
     }
 
     /// Acquire a command buffer
-    pub fn acquireCommandBuffer(self: *const Device) !*c.SDL_GPUCommandBuffer {
-        return try errify(c.SDL_AcquireGPUCommandBuffer(self.ptr));
+    pub fn acquireCommandBuffer(self: *const Device) !*CommandBuffer {
+        return .{
+            .ptr = try errify(c.SDL_AcquireGPUCommandBuffer(self.ptr)),
+        };
     }
 
     /// Check if a window supports the specified swapchain composition

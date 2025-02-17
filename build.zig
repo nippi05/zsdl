@@ -1,6 +1,25 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) !void {
+pub fn addTests(b: *std.Build, zsdl_mod: *std.Build.Module, zsdl_step: *std.Build.Step) !void {
+    var tests_dir = try b.build_root.handle.openDir("test", .{ .iterate = true });
+    var iter = tests_dir.iterate();
+
+    while (try iter.next()) |entry| {
+        if (entry.kind != .file) continue;
+        const test_file = b.addTest(.{
+            .root_source_file = b.path(b.pathJoin(&.{ "test", entry.name })),
+        });
+        const basename = std.fs.path.basename(entry.name);
+        const test_name = basename[0 .. basename.len - ".zig".len];
+        test_file.root_module.addImport("zsdl", zsdl_mod);
+        const run_tests = b.addRunArtifact(test_file);
+        const test_step = b.step(b.fmt("test-{s}", .{test_name}), b.fmt("Run test/{s} Zig tests", .{entry.name}));
+        test_step.dependOn(zsdl_step);
+        test_step.dependOn(&run_tests.step);
+    }
+}
+
+pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -32,20 +51,5 @@ pub fn build(b: *std.Build) !void {
     const docs_step = b.step("docs", "Generate library documentation");
     docs_step.dependOn(&docs.step);
 
-    var tests_dir = try b.build_root.handle.openDir("test", .{ .iterate = true });
-    var iter = tests_dir.iterate();
-    while (try iter.next()) |entry| {
-        if (entry.kind != .file) continue;
-        const test_file = b.addTest(.{
-            .root_source_file = b.path(b.pathJoin(&.{ "test", entry.name })),
-            .target = target,
-        });
-        const basename = std.fs.path.basename(entry.name);
-        const test_name = basename[0 .. basename.len - ".zig".len];
-        test_file.root_module.addImport("zsdl", zsdl_mod);
-        const run_tests = b.addRunArtifact(test_file);
-        const test_step = b.step(b.fmt("test-{s}", .{test_name}), b.fmt("Run test/{s} Zig tests", .{entry.name}));
-        test_step.dependOn(&zsdl.step);
-        test_step.dependOn(&run_tests.step);
-    }
+    addTests(b, zsdl_mod, &zsdl.step) catch {};
 }

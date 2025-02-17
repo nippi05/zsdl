@@ -1,7 +1,11 @@
 const std = @import("std");
 const c = @import("c.zig").c;
 const internal = @import("internal.zig");
-const Window = @import("video.zig").Window;
+const video = @import("video.zig");
+const Window = video.Window;
+const WindowID = video.WindowID;
+const Point = @import("rect.zig").Point;
+const Size = @import("rect.zig").Size;
 
 const errify = internal.errify;
 
@@ -415,9 +419,6 @@ pub const Event = union(EventType) {
     }
 };
 
-pub const Point = struct { x: i32, y: i32 };
-pub const Size = struct { width: i32, height: i32 };
-
 pub const AppEvent = struct {
     data: Data,
 
@@ -447,7 +448,7 @@ pub const DisplayEvent = struct {
 };
 
 pub const WindowEvent = struct {
-    window_id: c.SDL_WindowID,
+    window_id: WindowID,
     data: Data,
 
     const Data = union(enum) {
@@ -480,7 +481,7 @@ pub const WindowEvent = struct {
 };
 
 pub const KeyboardEvent = struct {
-    window_id: c.SDL_WindowID,
+    window_id: WindowID,
     data: Data,
 
     const Data = union(enum) {
@@ -508,7 +509,7 @@ pub const KeyboardEvent = struct {
 };
 
 pub const MouseEvent = struct {
-    window_id: c.SDL_WindowID,
+    window_id: WindowID,
     data: Data,
 
     const Data = union(enum) {
@@ -632,7 +633,7 @@ pub const GamepadEvent = struct {
 };
 
 pub const TouchEvent = struct {
-    window_id: c.SDL_WindowID,
+    window_id: WindowID,
     data: Data,
 
     const Data = union(enum) {
@@ -653,7 +654,7 @@ pub const TouchEvent = struct {
 };
 
 pub const DropEvent = struct {
-    window_id: c.SDL_WindowID,
+    window_id: WindowID,
     data: Data,
 
     const Data = union(enum) {
@@ -706,7 +707,7 @@ pub const SensorEvent = struct {
 };
 
 pub const PenEvent = struct {
-    window_id: c.SDL_WindowID,
+    window_id: WindowID,
     which: c.SDL_PenID,
     data: Data,
 
@@ -752,7 +753,7 @@ pub const PenEvent = struct {
 };
 
 pub const RenderEvent = struct {
-    window_id: c.SDL_WindowID,
+    window_id: WindowID,
     data: Data,
 
     const Data = union(enum) {

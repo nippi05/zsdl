@@ -7,12 +7,13 @@ pub const DisplayMode = c.SDL_DisplayMode;
 pub const WindowID = c.SDL_WindowID;
 const internal = @import("internal.zig");
 const errify = internal.errify;
+const errifyWithValue = internal.errifyWithValue;
 const pixels = @import("pixels.zig");
 const PixelFormat = pixels.PixelFormat;
 const rect = @import("rect.zig");
 const Rectangle = rect.Rectangle;
 const Point = rect.Point;
-const Dimension = rect.Dimension;
+const Size = rect.Size;
 const AspectRatio = rect.AspectRatio;
 const BordersSize = rect.BordersSize;
 const Surface = @import("surface.zig").Surface;
@@ -141,7 +142,7 @@ pub const Display = packed struct {
     id: DisplayID,
 
     /// Get the display containing a point.
-    pub fn getForPoint(point: Dimension) !Display {
+    pub fn getForPoint(point: Point) !Display {
         return .{
             .id = try errify(c.SDL_GetDisplayForPoint(@ptrCast(point))),
         };
@@ -197,9 +198,7 @@ pub const Display = packed struct {
 
     /// Get the content scale of a display.
     pub fn getContentScale(self: *const Display) f32 {
-        const scale = c.SDL_GetDisplayContentScale(self.id);
-        try errify(scale != 0.0);
-        return scale;
+        return try errify(c.SDL_GetDisplayContentScale(self.id));
     }
 
     /// Get a list of fullscreen display modes available on a display.
@@ -212,15 +211,15 @@ pub const Display = packed struct {
     ///  Get the closest match to the requested display mode.
     pub fn getClosestFullscreenDisplayMode(
         self: *const Display,
-        dimension: Dimension,
+        size: Size,
         refresh_rate: f32,
         include_high_density_modes: bool,
     ) !DisplayMode {
         var closest: DisplayMode = undefined;
         try errify(c.SDL_GetClosestFullscreenDisplayMode(
             self.id,
-            dimension.w,
-            dimension.h,
+            size.width,
+            size.height,
             refresh_rate,
             include_high_density_modes,
             &closest,
@@ -344,7 +343,7 @@ pub const WindowFlags = packed struct {
 pub const Window = struct {
     ptr: *c.SDL_Window,
 
-    /// Create a window with the specified dimensions and flags.
+    /// Create a window with the specified sizes and flags.
     pub fn create(
         title: [:0]const u8,
         width: comptime_int,
@@ -404,9 +403,10 @@ pub const Window = struct {
 
     /// Get the pixel format associated with the window.
     pub fn getPixelFormat(self: *const Window) !PixelFormat {
-        const pixel_format: PixelFormat = @enumFromInt(c.SDL_GetWindowPixelFormat(self.ptr));
-        try errify(pixel_format != .unknown);
-        return pixel_format;
+        return @enumFromInt(try errifyWithValue(
+            c.SDL_GetWindowPixelFormat(self.ptr),
+            c.SDL_PIXELFORMAT_UNKNOWN,
+        ));
     }
 
     /// Create a child popup window of the specified parent window.
@@ -414,11 +414,11 @@ pub const Window = struct {
         parent: *const Window,
         offset_x: i32,
         offset_y: i32,
-        dimension: Dimension,
+        size: Size,
         flags: WindowFlags,
     ) !Window {
         return .{
-            .ptr = try errify(c.SDL_CreatePopupWindow(parent.ptr, offset_x, offset_y, dimension.w, dimension.h, flags.toInt())),
+            .ptr = try errify(c.SDL_CreatePopupWindow(parent.ptr, offset_x, offset_y, size.width, size.height, flags.toInt())),
         };
     }
 
@@ -473,21 +473,21 @@ pub const Window = struct {
 
     /// Get the position of a window.
     pub fn getPosition(self: *const Window) !Point {
-        var point: Dimension = undefined;
+        var point: Size = undefined;
         try errify(c.SDL_GetWindowPosition(self.ptr, &point.x, &point.y));
         return point;
     }
 
     /// Request that the size of a window's client area be set.
-    pub fn setSize(self: *const Window, dimension: Dimension) !void {
-        try errify(c.SDL_SetWindowSize(self.ptr, dimension.w, dimension.h));
+    pub fn setSize(self: *const Window, size: Size) !void {
+        try errify(c.SDL_SetWindowSize(self.ptr, size.width, size.height));
     }
 
     /// Get the size of a window's client area.
-    pub fn getSize(self: *const Window) !Dimension {
-        var dimension: Dimension = undefined;
-        try errify(c.SDL_GetWindowSize(self.ptr, &dimension.w, &dimension.h));
-        return dimension;
+    pub fn getSize(self: *const Window) !Size {
+        var size: Size = undefined;
+        try errify(c.SDL_GetWindowSize(self.ptr, &size.width, &size.height));
+        return size;
     }
 
     /// Get the safe area for this window.
@@ -523,34 +523,34 @@ pub const Window = struct {
     }
 
     /// Get the size of a window's client area, in pixels.
-    pub fn getSizeInPixels(self: *const Window) !Dimension {
-        var dimension: Dimension = undefined;
-        try errify(c.SDL_GetWindowSizeInPixels(self.ptr, &dimension.w, &dimension.h));
-        return dimension;
+    pub fn getSizeInPixels(self: *const Window) !Size {
+        var size: Size = undefined;
+        try errify(c.SDL_GetWindowSizeInPixels(self.ptr, &size.width, &size.height));
+        return size;
     }
 
     /// Set the minimum size of a window's client area.
-    pub fn setMinimumSize(self: *const Window, min_dimension: Dimension) !void {
-        try errify(c.SDL_SetWindowMinimumSize(self.ptr, min_dimension.w, min_dimension.h));
+    pub fn setMinimumSize(self: *const Window, min_size: Size) !void {
+        try errify(c.SDL_SetWindowMinimumSize(self.ptr, min_size.width, min_size.height));
     }
 
     /// Get the minimum size of a window's client area.
-    pub fn getMinimumSize(self: *const Window) !Dimension {
-        var dimension: Dimension = undefined;
-        try errify(c.SDL_GetWindowMinimumSize(self.ptr, &dimension.w, &dimension.h));
-        return dimension;
+    pub fn getMinimumSize(self: *const Window) !Size {
+        var size: Size = undefined;
+        try errify(c.SDL_GetWindowMinimumSize(self.ptr, &size.width, &size.height));
+        return size;
     }
 
     /// Set the maximum size of a window's client area.
-    pub fn setMaximumSize(self: *const Window, max_dimension: Dimension) !void {
-        try errify(c.SDL_SetWindowMaximumSize(self.ptr, max_dimension.w, max_dimension.h));
+    pub fn setMaximumSize(self: *const Window, max_size: Size) !void {
+        try errify(c.SDL_SetWindowMaximumSize(self.ptr, max_size.width, max_size.height));
     }
 
     /// Get the maximum size of a window's client area.
-    pub fn getMaximumSize(self: *const Window) !Dimension {
-        var dimension: Dimension = undefined;
-        try errify(c.SDL_GetWindowMaximumSize(self.ptr, &dimension.w, &dimension.h));
-        return dimension;
+    pub fn getMaximumSize(self: *const Window) !Size {
+        var size: Size = undefined;
+        try errify(c.SDL_GetWindowMaximumSize(self.ptr, &size.width, &size.height));
+        return size;
     }
 
     /// Set the border state of a window.
@@ -697,9 +697,10 @@ pub const Window = struct {
 
     /// Get the opacity of a window.
     pub fn getOpacity(self: *const Window) !f32 {
-        const opacity = c.SDL_GetWindowOpacity(self.ptr);
-        try errify(opacity != -1);
-        return opacity;
+        return try errifyWithValue(
+            c.SDL_GetWindowOpacity(self.ptr),
+            -1,
+        );
     }
 
     /// Set the window as a child of a parent window.

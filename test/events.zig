@@ -1,3 +1,6 @@
+const std = @import("std");
+const print = std.debug.print;
+
 const zsdl = @import("zsdl");
 const events = zsdl.events;
 
@@ -11,5 +14,25 @@ test "window" {
         400,
         .{ .resizable = true },
     );
-    window.destroy();
+    defer window.destroy();
+
+    main_loop: while (true) {
+        while (events.pollEvent()) |event| {
+            switch (event) {
+                .quit => {
+                    break :main_loop;
+                },
+                .window => |w| {
+                    switch (w.data) {
+                        .shown => {},
+                        .resized => |size| {
+                            print("{any}{any}\n", .{ size.width, size.height });
+                        },
+                        else => {},
+                    }
+                },
+                else => {},
+            }
+        }
+    }
 }

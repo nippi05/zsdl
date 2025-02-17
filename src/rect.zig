@@ -4,22 +4,11 @@ const c = @import("c.zig").c;
 pub const Rectangle = c.SDL_Rect;
 pub const FRect = c.SDL_FRect;
 pub const FPoint = c.SDL_FPoint;
+pub const Point = c.SDL_Point;
 
-// = extern struct {
-//     x: c_int,
-//     y: c_int,
-//     w: c_int,
-//     h: c_int,
-// };
-
-pub const Point = extern struct {
-    x: c_int,
-    y: c_int,
-};
-
-pub const Dimension = extern struct {
-    w: c_int,
-    h: c_int,
+pub const Size = extern struct {
+    width: c_int,
+    height: c_int,
 };
 
 pub const AspectRatio = packed struct {

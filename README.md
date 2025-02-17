@@ -33,7 +33,24 @@ pub fn main() !void {
 
     main_loop: while (true) {
         while (zsdl.events.pollEvent()) |event| {
-            if (event == .quit) break :main_loop;
+            switch (event) {
+                .quit => {
+                    break :main_loop;
+                },
+                .window => |w| {
+                    switch (w.data) {
+                        .resized => |size| {
+                            print(
+                                "window resized: (w: {any}, h: {any})\n",
+                                .{ size.width, size.height },
+                            );
+                        },
+                        else => {},
+                    }
+                },
+                else => {},
+            }
+
         }
     }
 }

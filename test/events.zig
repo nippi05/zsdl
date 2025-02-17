@@ -26,7 +26,10 @@ test "window" {
                     switch (w.data) {
                         .shown => {},
                         .resized => |size| {
-                            print("{any}{any}\n", .{ size.width, size.height });
+                            print(
+                                "window resized: (w: {any}, h: {any})\n",
+                                .{ size.width, size.height },
+                            );
                         },
                         else => {},
                     }

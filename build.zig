@@ -1,6 +1,6 @@
 const std = @import("std");
 
-pub fn build(b: *std.Build) void {
+pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
@@ -32,13 +32,20 @@ pub fn build(b: *std.Build) void {
     const docs_step = b.step("docs", "Generate library documentation");
     docs_step.dependOn(&docs.step);
 
-    const tests = b.addTest(.{
-        .root_source_file = b.path("test/root.zig"),
-        .target = target,
-    });
-    tests.root_module.addImport("zsdl", zsdl_mod);
-    const run_tests = b.addRunArtifact(tests);
-    const test_step = b.step("test", "Run unit tests");
-    test_step.dependOn(&zsdl.step);
-    test_step.dependOn(&run_tests.step);
+    var tests_dir = try std.fs.cwd().openDir("test", .{ .iterate = true });
+    var iter = tests_dir.iterate();
+    while (try iter.next()) |entry| {
+        if (entry.kind != .file) continue;
+        const test_file = b.addTest(.{
+            .root_source_file = b.path(b.pathJoin(&.{ "test", entry.name })),
+            .target = target,
+        });
+        const basename = std.fs.path.basename(entry.name);
+        const test_name = basename[0 .. basename.len - ".zig".len];
+        test_file.root_module.addImport("zsdl", zsdl_mod);
+        const run_tests = b.addRunArtifact(test_file);
+        const test_step = b.step(b.fmt("test-{s}", .{test_name}), b.fmt("Run test/{s} tests", .{entry.name}));
+        test_step.dependOn(&zsdl.step);
+        test_step.dependOn(&run_tests.step);
+    }
 }

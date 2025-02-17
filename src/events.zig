@@ -131,11 +131,11 @@ pub const Event = union(EventType) {
                             .repeat = event.key.repeat,
                         } },
                         c.SDL_EVENT_TEXT_EDITING => .{ .text_editing = .{
-                            .text = event.edit.text[0..std.mem.len(event.edit.text)],
+                            .text = std.mem.span(event.edit.text),
                             .start = event.edit.start,
                             .length = event.edit.length,
                         } },
-                        c.SDL_EVENT_TEXT_INPUT => .{ .text_input = event.text.text[0..std.mem.len(event.text.text)] },
+                        c.SDL_EVENT_TEXT_INPUT => .{ .text_input = std.mem.span(event.text.text) },
                         c.SDL_EVENT_KEYMAP_CHANGED => .keymap_changed,
                         c.SDL_EVENT_KEYBOARD_ADDED => .added,
                         c.SDL_EVENT_KEYBOARD_REMOVED => .removed,
@@ -294,8 +294,8 @@ pub const Event = union(EventType) {
                 .drop = .{
                     .window_id = event.drop.windowID,
                     .data = switch (event.type) {
-                        c.SDL_EVENT_DROP_FILE => .{ .file = event.drop.data[0..std.mem.len(event.drop.data)] },
-                        c.SDL_EVENT_DROP_TEXT => .{ .text = event.drop.data[0..std.mem.len(event.drop.data)] },
+                        c.SDL_EVENT_DROP_FILE => .{ .file = std.mem.span(event.drop.data) },
+                        c.SDL_EVENT_DROP_TEXT => .{ .text = std.mem.span(event.drop.data) },
                         c.SDL_EVENT_DROP_BEGIN => .begin,
                         c.SDL_EVENT_DROP_COMPLETE => .complete,
                         c.SDL_EVENT_DROP_POSITION => .{ .position = .{ .x = event.drop.x, .y = event.drop.y } },

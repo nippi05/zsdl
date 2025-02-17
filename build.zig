@@ -32,7 +32,7 @@ pub fn build(b: *std.Build) !void {
     const docs_step = b.step("docs", "Generate library documentation");
     docs_step.dependOn(&docs.step);
 
-    var tests_dir = try std.fs.cwd().openDir("test", .{ .iterate = true });
+    var tests_dir = try b.build_root.handle.openDir("test", .{ .iterate = true });
     var iter = tests_dir.iterate();
     while (try iter.next()) |entry| {
         if (entry.kind != .file) continue;

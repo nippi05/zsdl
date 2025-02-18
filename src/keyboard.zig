@@ -625,9 +625,9 @@ pub fn getKeyboardFocus() ?Window {
 }
 
 /// Gets a snapshot of the current state of the keyboard.
-pub fn getKeyboardState(numkeys: ?*c_int) ![]const bool {
-    const state = c.SDL_GetKeyboardState(numkeys);
-    if (state == null) return error.SDLError;
+pub fn getKeyboardState() ![]const bool {
+    var numkeys: c_int = undefined;
+    const state = try errify(c.SDL_GetKeyboardState(&numkeys));
     const len = if (numkeys) |n| @as(usize, @intCast(n.*)) else 512;
     return @ptrCast(state[0..len]);
 }

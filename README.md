@@ -17,6 +17,8 @@ exe.root_module.addImport("zsdl", zsdl.module("zsdl"));
 
 ## Example
 ```zig
+const std = @import("std");
+
 const zsdl = @import("zsdl");
 
 pub fn main() !void {
@@ -40,7 +42,7 @@ pub fn main() !void {
                 .window => |w| {
                     switch (w.data) {
                         .resized => |size| {
-                            print(
+                            std.debug.print(
                                 "window resized: (w: {any}, h: {any})\n",
                                 .{ size.width, size.height },
                             );
@@ -50,10 +52,10 @@ pub fn main() !void {
                 },
                 else => {},
             }
-
         }
     }
 }
+
 ```
 
 ## Support

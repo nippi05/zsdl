@@ -270,12 +270,12 @@ pub const Keycode = enum(u32) {
     rhyper = c.SDLK_RHYPER,
 
     /// Gets a human-readable name for a key.
-    pub fn getName(self: *const Keycode) []const u8 {
+    pub fn getName(self: Keycode) []const u8 {
         return std.mem.span(c.SDL_GetKeyName(@intFromEnum(self)));
     }
 
     /// Gets the scancode corresponding to the given key code according to the current keyboard layout.
-    pub fn getScancode(self: *const Keycode, modstate: Keymod) Scancode {
+    pub fn getScancode(self: Keycode, modstate: Keymod) Scancode {
         return @enumFromInt(c.SDL_GetScancodeFromKey(@intFromEnum(self), @intFromEnum(modstate)));
     }
 
@@ -538,17 +538,17 @@ pub const Scancode = enum(u32) {
     endcall = c.SDL_SCANCODE_ENDCALL,
 
     /// Gets a human-readable name for a scancode.
-    pub fn getName(self: *const Scancode) []const u8 {
+    pub fn getName(self: Scancode) []const u8 {
         return std.mem.span(c.SDL_GetScancodeName(@intFromEnum(self)));
     }
 
     /// Sets a human-readable name for a scancode.
-    pub fn setName(self: *const Scancode, name: [:0]const u8) !void {
+    pub fn setName(self: Scancode, name: [:0]const u8) !void {
         try errify(c.SDL_SetScancodeName(@intFromEnum(self), name.ptr));
     }
 
     /// Gets the key code corresponding to the given scancode according to the current keyboard layout.
-    pub fn getKey(self: *const Scancode, modstate: Keymod, key_event: bool) Keycode {
+    pub fn getKey(self: Scancode, modstate: Keymod, key_event: bool) Keycode {
         return @enumFromInt(c.SDL_GetKeyFromScancode(@intFromEnum(self), @intFromEnum(modstate), key_event));
     }
 
@@ -587,7 +587,7 @@ pub const Keymod = enum(u16) {
     }
 
     /// Sets the current key modifier state for the keyboard.
-    pub fn setState(self: *const Keymod) void {
+    pub fn setState(self: Keymod) void {
         c.SDL_SetModState(@intFromEnum(self));
     }
 };
@@ -596,7 +596,7 @@ pub const Keyboard = struct {
     id: KeyboardID,
 
     /// Gets the name of a keyboard.
-    pub fn getName(self: *const Keyboard) ?[]const u8 {
+    pub fn getName(self: Keyboard) ?[]const u8 {
         if (c.SDL_GetKeyboardNameForID(self.id)) |name_ptr| {
             return std.mem.sliceTo(name_ptr, 0);
         }

@@ -37,7 +37,9 @@ test "window" {
                 .keyboard => |k| {
                     switch (k.data) {
                         .down => |key| {
-                            _ = key;
+                            const keycode: zsdl.keyboard.Keycode = @enumFromInt(key.keycode);
+
+                            std.debug.print("{s}\n", .{keycode.getName()});
                         },
                         else => {},
                     }

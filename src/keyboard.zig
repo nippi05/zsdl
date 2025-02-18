@@ -1,14 +1,16 @@
 const std = @import("std");
-const internal = @import("internal.zig");
+
 const c = @import("c.zig").c;
+pub const KeyboardID = c.SDL_KeyboardID;
+const internal = @import("internal.zig");
 const errify = internal.errify;
-const video = @import("video.zig");
-const Window = video.Window;
+const errifyWithValue = internal.errifyfyWithValue;
 const rect = @import("rect.zig");
 const Rectangle = rect.Rectangle;
+const video = @import("video.zig");
+const Window = video.Window;
 const PropertiesID = video.PropertiesID;
 
-pub const KeyboardID = c.SDL_KeyboardID;
 pub const Keycode = enum(u32) {
     unknown = c.SDLK_UNKNOWN,
     @"return" = c.SDLK_RETURN,
@@ -267,18 +269,19 @@ pub const Keycode = enum(u32) {
     lhyper = c.SDLK_LHYPER,
     rhyper = c.SDLK_RHYPER,
 
-    pub fn getName(self: Keycode) []const u8 {
-        return std.mem.sliceTo(c.SDL_GetKeyName(@intFromEnum(self)), 0);
+    pub fn getName(self: *const Keycode) []const u8 {
+        return std.mem.span(c.SDL_GetKeyName(@intFromEnum(self)));
     }
 
-    pub fn getScancode(self: Keycode, modstate: Keymod) Scancode {
+    pub fn getScancode(self: *const Keycode, modstate: Keymod) Scancode {
         return @enumFromInt(c.SDL_GetScancodeFromKey(@intFromEnum(self), @intFromEnum(modstate)));
     }
 
     pub fn fromName(name: [:0]const u8) !Keycode {
-        const key = c.SDL_GetKeyFromName(name.ptr);
-        try errify(key != c.SDLK_UNKNOWN);
-        return @enumFromInt(key);
+        return @enumFromInt(try errifyWithValue(
+            c.SDL_GetKeyFromName(name.ptr),
+            c.SDLK_UNKNOWN,
+        ));
     }
 };
 
@@ -331,10 +334,10 @@ pub const Scancode = enum(u32) {
     rightbracket = c.SDL_SCANCODE_RIGHTBRACKET,
     backslash = c.SDL_SCANCODE_BACKSLASH,
     nonushash = c.SDL_SCANCODE_NONUSHASH,
-    _semicolon = c.SDL_SCANCODE_SEMICOLON,
+    semicolon = c.SDL_SCANCODE_SEMICOLON,
     apostrophe = c.SDL_SCANCODE_APOSTROPHE,
     grave = c.SDL_SCANCODE_GRAVE,
-    ode_comma = c.SDL_SCANCODE_COMMA,
+    comma = c.SDL_SCANCODE_COMMA,
     period = c.SDL_SCANCODE_PERIOD,
     slash = c.SDL_SCANCODE_SLASH,
     capslock = c.SDL_SCANCODE_CAPSLOCK,
@@ -354,7 +357,7 @@ pub const Scancode = enum(u32) {
     scrolllock = c.SDL_SCANCODE_SCROLLLOCK,
     pause = c.SDL_SCANCODE_PAUSE,
     insert = c.SDL_SCANCODE_INSERT,
-    ode_home = c.SDL_SCANCODE_HOME,
+    home = c.SDL_SCANCODE_HOME,
     pageup = c.SDL_SCANCODE_PAGEUP,
     delete = c.SDL_SCANCODE_DELETE,
     end = c.SDL_SCANCODE_END,
@@ -364,7 +367,7 @@ pub const Scancode = enum(u32) {
     down = c.SDL_SCANCODE_DOWN,
     up = c.SDL_SCANCODE_UP,
     numlockclear = c.SDL_SCANCODE_NUMLOCKCLEAR,
-    ode_kp_divide = c.SDL_SCANCODE_KP_DIVIDE,
+    kp_divide = c.SDL_SCANCODE_KP_DIVIDE,
     kp_multiply = c.SDL_SCANCODE_KP_MULTIPLY,
     kp_minus = c.SDL_SCANCODE_KP_MINUS,
     kp_plus = c.SDL_SCANCODE_KP_PLUS,
@@ -381,9 +384,9 @@ pub const Scancode = enum(u32) {
     kp_0 = c.SDL_SCANCODE_KP_0,
     kp_period = c.SDL_SCANCODE_KP_PERIOD,
     nonusbackslash = c.SDL_SCANCODE_NONUSBACKSLASH,
-    ode_application = c.SDL_SCANCODE_APPLICATION,
-    cancode_power = c.SDL_SCANCODE_POWER,
-    dl_scancode_kp_equals = c.SDL_SCANCODE_KP_EQUALS,
+    application = c.SDL_SCANCODE_APPLICATION,
+    power = c.SDL_SCANCODE_POWER,
+    kp_equals = c.SDL_SCANCODE_KP_EQUALS,
     f13 = c.SDL_SCANCODE_F13,
     f14 = c.SDL_SCANCODE_F14,
     f15 = c.SDL_SCANCODE_F15,
@@ -413,9 +416,9 @@ pub const Scancode = enum(u32) {
     kp_comma = c.SDL_SCANCODE_KP_COMMA,
     kp_equalsas400 = c.SDL_SCANCODE_KP_EQUALSAS400,
     international1 = c.SDL_SCANCODE_INTERNATIONAL1,
-    ode_international2 = c.SDL_SCANCODE_INTERNATIONAL2,
+    international2 = c.SDL_SCANCODE_INTERNATIONAL2,
     international3 = c.SDL_SCANCODE_INTERNATIONAL3,
-    ode_international4 = c.SDL_SCANCODE_INTERNATIONAL4,
+    international4 = c.SDL_SCANCODE_INTERNATIONAL4,
     international5 = c.SDL_SCANCODE_INTERNATIONAL5,
     international6 = c.SDL_SCANCODE_INTERNATIONAL6,
     international7 = c.SDL_SCANCODE_INTERNATIONAL7,
@@ -497,7 +500,7 @@ pub const Scancode = enum(u32) {
     ralt = c.SDL_SCANCODE_RALT,
     rgui = c.SDL_SCANCODE_RGUI,
     mode = c.SDL_SCANCODE_MODE,
-    de_sleep = c.SDL_SCANCODE_SLEEP,
+    sleep = c.SDL_SCANCODE_SLEEP,
     wake = c.SDL_SCANCODE_WAKE,
     channel_increment = c.SDL_SCANCODE_CHANNEL_INCREMENT,
     channel_decrement = c.SDL_SCANCODE_CHANNEL_DECREMENT,
@@ -526,27 +529,28 @@ pub const Scancode = enum(u32) {
     ac_stop = c.SDL_SCANCODE_AC_STOP,
     ac_refresh = c.SDL_SCANCODE_AC_REFRESH,
     ac_bookmarks = c.SDL_SCANCODE_AC_BOOKMARKS,
-    de_softleft = c.SDL_SCANCODE_SOFTLEFT,
+    softleft = c.SDL_SCANCODE_SOFTLEFT,
     softright = c.SDL_SCANCODE_SOFTRIGHT,
     call = c.SDL_SCANCODE_CALL,
     endcall = c.SDL_SCANCODE_ENDCALL,
 
-    pub fn getName(self: Scancode) []const u8 {
-        return std.mem.sliceTo(c.SDL_GetScancodeName(@intFromEnum(self)), 0);
+    pub fn getName(self: *const Scancode) []const u8 {
+        return std.mem.span(c.SDL_GetScancodeName(@intFromEnum(self)));
     }
 
-    pub fn setName(self: Scancode, name: [:0]const u8) !void {
+    pub fn setName(self: *const Scancode, name: [:0]const u8) !void {
         try errify(c.SDL_SetScancodeName(@intFromEnum(self), name.ptr));
     }
 
-    pub fn getKey(self: Scancode, modstate: Keymod, key_event: bool) Keycode {
+    pub fn getKey(self: *const Scancode, modstate: Keymod, key_event: bool) Keycode {
         return @enumFromInt(c.SDL_GetKeyFromScancode(@intFromEnum(self), @intFromEnum(modstate), key_event));
     }
 
     pub fn fromName(name: [:0]const u8) !Scancode {
-        const scancode = c.SDL_GetScancodeFromName(name.ptr);
-        try errify(scancode != c.SDL_SCANCODE_UNKNOWN);
-        return @enumFromInt(scancode);
+        return @enumFromInt(try errifyWithValue(
+            c.SDL_GetScancodeFromName(name.ptr),
+            c.SDL_SCANCODE_UNKNOWN,
+        ));
     }
 };
 
@@ -574,7 +578,7 @@ pub const Keymod = enum(u16) {
         return @enumFromInt(c.SDL_GetModState());
     }
 
-    pub fn setState(self: Keymod) void {
+    pub fn setState(self: *const Keymod) void {
         c.SDL_SetModState(@intFromEnum(self));
     }
 };
@@ -618,31 +622,31 @@ pub fn resetKeyboard() void {
     c.SDL_ResetKeyboard();
 }
 
-pub fn startTextInput(window: *const Window) !void {
+pub fn startTextInput(window: Window) !void {
     try errify(c.SDL_StartTextInput(window.ptr));
 }
 
-pub fn startTextInputWithProperties(window: *const Window, props: PropertiesID) !void {
+pub fn startTextInputWithProperties(window: Window, props: PropertiesID) !void {
     try errify(c.SDL_StartTextInputWithProperties(window.ptr, props));
 }
 
-pub fn textInputActive(window: *const Window) bool {
+pub fn textInputActive(window: Window) bool {
     return c.SDL_TextInputActive(window.ptr);
 }
 
-pub fn stopTextInput(window: *const Window) !void {
+pub fn stopTextInput(window: Window) !void {
     try errify(c.SDL_StopTextInput(window.ptr));
 }
 
-pub fn clearComposition(window: *const Window) !void {
+pub fn clearComposition(window: Window) !void {
     try errify(c.SDL_ClearComposition(window.ptr));
 }
 
-pub fn setTextInputArea(window: *const Window, rectangle: *const Rectangle, cursor: c_int) !void {
+pub fn setTextInputArea(window: Window, rectangle: Rectangle, cursor: c_int) !void {
     try errify(c.SDL_SetTextInputArea(window.ptr, @ptrCast(rectangle), cursor));
 }
 
-pub fn getTextInputArea(window: *const Window, cursor: ?*c_int) !Rectangle {
+pub fn getTextInputArea(window: Window, cursor: ?*c_int) !Rectangle {
     var rectangle: Rectangle = undefined;
     try errify(c.SDL_GetTextInputArea(window.ptr, @ptrCast(&rectangle), cursor));
     return rectangle;
@@ -652,6 +656,6 @@ pub fn hasScreenKeyboardSupport() bool {
     return c.SDL_HasScreenKeyboardSupport();
 }
 
-pub fn screenKeyboardShown(window: *const Window) bool {
+pub fn screenKeyboardShown(window: Window) bool {
     return c.SDL_ScreenKeyboardShown(window.ptr);
 }

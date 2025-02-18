@@ -34,6 +34,14 @@ test "window" {
                         else => {},
                     }
                 },
+                .keyboard => |k| {
+                    switch (k.data) {
+                        .down => |key| {
+                            _ = key;
+                        },
+                        else => {},
+                    }
+                },
                 else => {},
             }
         }

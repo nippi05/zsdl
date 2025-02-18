@@ -32,11 +32,6 @@ jobs:
           version: ${{ env.ZIG_VERSION }}
       - name: Build
         run: zig build
-      - uses: actions/upload-artifact@v4
-        with:
-          name: nitrome-${{ matrix.arch }}-macos
-          path: zig-out/bin/
-          retention-days: 7
   build-windows:
     name: build (windows, ${{ matrix.arch }})
     runs-on: ubuntu-22.04
@@ -55,11 +50,6 @@ jobs:
           version: ${{ env.ZIG_VERSION }}
       - name: Build
         run: zig build -Dtarget=${{ matrix.target }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: nitrome-${{ matrix.target }}
-          path: zig-out/bin/
-          retention-days: 7
   build-linux:
     name: build (linux, ${{ matrix.arch }})
     runs-on: ubuntu-22.04
@@ -88,11 +78,6 @@ jobs:
           version: ${{ env.ZIG_VERSION }}
       - name: Build
         run: zig build -Dtarget=${{ matrix.target }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: nitrome-${{ matrix.target }}
-          path: zig-out/bin/
-          retention-days: 7
   docs:
     name: build and deploy documentation
     runs-on: ubuntu-latest

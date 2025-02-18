@@ -268,6 +268,7 @@ pub const Keycode = enum(u32) {
     rmeta = c.SDLK_RMETA,
     lhyper = c.SDLK_LHYPER,
     rhyper = c.SDLK_RHYPER,
+    _,
 
     /// Gets a human-readable name for a key.
     pub fn getName(self: Keycode) []const u8 {
@@ -536,6 +537,7 @@ pub const Scancode = enum(u32) {
     softright = c.SDL_SCANCODE_SOFTRIGHT,
     call = c.SDL_SCANCODE_CALL,
     endcall = c.SDL_SCANCODE_ENDCALL,
+    _,
 
     /// Gets a human-readable name for a scancode.
     pub fn getName(self: Scancode) []const u8 {

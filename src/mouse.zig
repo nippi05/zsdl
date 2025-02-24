@@ -44,7 +44,7 @@ pub const MouseButtonFlags = struct {
     x1: bool = false,
     x2: bool = false,
 
-    pub fn fromInt(flags: u32) MouseButtonFlags {
+    pub inline fn fromInt(flags: u32) MouseButtonFlags {
         return .{
             .left = flags & c.SDL_BUTTON_LMASK != 0,
             .middle = flags & c.SDL_BUTTON_MMASK != 0,
@@ -56,24 +56,24 @@ pub const MouseButtonFlags = struct {
 };
 
 /// Return whether a mouse is currently connected.
-pub fn hasMouse() bool {
+pub inline fn hasMouse() bool {
     return c.SDL_HasMouse();
 }
 
 /// Get a list of currently connected mice.
-pub fn getMice() ![]MouseID {
+pub inline fn getMice() ![]MouseID {
     var count: c_int = undefined;
     const mice = try errify(c.SDL_GetMice(&count));
     return @ptrCast(mice[0..@intCast(count)]);
 }
 
 /// Get the name of a mouse
-pub fn getMouseNameForID(id: MouseID) ![]const u8 {
+pub inline fn getMouseNameForID(id: MouseID) ![]const u8 {
     return std.mem.span(try errify(c.SDL_GetMouseNameForID(id)));
 }
 
 /// Get the window which currently has mouse focus.
-pub fn getMouseFocus() ?Window {
+pub inline fn getMouseFocus() ?Window {
     if (c.SDL_GetMouseFocus()) |ptr| {
         return Window{ .ptr = ptr };
     }
@@ -81,42 +81,42 @@ pub fn getMouseFocus() ?Window {
 }
 
 /// Query SDL's cache for the synchronous mouse button state and position
-pub fn getMouseState(x: *f32, y: *f32) MouseButtonFlags {
+pub inline fn getMouseState(x: *f32, y: *f32) MouseButtonFlags {
     return MouseButtonFlags.fromInt(c.SDL_GetMouseState(x, y));
 }
 
 /// Query the platform for the asynchronous mouse button state and position
-pub fn getGlobalMouseState(x: *f32, y: *f32) MouseButtonFlags {
+pub inline fn getGlobalMouseState(x: *f32, y: *f32) MouseButtonFlags {
     return MouseButtonFlags.fromInt(c.SDL_GetGlobalMouseState(x, y));
 }
 
 /// Query SDL's cache for the synchronous mouse button state and accumulated delta
-pub fn getRelativeMouseState(x: *f32, y: *f32) MouseButtonFlags {
+pub inline fn getRelativeMouseState(x: *f32, y: *f32) MouseButtonFlags {
     return MouseButtonFlags.fromInt(c.SDL_GetRelativeMouseState(x, y));
 }
 
 /// Move the mouse cursor to the given position within the window
-pub fn warpMouseInWindow(window: Window, x: f32, y: f32) void {
+pub inline fn warpMouseInWindow(window: Window, x: f32, y: f32) void {
     c.SDL_WarpMouseInWindow(window.ptr, x, y);
 }
 
 /// Move the mouse to the given position in global screen space
-pub fn warpMouseGlobal(x: f32, y: f32) !void {
+pub inline fn warpMouseGlobal(x: f32, y: f32) !void {
     try errify(c.SDL_WarpMouseGlobal(x, y));
 }
 
 /// Set relative mouse mode for a window
-pub fn setWindowRelativeMouseMode(window: Window, enabled: bool) !void {
+pub inline fn setWindowRelativeMouseMode(window: Window, enabled: bool) !void {
     try errify(c.SDL_SetWindowRelativeMouseMode(window.ptr, enabled));
 }
 
 /// Query whether relative mouse mode is enabled for a window
-pub fn getWindowRelativeMouseMode(window: Window) bool {
+pub inline fn getWindowRelativeMouseMode(window: Window) bool {
     return c.SDL_GetWindowRelativeMouseMode(window.ptr);
 }
 
 /// Capture the mouse and to track input outside an SDL window
-pub fn captureMouse(enabled: bool) !void {
+pub inline fn captureMouse(enabled: bool) !void {
     try errify(c.SDL_CaptureMouse(enabled));
 }
 
@@ -124,33 +124,33 @@ pub const Cursor = struct {
     ptr: *c.SDL_Cursor,
 
     /// Create a cursor using the specified bitmap data and mask
-    pub fn create(data: [*]const u8, mask: [*]const u8, w: i32, h: i32, hot_x: i32, hot_y: i32) !Cursor {
+    pub inline fn create(data: [*]const u8, mask: [*]const u8, w: i32, h: i32, hot_x: i32, hot_y: i32) !Cursor {
         return Cursor{ .ptr = try errify(c.SDL_CreateCursor(data, mask, w, h, hot_x, hot_y)) };
     }
 
     /// Create a color cursor
-    pub fn createColor(surface: *c.SDL_Surface, hot_x: i32, hot_y: i32) !Cursor {
+    pub inline fn createColor(surface: *c.SDL_Surface, hot_x: i32, hot_y: i32) !Cursor {
         return Cursor{ .ptr = try errify(c.SDL_CreateColorCursor(surface, hot_x, hot_y)) };
     }
 
     /// Create a system cursor
-    pub fn createSystem(id: SystemCursor) !Cursor {
+    pub inline fn createSystem(id: SystemCursor) !Cursor {
         return Cursor{ .ptr = try errify(c.SDL_CreateSystemCursor(@intFromEnum(id))) };
     }
 
     /// Free a previously-created cursor
-    pub fn destroy(self: Cursor) void {
+    pub inline fn destroy(self: Cursor) void {
         c.SDL_DestroyCursor(self.ptr);
     }
 
     /// Set the active cursor
-    pub fn set(self: Cursor) !void {
+    pub inline fn set(self: Cursor) !void {
         try errify(c.SDL_SetCursor(self.ptr));
     }
 };
 
 /// Get the active cursor
-pub fn getCursor() ?Cursor {
+pub inline fn getCursor() ?Cursor {
     if (c.SDL_GetCursor()) |ptr| {
         return Cursor{ .ptr = ptr };
     }
@@ -158,21 +158,21 @@ pub fn getCursor() ?Cursor {
 }
 
 /// Get the default cursor
-pub fn getDefaultCursor() !Cursor {
+pub inline fn getDefaultCursor() !Cursor {
     return Cursor{ .ptr = try errify(c.SDL_GetDefaultCursor()) };
 }
 
 /// Show the cursor
-pub fn showCursor() !void {
+pub inline fn showCursor() !void {
     try errify(c.SDL_ShowCursor());
 }
 
 /// Hide the cursor
-pub fn hideCursor() !void {
+pub inline fn hideCursor() !void {
     try errify(c.SDL_HideCursor());
 }
 
 /// Return whether the cursor is currently being shown
-pub fn cursorVisible() bool {
+pub inline fn cursorVisible() bool {
     return c.SDL_CursorVisible();
 }

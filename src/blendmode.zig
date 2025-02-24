@@ -32,7 +32,7 @@ pub const BlendFactor = enum(c_uint) {
     one_minus_dst_alpha = c.SDL_BLENDFACTOR_ONE_MINUS_DST_ALPHA,
 };
 
-pub fn composeCustomBlendMode(
+pub inline fn composeCustomBlendMode(
     srcColorFactor: BlendFactor,
     dstColorFactor: BlendFactor,
     colorOperation: BlendOperation,

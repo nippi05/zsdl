@@ -24,7 +24,7 @@ pub const FileDialogProperties = struct {
     accept: ?[*:0]const u8 = null,
     cancel: ?[*:0]const u8 = null,
 
-    fn apply(self: FileDialogProperties, props: c.SDL_PropertiesID) void {
+    inline fn apply(self: FileDialogProperties, props: c.SDL_PropertiesID) void {
         if (self.filters) |f| {
             _ = c.SDL_SetPointerProperty(props, c.SDL_PROP_FILE_DIALOG_FILTERS_POINTER, @ptrCast(@constCast(f.ptr)));
             _ = c.SDL_SetNumberProperty(props, c.SDL_PROP_FILE_DIALOG_NFILTERS_NUMBER, @intCast(f.len));
@@ -45,7 +45,7 @@ pub const FileDialogType = enum(u32) {
 };
 
 /// Displays a dialog that lets the user select a file on their filesystem.
-pub fn showOpenFileDialog(
+pub inline fn showOpenFileDialog(
     callback: DialogFileCallback,
     userdata: ?*anyopaque,
     window: ?Window,
@@ -65,7 +65,7 @@ pub fn showOpenFileDialog(
 }
 
 /// Displays a dialog that lets the user choose a new or existing file on their filesystem.
-pub fn showSaveFileDialog(
+pub inline fn showSaveFileDialog(
     callback: DialogFileCallback,
     userdata: ?*anyopaque,
     window: ?Window,
@@ -83,7 +83,7 @@ pub fn showSaveFileDialog(
 }
 
 /// Displays a dialog that lets the user select a folder on their filesystem.
-pub fn showOpenFolderDialog(
+pub inline fn showOpenFolderDialog(
     callback: DialogFileCallback,
     userdata: ?*anyopaque,
     window: ?Window,
@@ -100,7 +100,7 @@ pub fn showOpenFolderDialog(
 }
 
 /// Create and launch a file dialog with the specified properties.
-pub fn showFileDialogWithProperties(
+pub inline fn showFileDialogWithProperties(
     dialog_type: FileDialogType,
     callback: DialogFileCallback,
     userdata: ?*anyopaque,

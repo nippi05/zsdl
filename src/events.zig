@@ -49,7 +49,7 @@ pub const Event = union(EventType) {
     camera: CameraEvent,
     pen: PenEvent,
 
-    pub fn fromNative(event: c.SDL_Event) Event {
+    pub inline fn fromNative(event: c.SDL_Event) Event {
         return switch (event.type) {
             c.SDL_EVENT_FIRST => .{ .first = {} },
             c.SDL_EVENT_QUIT => .{ .quit = {} },
@@ -764,99 +764,99 @@ pub const RenderEvent = struct {
 };
 
 /// Poll for currently pending events.
-pub fn pollEvent() ?Event {
+pub inline fn pollEvent() ?Event {
     var event: c.SDL_Event = undefined;
     if (!c.SDL_PollEvent(&event)) return null;
     return Event.fromNative(event);
 }
 
 /// Pump the event loop, gathering events from the input devices.
-pub fn pumpEvents() void {
+pub inline fn pumpEvents() void {
     c.SDL_PumpEvents();
 }
 
 /// Check the event queue for messages and optionally return them.
-pub fn peepEvents(events: ?[*]c.SDL_Event, numevents: i32, action: c.SDL_EventAction, minType: u32, maxType: u32) !i32 {
+pub inline fn peepEvents(events: ?[*]c.SDL_Event, numevents: i32, action: c.SDL_EventAction, minType: u32, maxType: u32) !i32 {
     return errify(c.SDL_PeepEvents(events, numevents, action, minType, maxType));
 }
 
 /// Check for the existence of a certain event type in the event queue.
-pub fn hasEvent(event_type: u32) bool {
+pub inline fn hasEvent(event_type: u32) bool {
     return c.SDL_HasEvent(event_type);
 }
 
 /// Check for the existence of certain event types in the event queue.
-pub fn hasEvents(minType: u32, maxType: u32) bool {
+pub inline fn hasEvents(minType: u32, maxType: u32) bool {
     return c.SDL_HasEvents(minType, maxType);
 }
 
 /// Clear events of a specific type from the event queue.
-pub fn flushEvent(event_type: u32) void {
+pub inline fn flushEvent(event_type: u32) void {
     c.SDL_FlushEvent(event_type);
 }
 
 /// Clear events of a range of types from the event queue.
-pub fn flushEvents(minType: u32, maxType: u32) void {
+pub inline fn flushEvents(minType: u32, maxType: u32) void {
     c.SDL_FlushEvents(minType, maxType);
 }
 
 /// Wait indefinitely for the next available event.
-pub fn waitEvent(event: ?*c.SDL_Event) !bool {
+pub inline fn waitEvent(event: ?*c.SDL_Event) !bool {
     return errify(c.SDL_WaitEvent(event));
 }
 
 /// Wait until the specified timeout (in milliseconds) for the next available event.
-pub fn waitEventTimeout(event: ?*c.SDL_Event, timeout: i32) bool {
+pub inline fn waitEventTimeout(event: ?*c.SDL_Event, timeout: i32) bool {
     return c.SDL_WaitEventTimeout(event, timeout);
 }
 
 /// Add an event to the event queue.
-pub fn pushEvent(event: *c.SDL_Event) !bool {
+pub inline fn pushEvent(event: *c.SDL_Event) !bool {
     return errify(c.SDL_PushEvent(event));
 }
 
 /// Set up a filter to process all events before they are added to the internal event queue.
-pub fn setEventFilter(filter: c.SDL_EventFilter, userdata: ?*anyopaque) void {
+pub inline fn setEventFilter(filter: c.SDL_EventFilter, userdata: ?*anyopaque) void {
     c.SDL_SetEventFilter(filter, userdata);
 }
 
 /// Query the current event filter.
-pub fn getEventFilter(filter: ?*c.SDL_EventFilter, userdata: ?*?*anyopaque) bool {
+pub inline fn getEventFilter(filter: ?*c.SDL_EventFilter, userdata: ?*?*anyopaque) bool {
     return c.SDL_GetEventFilter(filter, userdata);
 }
 
 /// Add a callback to be triggered when an event is added to the event queue.
-pub fn addEventWatch(filter: c.SDL_EventFilter, userdata: ?*anyopaque) !bool {
+pub inline fn addEventWatch(filter: c.SDL_EventFilter, userdata: ?*anyopaque) !bool {
     return errify(c.SDL_AddEventWatch(filter, userdata));
 }
 
 /// Remove an event watch callback added with addEventWatch().
-pub fn removeEventWatch(filter: c.SDL_EventFilter, userdata: ?*anyopaque) void {
+pub inline fn removeEventWatch(filter: c.SDL_EventFilter, userdata: ?*anyopaque) void {
     c.SDL_RemoveEventWatch(filter, userdata);
 }
 
 /// Run a specific filter function on the current event queue, removing any events for which the filter returns false.
-pub fn filterEvents(filter: c.SDL_EventFilter, userdata: ?*anyopaque) void {
+pub inline fn filterEvents(filter: c.SDL_EventFilter, userdata: ?*anyopaque) void {
     c.SDL_FilterEvents(filter, userdata);
 }
 
 /// Set the state of processing events by type.
-pub fn setEventEnabled(event_type: u32, enabled: bool) void {
+pub inline fn setEventEnabled(event_type: u32, enabled: bool) void {
     c.SDL_SetEventEnabled(event_type, enabled);
 }
 
 /// Query the state of processing events by type.
-pub fn eventEnabled(event_type: u32) bool {
+pub inline fn eventEnabled(event_type: u32) bool {
     return c.SDL_EventEnabled(event_type);
 }
 
 /// Allocate a set of user-defined events, and return the beginning event number for that set of events.
-pub fn registerEvents(numevents: i32) u32 {
+pub inline fn registerEvents(numevents: i32) u32 {
     return c.SDL_RegisterEvents(numevents);
 }
 
 /// Get window associated with an event.
-pub fn getWindowFromEvent(event: *const c.SDL_Event) ?*Window {
+pub inline fn getWindowFromEvent(event: *const c.SDL_Event) ?*Window {
     if (c.SDL_GetWindowFromEvent(event)) |window| {
         return @ptrCast(window);
     }

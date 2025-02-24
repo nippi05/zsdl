@@ -271,17 +271,17 @@ pub const Keycode = enum(u32) {
     _,
 
     /// Gets a human-readable name for a key.
-    pub fn getName(self: Keycode) []const u8 {
+    pub inline fn getName(self: Keycode) []const u8 {
         return std.mem.span(c.SDL_GetKeyName(@intFromEnum(self)));
     }
 
     /// Gets the scancode corresponding to the given key code according to the current keyboard layout.
-    pub fn getScancode(self: Keycode, modstate: Keymod) Scancode {
+    pub inline fn getScancode(self: Keycode, modstate: Keymod) Scancode {
         return @enumFromInt(c.SDL_GetScancodeFromKey(@intFromEnum(self), @intFromEnum(modstate)));
     }
 
     /// Gets a key code from a human-readable name.
-    pub fn fromName(name: [:0]const u8) !Keycode {
+    pub inline fn fromName(name: [:0]const u8) !Keycode {
         return @enumFromInt(try errifyWithValue(
             c.SDL_GetKeyFromName(name.ptr),
             c.SDLK_UNKNOWN,
@@ -540,22 +540,22 @@ pub const Scancode = enum(u32) {
     _,
 
     /// Gets a human-readable name for a scancode.
-    pub fn getName(self: Scancode) []const u8 {
+    pub inline fn getName(self: Scancode) []const u8 {
         return std.mem.span(c.SDL_GetScancodeName(@intFromEnum(self)));
     }
 
     /// Sets a human-readable name for a scancode.
-    pub fn setName(self: Scancode, name: [:0]const u8) !void {
+    pub inline fn setName(self: Scancode, name: [:0]const u8) !void {
         try errify(c.SDL_SetScancodeName(@intFromEnum(self), name.ptr));
     }
 
     /// Gets the key code corresponding to the given scancode according to the current keyboard layout.
-    pub fn getKey(self: Scancode, modstate: Keymod, key_event: bool) Keycode {
+    pub inline fn getKey(self: Scancode, modstate: Keymod, key_event: bool) Keycode {
         return @enumFromInt(c.SDL_GetKeyFromScancode(@intFromEnum(self), @intFromEnum(modstate), key_event));
     }
 
     /// Gets a scancode from a human-readable name.
-    pub fn fromName(name: [:0]const u8) !Scancode {
+    pub inline fn fromName(name: [:0]const u8) !Scancode {
         return @enumFromInt(try errifyWithValue(
             c.SDL_GetScancodeFromName(name.ptr),
             c.SDL_SCANCODE_UNKNOWN,
@@ -584,12 +584,12 @@ pub const Keymod = enum(u16) {
     gui = c.SDL_KMOD_GUI,
 
     /// Gets the current key modifier state for the keyboard.
-    pub fn getState() Keymod {
+    pub inline fn getState() Keymod {
         return @enumFromInt(c.SDL_GetModState());
     }
 
     /// Sets the current key modifier state for the keyboard.
-    pub fn setState(self: Keymod) void {
+    pub inline fn setState(self: Keymod) void {
         c.SDL_SetModState(@intFromEnum(self));
     }
 };
@@ -598,7 +598,7 @@ pub const Keyboard = struct {
     id: KeyboardID,
 
     /// Gets the name of a keyboard.
-    pub fn getName(self: Keyboard) ?[]const u8 {
+    pub inline fn getName(self: Keyboard) ?[]const u8 {
         if (c.SDL_GetKeyboardNameForID(self.id)) |name_ptr| {
             return std.mem.sliceTo(name_ptr, 0);
         }
@@ -607,19 +607,19 @@ pub const Keyboard = struct {
 };
 
 /// Returns whether a keyboard is currently connected.
-pub fn hasKeyboard() bool {
+pub inline fn hasKeyboard() bool {
     return c.SDL_HasKeyboard();
 }
 
 /// Gets a list of currently connected keyboards.
-pub fn getKeyboards() ![]Keyboard {
+pub inline fn getKeyboards() ![]Keyboard {
     var count: c_int = undefined;
     var keyboard_ids = try errify(c.SDL_GetKeyboards(&count));
     return @ptrCast(keyboard_ids[0..@intCast(count)]);
 }
 
 /// Queries the window which currently has keyboard focus.
-pub fn getKeyboardFocus() ?Window {
+pub inline fn getKeyboardFocus() ?Window {
     if (c.SDL_GetKeyboardFocus()) |window_ptr| {
         return Window{ .ptr = window_ptr };
     }
@@ -627,7 +627,7 @@ pub fn getKeyboardFocus() ?Window {
 }
 
 /// Gets a snapshot of the current state of the keyboard.
-pub fn getKeyboardState() ![]const bool {
+pub inline fn getKeyboardState() ![]const bool {
     var numkeys: c_int = undefined;
     const state = try errify(c.SDL_GetKeyboardState(&numkeys));
     const len = if (numkeys) |n| @as(usize, @intCast(n.*)) else 512;
@@ -635,53 +635,53 @@ pub fn getKeyboardState() ![]const bool {
 }
 
 /// Clears the state of the keyboard.
-pub fn resetKeyboard() void {
+pub inline fn resetKeyboard() void {
     c.SDL_ResetKeyboard();
 }
 
 /// Starts accepting Unicode text input events in a window.
-pub fn startTextInput(window: Window) !void {
+pub inline fn startTextInput(window: Window) !void {
     try errify(c.SDL_StartTextInput(window.ptr));
 }
 
 /// Starts accepting Unicode text input events in a window, with properties describing the input.
-pub fn startTextInputWithProperties(window: Window, props: PropertiesID) !void {
+pub inline fn startTextInputWithProperties(window: Window, props: PropertiesID) !void {
     try errify(c.SDL_StartTextInputWithProperties(window.ptr, props));
 }
 
 /// Checks whether or not Unicode text input events are enabled for a window.
-pub fn textInputActive(window: Window) bool {
+pub inline fn textInputActive(window: Window) bool {
     return c.SDL_TextInputActive(window.ptr);
 }
 
 /// Stops receiving any text input events in a window.
-pub fn stopTextInput(window: Window) !void {
+pub inline fn stopTextInput(window: Window) !void {
     try errify(c.SDL_StopTextInput(window.ptr));
 }
 
 /// Dismisses the composition window/IME without disabling the subsystem.
-pub fn clearComposition(window: Window) !void {
+pub inline fn clearComposition(window: Window) !void {
     try errify(c.SDL_ClearComposition(window.ptr));
 }
 
 /// Sets the area used to type Unicode text input.
-pub fn setTextInputArea(window: Window, rectangle: Rectangle, cursor: c_int) !void {
+pub inline fn setTextInputArea(window: Window, rectangle: Rectangle, cursor: c_int) !void {
     try errify(c.SDL_SetTextInputArea(window.ptr, @ptrCast(rectangle), cursor));
 }
 
 /// Gets the area used to type Unicode text input.
-pub fn getTextInputArea(window: Window, cursor: ?*c_int) !Rectangle {
+pub inline fn getTextInputArea(window: Window, cursor: ?*c_int) !Rectangle {
     var rectangle: Rectangle = undefined;
     try errify(c.SDL_GetTextInputArea(window.ptr, @ptrCast(&rectangle), cursor));
     return rectangle;
 }
 
 /// Checks whether the platform has screen keyboard support.
-pub fn hasScreenKeyboardSupport() bool {
+pub inline fn hasScreenKeyboardSupport() bool {
     return c.SDL_HasScreenKeyboardSupport();
 }
 
 /// Checks whether the screen keyboard is shown for given window.
-pub fn screenKeyboardShown(window: Window) bool {
+pub inline fn screenKeyboardShown(window: Window) bool {
     return c.SDL_ScreenKeyboardShown(window.ptr);
 }

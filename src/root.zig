@@ -45,7 +45,7 @@ pub const InitFlags = packed struct {
     sensor: bool = false,
     camera: bool = false,
 
-    pub fn fromInt(flags: c.SDL_InitFlags) InitFlags {
+    pub inline fn fromInt(flags: c.SDL_InitFlags) InitFlags {
         return .{
             .audio = (flags & c.SDL_INIT_AUDIO) != 0,
             .video = (flags & c.SDL_INIT_VIDEO) != 0,
@@ -58,7 +58,7 @@ pub const InitFlags = packed struct {
         };
     }
 
-    pub fn toInt(self: InitFlags) c.SDL_InitFlags {
+    pub inline fn toInt(self: InitFlags) c.SDL_InitFlags {
         return (if (self.audio) c.SDL_INIT_AUDIO else 0) |
             (if (self.video) c.SDL_INIT_VIDEO else 0) |
             (if (self.joystick) c.SDL_INIT_JOYSTICK else 0) |
@@ -71,42 +71,42 @@ pub const InitFlags = packed struct {
 };
 
 /// Initialize the SDL library.
-pub fn init(flags: InitFlags) !void {
+pub inline fn init(flags: InitFlags) !void {
     try errify(c.SDL_Init(flags.toInt()));
 }
 
 /// Compatibility function to initialize the SDL library.
-pub fn initSubSystem(flags: InitFlags) !void {
+pub inline fn initSubSystem(flags: InitFlags) !void {
     try errify(c.SDL_InitSubSystem(flags.toInt()));
 }
 
 /// Shut down specific SDL subsystems.
-pub fn quitSubSystem(flags: InitFlags) void {
+pub inline fn quitSubSystem(flags: InitFlags) void {
     c.SDL_QuitSubSystem(flags.toInt());
 }
 
 /// Get a mask of the specified subsystems which are currently initialized.
-pub fn wasInit(flags: InitFlags) InitFlags {
+pub inline fn wasInit(flags: InitFlags) InitFlags {
     return InitFlags.fromInt(c.SDL_WasInit(flags.toInt()));
 }
 
 /// Clean up all initialized subsystems.
-pub fn quit() void {
+pub inline fn quit() void {
     c.SDL_Quit();
 }
 
 /// Return whether this is the main thread.
-pub fn isMainThread() bool {
+pub inline fn isMainThread() bool {
     return c.SDL_IsMainThread();
 }
 
 /// Call a function on the main thread during event processing.
-pub fn runOnMainThread(callback: c.SDL_MainThreadCallback, userdata: ?*anyopaque, wait_complete: bool) !void {
+pub inline fn runOnMainThread(callback: c.SDL_MainThreadCallback, userdata: ?*anyopaque, wait_complete: bool) !void {
     try errify(c.SDL_RunOnMainThread(callback, userdata, wait_complete));
 }
 
 /// Specify basic metadata about your app.
-pub fn setAppMetadata(
+pub inline fn setAppMetadata(
     name: [:0]const u8,
     appversion: [:0]const u8,
     appidentifier: [:0]const u8,
@@ -123,7 +123,7 @@ pub const AppMetadataProperty = enum {
     url_string,
     type_string,
 
-    pub fn toString(property: AppMetadataProperty) [:0]const u8 {
+    pub inline fn toString(property: AppMetadataProperty) [:0]const u8 {
         return switch (property) {
             .name_string => c.SDL_PROP_APP_METADATA_NAME_STRING,
             .version_string => c.SDL_PROP_APP_METADATA_VERSION_STRING,
@@ -137,7 +137,7 @@ pub const AppMetadataProperty = enum {
 };
 
 /// Specify metadata about your app through a set of properties.
-pub fn setAppMetadataProperty(
+pub inline fn setAppMetadataProperty(
     property: AppMetadataProperty,
     value: [:0]const u8,
 ) !void {
@@ -145,7 +145,7 @@ pub fn setAppMetadataProperty(
 }
 
 /// Get metadata about your app.
-pub fn getAppMetadataProperty(
+pub inline fn getAppMetadataProperty(
     property: AppMetadataProperty,
 ) []const u8 {
     return std.mem.sliceTo(

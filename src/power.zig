@@ -13,7 +13,7 @@ pub const PowerState = enum(i32) {
 };
 
 /// Get the current power supply details.
-pub fn getPowerInfo(seconds: *i32, percent: *i32) !PowerState {
+pub inline fn getPowerInfo(seconds: *i32, percent: *i32) !PowerState {
     return @enumFromInt(try errifyWithValue(
         c.SDL_GetPowerInfo(seconds, percent),
         c.SDL_POWERSTATE_ERROR,

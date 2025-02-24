@@ -70,7 +70,7 @@ pub const PixelFormat = enum(u32) {
     external_oes = c.SDL_PIXELFORMAT_EXTERNAL_OES,
 
     /// Get the human readable name of a pixel format
-    pub fn getName(self: PixelFormat) []const u8 {
+    pub inline fn getName(self: PixelFormat) []const u8 {
         return std.mem.span(c.SDL_GetPixelFormatName(@intFromEnum(self)));
     }
 };
@@ -110,7 +110,7 @@ pub const Palette = struct {
     ptr: *c.SDL_Palette,
 
     /// Create a palette structure with the specified number of color entries.
-    pub fn create(ncolors: i32) !Palette {
+    pub inline fn create(ncolors: i32) !Palette {
         const palette = c.SDL_CreatePalette(ncolors);
         try errify(palette != null);
         return .{
@@ -119,12 +119,12 @@ pub const Palette = struct {
     }
 
     /// Set a range of colors in a palette.
-    pub fn setColors(self: *const Palette, colors: []const Color, firstcolor: i32) !void {
+    pub inline fn setColors(self: *const Palette, colors: []const Color, firstcolor: i32) !void {
         try errify(c.SDL_SetPaletteColors(self.ptr, @ptrCast(colors.ptr), firstcolor, @intCast(colors.len)));
     }
 
     /// Free a palette created with create().
-    pub fn destroy(self: *const Palette) void {
+    pub inline fn destroy(self: *const Palette) void {
         c.SDL_DestroyPalette(self.ptr);
     }
 };
@@ -133,17 +133,17 @@ pub const PixelFormatDetails = struct {
     ptr: *const c.SDL_PixelFormatDetails,
 
     /// Convert one of the enumerated pixel formats to a bpp value and RGBA masks.
-    pub fn getMasks(format: PixelFormat, bpp: *i32, rmask: *u32, gmask: *u32, bmask: *u32, amask: *u32) !void {
+    pub inline fn getMasks(format: PixelFormat, bpp: *i32, rmask: *u32, gmask: *u32, bmask: *u32, amask: *u32) !void {
         try errify(c.SDL_GetMasksForPixelFormat(@intFromEnum(format), bpp, rmask, gmask, bmask, amask));
     }
 
     /// Convert a bpp value and RGBA masks to an enumerated pixel format.
-    pub fn getFormatForMasks(bpp: i32, rmask: u32, gmask: u32, bmask: u32, amask: u32) PixelFormat {
+    pub inline fn getFormatForMasks(bpp: i32, rmask: u32, gmask: u32, bmask: u32, amask: u32) PixelFormat {
         return @enumFromInt(c.SDL_GetPixelFormatForMasks(bpp, rmask, gmask, bmask, amask));
     }
 
     /// Create an SDL_PixelFormatDetails structure corresponding to a pixel format.
-    pub fn getDetails(format: PixelFormat) !PixelFormatDetails {
+    pub inline fn getDetails(format: PixelFormat) !PixelFormatDetails {
         const details = c.SDL_GetPixelFormatDetails(@intFromEnum(format));
         try errify(details != null);
         return .{
@@ -152,22 +152,22 @@ pub const PixelFormatDetails = struct {
     }
 
     /// Map an RGB triple to an opaque pixel value for a given pixel format.
-    pub fn mapRGB(self: *const PixelFormatDetails, palette: *const Palette, r: u8, g: u8, b: u8) u32 {
+    pub inline fn mapRGB(self: *const PixelFormatDetails, palette: *const Palette, r: u8, g: u8, b: u8) u32 {
         return c.SDL_MapRGB(self.ptr, palette.ptr, r, g, b);
     }
 
     /// Map an RGBA quadruple to a pixel value for a given pixel format.
-    pub fn mapRGBA(self: *const PixelFormatDetails, palette: *const Palette, r: u8, g: u8, b: u8, a: u8) u32 {
+    pub inline fn mapRGBA(self: *const PixelFormatDetails, palette: *const Palette, r: u8, g: u8, b: u8, a: u8) u32 {
         return c.SDL_MapRGBA(self.ptr, palette.ptr, r, g, b, a);
     }
 
     /// Get RGB values from a pixel in the specified format.
-    pub fn getRGB(self: *const PixelFormatDetails, pixel: u32, palette: *const Palette, r: ?*u8, g: ?*u8, b: ?*u8) void {
+    pub inline fn getRGB(self: *const PixelFormatDetails, pixel: u32, palette: *const Palette, r: ?*u8, g: ?*u8, b: ?*u8) void {
         c.SDL_GetRGB(pixel, self.ptr, palette.ptr, r, g, b);
     }
 
     /// Get RGBA values from a pixel in the specified format.
-    pub fn getRGBA(self: *const PixelFormatDetails, pixel: u32, palette: *const Palette, r: ?*u8, g: ?*u8, b: ?*u8, a: ?*u8) void {
+    pub inline fn getRGBA(self: *const PixelFormatDetails, pixel: u32, palette: *const Palette, r: ?*u8, g: ?*u8, b: ?*u8, a: ?*u8) void {
         c.SDL_GetRGBA(pixel, self.ptr, palette.ptr, r, g, b, a);
     }
 };

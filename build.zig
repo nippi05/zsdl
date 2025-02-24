@@ -1,6 +1,11 @@
 const std = @import("std");
 
-pub fn addTests(b: *std.Build, zsdl_mod: *std.Build.Module, zsdl_step: *std.Build.Step) !void {
+pub fn addTests(
+    b: *std.Build,
+    zsdl_mod: *std.Build.Module,
+    zsdl_step: *std.Build.Step,
+    target: std.Build.ResolvedTarget,
+) !void {
     var tests_dir = try b.build_root.handle.openDir("test", .{ .iterate = true });
     var iter = tests_dir.iterate();
     while (try iter.next()) |entry| {
@@ -12,6 +17,7 @@ pub fn addTests(b: *std.Build, zsdl_mod: *std.Build.Module, zsdl_step: *std.Buil
         const test_exe = b.addTest(.{
             .name = test_name,
             .root_source_file = b.path(b.pathJoin(&.{ "test", entry.name })),
+            .target = target,
             .optimize = .Debug,
         });
 
@@ -57,5 +63,5 @@ pub fn build(b: *std.Build) void {
     const docs_step = b.step("docs", "Generate library documentation");
     docs_step.dependOn(&docs.step);
 
-    addTests(b, zsdl_mod, &zsdl.step) catch {};
+    addTests(b, zsdl_mod, &zsdl.step, target) catch {};
 }

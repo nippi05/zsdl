@@ -148,8 +148,5 @@ pub inline fn setAppMetadataProperty(
 pub inline fn getAppMetadataProperty(
     property: AppMetadataProperty,
 ) []const u8 {
-    return std.mem.sliceTo(
-        c.SDL_GetAppMetadataProperty(property.toString()),
-        0,
-    );
+    return std.mem.span(c.SDL_GetAppMetadataProperty(property.toString()));
 }

@@ -99,12 +99,12 @@ pub inline fn getNumVideoDrivers() comptime_int {
 
 /// Get the name of a built in video driver.
 pub inline fn getVideoDriver(index: comptime_int) []const u8 {
-    return std.mem.sliceTo(c.SDL_GetVideoDriver(index), 0);
+    return std.mem.span(c.SDL_GetVideoDriver(index));
 }
 
 /// Get the name of the currently initialized video driver.
 pub inline fn getCurrentVideoDriver() []const u8 {
-    return std.mem.sliceTo(c.SDL_GetCurrentVideoDriver(), 0);
+    return std.mem.span(c.SDL_GetCurrentVideoDriver());
 }
 
 pub const SystemTheme = enum(c_int) {
@@ -169,7 +169,7 @@ pub const Display = packed struct {
 
     /// Get the name of a display in UTF-8 encoding.
     pub inline fn getName(self: *const Display) []const u8 {
-        return std.mem.sliceTo(c.SDL_GetDisplayName(self.id), 0);
+        return std.mem.span(c.SDL_GetDisplayName(self.id));
     }
 
     /// Get the desktop area represented by a display.
@@ -458,7 +458,7 @@ pub const Window = struct {
 
     /// Get the title of a window.
     pub inline fn getTitle(self: *const Window) []const u8 {
-        return std.mem.sliceTo(c.SDL_GetWindowTitle(self.ptr), 0);
+        return std.mem.span(c.SDL_GetWindowTitle(self.ptr));
     }
 
     /// Set the icon for a window.

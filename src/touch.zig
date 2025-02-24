@@ -37,7 +37,7 @@ pub const Touch = struct {
 
     /// Get the touch device name as reported from the driver.
     pub inline fn getName(self: Touch) []const u8 {
-        return std.mem.sliceTo(c.SDL_GetTouchDeviceName(self.id), 0);
+        return std.mem.span(c.SDL_GetTouchDeviceName(self.id));
     }
 
     /// Get the type of the given touch device.

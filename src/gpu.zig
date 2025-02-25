@@ -450,8 +450,8 @@ pub const VertexInputState = struct {
 };
 
 pub const ComputePipelineCreateInfo = struct {
-    code: [*:0]const u8,
-    entrypoint: [*:0]const u8,
+    code: []const u8,
+    entrypoint: []const u8,
     format: u32,
     num_samplers: u32,
     num_readonly_storage_textures: u32,
@@ -1408,18 +1408,18 @@ pub const ComputePass = struct {
     }
 
     /// Bind texture-sampler pairs for use on the compute shader.
-    pub inline fn bindComputeSamplers(self: *const ComputePass, first_slot: u32, texture_sampler_bindings: [*]const TextureSamplerBinding, num_bindings: u32) void {
-        c.SDL_BindGPUComputeSamplers(self.ptr, first_slot, texture_sampler_bindings, num_bindings);
+    pub inline fn bindComputeSamplers(self: *const ComputePass, first_slot: u32, texture_sampler_bindings: []const TextureSamplerBinding) void {
+        c.SDL_BindGPUComputeSamplers(self.ptr, first_slot, @intCast(texture_sampler_bindings.ptr), @intCast(texture_sampler_bindings.len));
     }
 
     /// Bind storage textures as readonly for use on the compute pipeline.
-    pub inline fn bindComputeStorageTextures(self: *const ComputePass, first_slot: u32, storage_textures: [*]const *Texture, num_bindings: u32) void {
-        c.SDL_BindGPUComputeStorageTextures(self.ptr, first_slot, storage_textures, num_bindings);
+    pub inline fn bindComputeStorageTextures(self: *const ComputePass, first_slot: u32, storage_textures: []const *Texture) void {
+        c.SDL_BindGPUComputeStorageTextures(self.ptr, first_slot, @intCast(storage_textures.ptr), @intCast(storage_textures.len));
     }
 
     /// Bind storage buffers as readonly for use on the compute pipeline.
-    pub inline fn bindComputeStorageBuffers(self: *const ComputePass, first_slot: u32, storage_buffers: [*]const *Buffer, num_bindings: u32) void {
-        c.SDL_BindGPUComputeStorageBuffers(self.ptr, first_slot, storage_buffers, num_bindings);
+    pub inline fn bindComputeStorageBuffers(self: *const ComputePass, first_slot: u32, storage_buffers: []const *Buffer) void {
+        c.SDL_BindGPUComputeStorageBuffers(self.ptr, first_slot, @intCast(storage_buffers.ptr), @intCast(storage_buffers.len));
     }
 
     /// Dispatch compute work.

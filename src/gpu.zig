@@ -121,7 +121,7 @@ pub const ColorTargetInfo = extern struct {
 };
 
 pub const DepthStencilTargetInfo = extern struct {
-    texture: *Texture,
+    texture: *allowzero Texture,
     clear_depth: f32,
     load_op: LoadOp,
     store_op: StoreOp,
@@ -1235,7 +1235,7 @@ pub const CommandBuffer = struct {
     pub inline fn beginRenderPass(
         self: *const CommandBuffer,
         color_target_infos: []const ColorTargetInfo,
-        depth_stencil_target_info: DepthStencilTargetInfo,
+        depth_stencil_target_info: ?DepthStencilTargetInfo,
     ) !RenderPass {
         return .{
             .ptr = try errify(c.SDL_BeginGPURenderPass(

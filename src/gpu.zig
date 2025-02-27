@@ -857,9 +857,10 @@ pub const SampleCount = enum(u32) {
 };
 
 pub const SwapchainComposition = enum(u32) {
-    automatic = c.SDL_GPU_SWAPCHAIN_AUTOMATIC,
-    copy = c.SDL_GPU_SWAPCHAIN_COPY,
-    flip = c.SDL_GPU_SWAPCHAIN_FLIP,
+    sdr = c.SDL_GPU_SWAPCHAINCOMPOSITION_SDR,
+    sdr_linear = c.SDL_GPU_SWAPCHAINCOMPOSITION_SDR_LINEAR,
+    hdr_extended_linear = c.SDL_GPU_SWAPCHAINCOMPOSITION_HDR_EXTENDED_LINEAR,
+    hdr10_st2084 = c.SDL_GPU_SWAPCHAINCOMPOSITION_HDR10_ST2084,
 };
 
 pub const PresentMode = enum(u32) {
@@ -1089,7 +1090,7 @@ pub const Device = struct {
 
     /// Check if a window supports the specified present mode.
     pub inline fn windowSupportsPresentMode(self: *const Device, window: *const Window, present_mode: PresentMode) bool {
-        return c.SDL_WindowSupportsGPUPresentMode(self.ptr, window.ptr, present_mode);
+        return c.SDL_WindowSupportsGPUPresentMode(self.ptr, window.ptr, @intFromEnum(present_mode));
     }
 
     /// Claim a window, creating a swapchain structure for it.
@@ -1104,7 +1105,7 @@ pub const Device = struct {
 
     /// Change the swapchain parameters for the given claimed window.
     pub inline fn setSwapchainParameters(self: *const Device, window: Window, swapchain_composition: SwapchainComposition, present_mode: PresentMode) !void {
-        try errify(c.SDL_SetGPUSwapchainParameters(self.ptr, window.ptr, swapchain_composition, present_mode));
+        try errify(c.SDL_SetGPUSwapchainParameters(self.ptr, window.ptr, @intFromEnum(swapchain_composition), @intFromEnum(present_mode)));
     }
 
     /// Configure the maximum allowed number of frames in flight.

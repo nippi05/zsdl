@@ -369,7 +369,7 @@ test "graphics pipeline" {
         angle_z = @mod(angle_z, 360.0);
 
         cmd_buffer.pushVertexUniformData(0, &matrix_final, @sizeOf(@TypeOf(matrix_final)));
-        const render_pass = try cmd_buffer.beginRenderPass(&.{color_target}, depth_target);
+        const render_pass = try cmd_buffer.beginRenderPass(&.{color_target}, &depth_target);
         render_pass.bindGraphicsPipeline(pipeline);
         render_pass.bindVertexBuffers(0, &.{vertex_binding});
         render_pass.drawPrimitives(vertices.len, 1, 0, 0);

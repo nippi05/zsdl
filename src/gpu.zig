@@ -351,7 +351,7 @@ pub const VertexElementFormat = enum(u32) {
     half4 = c.SDL_GPU_VERTEXELEMENTFORMAT_HALF4,
 };
 
-pub const ColorComponentFlags = extern struct {
+pub const ColorComponentFlags = packed struct {
     r: bool = false,
     g: bool = false,
     b: bool = false,
@@ -374,7 +374,7 @@ pub const ColorComponentFlags = extern struct {
     }
 };
 
-pub const BufferUsageFlags = extern struct {
+pub const BufferUsageFlags = packed struct {
     vertex: bool = false,
     index: bool = false,
     indirect: bool = false,
@@ -817,7 +817,7 @@ pub const TextureType = enum(u32) {
     cube_array = c.SDL_GPU_TEXTURETYPE_CUBE_ARRAY,
 };
 
-pub const TextureUsageFlags = extern struct {
+pub const TextureUsageFlags = packed struct {
     sampler: bool = false,
     color_target: bool = false,
     depth_stencil_target: bool = false,
@@ -1235,14 +1235,14 @@ pub const CommandBuffer = struct {
     pub inline fn beginRenderPass(
         self: *const CommandBuffer,
         color_target_infos: []const ColorTargetInfo,
-        depth_stencil_target_info: ?DepthStencilTargetInfo,
+        depth_stencil_target_info: ?*DepthStencilTargetInfo,
     ) !RenderPass {
         return .{
             .ptr = try errify(c.SDL_BeginGPURenderPass(
                 self.ptr,
                 @ptrCast(color_target_infos.ptr),
                 @intCast(color_target_infos.len),
-                @ptrCast(&depth_stencil_target_info),
+                @ptrCast(depth_stencil_target_info),
             )),
         };
     }
@@ -1256,9 +1256,9 @@ pub const CommandBuffer = struct {
         return .{
             .ptr = try errify(c.SDL_BeginGPUComputePass(
                 self.ptr,
-                storage_texture_bindings,
+                @ptrCast(storage_texture_bindings.ptr),
                 @intCast(storage_texture_bindings.len),
-                storage_buffer_bindings,
+                @ptrCast(storage_buffer_bindings.ptr),
                 @intCast(storage_buffer_bindings.len),
             )),
         };

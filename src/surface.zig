@@ -1,9 +1,12 @@
 const std = @import("std");
 
+const BlendMode = @import("blendmode.zig").BlendMode;
 const c = @import("c.zig").c;
 const errify = @import("internal.zig").errify;
 const pixels = @import("pixels.zig");
 const PixelFormat = pixels.PixelFormat;
+const Colorspace = pixels.Colorspace;
+const Palette = pixels.Palette;
 const rect = @import("rect.zig");
 
 pub const ScaleMode = enum(u32) {
@@ -30,7 +33,7 @@ pub const Surface = struct {
     /// Creates a new Surface from existing pixel data.
     pub inline fn createFrom(width: c_int, height: c_int, format: PixelFormat, pixels_ptr: ?*anyopaque, pitch: c_int) !Surface {
         return Surface{
-            .ptr = try errify(c.SDL_CreateSurfaceFrom(width, height, format.toNative(), pixels_ptr, pitch)),
+            .ptr = try errify(c.SDL_CreateSurfaceFrom(width, height, @intFromEnum(format), pixels_ptr, pitch)),
         };
     }
 
@@ -45,28 +48,32 @@ pub const Surface = struct {
     }
 
     /// Sets the colorspace used by the surface.
-    pub inline fn setColorspace(self: *const Surface, colorspace: c.SDL_Colorspace) !void {
-        try errify(c.SDL_SetSurfaceColorspace(self.ptr, colorspace));
+    pub inline fn setColorspace(self: *const Surface, colorspace: Colorspace) !void {
+        try errify(c.SDL_SetSurfaceColorspace(self.ptr, @intFromEnum(colorspace)));
     }
 
     /// Gets the colorspace used by the surface.
-    pub inline fn getColorspace(self: *const Surface) c.SDL_Colorspace {
-        return c.SDL_GetSurfaceColorspace(self.ptr);
+    pub inline fn getColorspace(self: *const Surface) Colorspace {
+        return @enumFromInt(c.SDL_GetSurfaceColorspace(self.ptr));
     }
 
     /// Creates a palette and associates it with the surface.
-    pub inline fn createPalette(self: *const Surface) !*c.SDL_Palette {
-        return try errify(c.SDL_CreateSurfacePalette(self.ptr));
+    pub inline fn createPalette(self: *const Surface) !Palette {
+        return .{
+            .ptr = try errify(c.SDL_CreateSurfacePalette(self.ptr)),
+        };
     }
 
     /// Sets the palette used by the surface.
-    pub inline fn setPalette(self: *const Surface, palette: ?*c.SDL_Palette) !void {
-        try errify(c.SDL_SetSurfacePalette(self.ptr, palette));
+    pub inline fn setPalette(self: *const Surface, palette: Palette) !void {
+        try errify(c.SDL_SetSurfacePalette(self.ptr, palette.ptr));
     }
 
     /// Gets the palette used by the surface.
-    pub inline fn getPalette(self: *const Surface) ?*c.SDL_Palette {
-        return c.SDL_GetSurfacePalette(self.ptr);
+    pub inline fn getPalette(self: *const Surface) Palette {
+        return .{
+            .ptr = c.SDL_GetSurfacePalette(self.ptr),
+        };
     }
 
     /// Adds an alternate version of the surface.
@@ -165,21 +172,21 @@ pub const Surface = struct {
     }
 
     /// Sets the blend mode used for blit operations.
-    pub inline fn setBlendMode(self: *const Surface, blend_mode: c.SDL_BlendMode) !void {
-        try errify(c.SDL_SetSurfaceBlendMode(self.ptr, blend_mode));
+    pub inline fn setBlendMode(self: *const Surface, blend_mode: BlendMode) !void {
+        try errify(c.SDL_SetSurfaceBlendMode(self.ptr, @intFromEnum(blend_mode)));
     }
 
     /// Gets the blend mode used for blit operations.
-    pub inline fn getBlendMode(self: *const Surface) !c.SDL_BlendMode {
+    pub inline fn getBlendMode(self: *const Surface) !BlendMode {
         var blend_mode: c.SDL_BlendMode = undefined;
         try errify(c.SDL_GetSurfaceBlendMode(self.ptr, &blend_mode));
-        return blend_mode;
+        return @enumFromInt(blend_mode);
     }
 
     /// Sets the clipping rectangle for the surface.
-    pub inline fn setClipRect(self: *const Surface, rect_opt: ?rect.Rectangle) bool {
+    pub inline fn setClipRect(self: *const Surface, rect_opt: ?rect.Rectangle) void {
         const rect_ptr = if (rect_opt) |r| &r.toNative() else null;
-        return c.SDL_SetSurfaceClipRect(self.ptr, rect_ptr);
+        try errify(c.SDL_SetSurfaceClipRect(self.ptr, rect_ptr));
     }
 
     /// Gets the clipping rectangle for the surface.
@@ -204,14 +211,14 @@ pub const Surface = struct {
     /// Creates a new surface identical to the existing surface, scaled to the desired size.
     pub inline fn scale(self: *const Surface, width: c_int, height: c_int, scale_mode: ScaleMode) !Surface {
         return Surface{
-            .ptr = try errify(c.SDL_ScaleSurface(self.ptr, width, height, scale_mode)),
+            .ptr = try errify(c.SDL_ScaleSurface(self.ptr, width, height, @intFromEnum(scale_mode))),
         };
     }
 
     /// Converts the surface to a new format.
     pub inline fn convert(self: *const Surface, format: PixelFormat) !Surface {
         return Surface{
-            .ptr = try errify(c.SDL_ConvertSurface(self.ptr, format.toNative())),
+            .ptr = try errify(c.SDL_ConvertSurface(self.ptr, @intFromEnum(format))),
         };
     }
 
@@ -219,16 +226,16 @@ pub const Surface = struct {
     pub inline fn convertAndColorspace(
         self: *const Surface,
         format: PixelFormat,
-        palette: ?*c.SDL_Palette,
-        colorspace: c.SDL_Colorspace,
+        palette: ?*const Palette,
+        colorspace: Colorspace,
         props: c.SDL_PropertiesID,
     ) !Surface {
         return Surface{
             .ptr = try errify(c.SDL_ConvertSurfaceAndColorspace(
                 self.ptr,
-                format.toNative(),
-                palette,
-                colorspace,
+                @intFromEnum(format),
+                @ptrCast(palette),
+                @intFromEnum(colorspace),
                 props,
             )),
         };
@@ -405,10 +412,10 @@ pub inline fn convertPixels(
     try errify(c.SDL_ConvertPixels(
         width,
         height,
-        src_format.toNative(),
+        @intFromEnum(src_format),
         src,
         src_pitch,
-        dst_format.toNative(),
+        @intFromEnum(dst_format),
         dst,
         dst_pitch,
     ));
@@ -432,12 +439,12 @@ pub inline fn convertPixelsAndColorspace(
     try errify(c.SDL_ConvertPixelsAndColorspace(
         width,
         height,
-        src_format.toNative(),
+        @intFromEnum(src_format),
         src_colorspace,
         src_properties,
         src,
         src_pitch,
-        dst_format.toNative(),
+        @intFromEnum(dst_format),
         dst_colorspace,
         dst_properties,
         dst,
@@ -460,10 +467,10 @@ pub inline fn premultiplyAlpha(
     try errify(c.SDL_PremultiplyAlpha(
         width,
         height,
-        src_format.toNative(),
+        @intFromEnum(src_format),
         src,
         src_pitch,
-        dst_format.toNative(),
+        @intFromEnum(dst_format),
         dst,
         dst_pitch,
         linear,

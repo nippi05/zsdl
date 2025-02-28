@@ -75,7 +75,7 @@ pub const PixelFormat = enum(u32) {
     }
 };
 
-pub const ColorSpace = enum(u32) {
+pub const Colorspace = enum(u32) {
     unknown = c.SDL_COLORSPACE_UNKNOWN,
     srgb = c.SDL_COLORSPACE_SRGB,
     srgb_linear = c.SDL_COLORSPACE_SRGB_LINEAR,
@@ -88,8 +88,8 @@ pub const ColorSpace = enum(u32) {
     bt2020_limited = c.SDL_COLORSPACE_BT2020_LIMITED,
     bt2020_full = c.SDL_COLORSPACE_BT2020_FULL,
 
-    pub const rgb_default: ColorSpace = c.SDL_COLORSPACE_RGB_DEFAULT;
-    pub const yuv_default: ColorSpace = c.SDL_COLORSPACE_YUV_DEFAULT;
+    pub const rgb_default: Colorspace = c.SDL_COLORSPACE_RGB_DEFAULT;
+    pub const yuv_default: Colorspace = c.SDL_COLORSPACE_YUV_DEFAULT;
 };
 
 pub const Color = extern struct {

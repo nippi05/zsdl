@@ -24,16 +24,16 @@ pub const Surface = struct {
     ptr: *c.SDL_Surface,
 
     /// Creates a new Surface that can be safely destroyed with deinit().
-    pub inline fn create(width: c_int, height: c_int, format: PixelFormat) !Surface {
+    pub inline fn create(width: usize, height: usize, format: PixelFormat) !Surface {
         return Surface{
-            .ptr = try errify(c.SDL_CreateSurface(width, height, @intFromEnum(format))),
+            .ptr = try errify(c.SDL_CreateSurface(@intCast(width), @intCast(height), @intFromEnum(format))),
         };
     }
 
     /// Creates a new Surface from existing pixel data.
-    pub inline fn createFrom(width: c_int, height: c_int, format: PixelFormat, pixels_ptr: ?*anyopaque, pitch: c_int) !Surface {
+    pub inline fn createFrom(width: usize, height: usize, format: PixelFormat, pixels_ptr: ?*anyopaque, pitch: usize) !Surface {
         return Surface{
-            .ptr = try errify(c.SDL_CreateSurfaceFrom(width, height, @intFromEnum(format), pixels_ptr, pitch)),
+            .ptr = try errify(c.SDL_CreateSurfaceFrom(@intCast(width), @intCast(height), @intFromEnum(format), pixels_ptr, @intCast(pitch))),
         };
     }
 
@@ -209,9 +209,9 @@ pub const Surface = struct {
     }
 
     /// Creates a new surface identical to the existing surface, scaled to the desired size.
-    pub inline fn scale(self: *const Surface, width: c_int, height: c_int, scale_mode: ScaleMode) !Surface {
+    pub inline fn scale(self: *const Surface, width: usize, height: usize, scale_mode: ScaleMode) !Surface {
         return Surface{
-            .ptr = try errify(c.SDL_ScaleSurface(self.ptr, width, height, @intFromEnum(scale_mode))),
+            .ptr = try errify(c.SDL_ScaleSurface(self.ptr, @intCast(width), @intCast(height), @intFromEnum(scale_mode))),
         };
     }
 
@@ -298,33 +298,33 @@ pub const Surface = struct {
     }
 
     /// Retrieves a single pixel from the surface.
-    pub inline fn readPixel(self: *const Surface, x: c_int, y: c_int) !struct { r: u8, g: u8, b: u8, a: u8 } {
+    pub inline fn readPixel(self: *const Surface, x: usize, y: usize) !struct { r: u8, g: u8, b: u8, a: u8 } {
         var r: u8 = undefined;
         var g: u8 = undefined;
         var b: u8 = undefined;
         var a: u8 = undefined;
-        try errify(c.SDL_ReadSurfacePixel(self.ptr, x, y, &r, &g, &b, &a));
+        try errify(c.SDL_ReadSurfacePixel(self.ptr, @intCast(x), @intCast(y), &r, &g, &b, &a));
         return .{ .r = r, .g = g, .b = b, .a = a };
     }
 
     /// Retrieves a single pixel from the surface as floating point values.
-    pub inline fn readPixelFloat(self: *const Surface, x: c_int, y: c_int) !struct { r: f32, g: f32, b: f32, a: f32 } {
+    pub inline fn readPixelFloat(self: *const Surface, x: usize, y: usize) !struct { r: f32, g: f32, b: f32, a: f32 } {
         var r: f32 = undefined;
         var g: f32 = undefined;
         var b: f32 = undefined;
         var a: f32 = undefined;
-        try errify(c.SDL_ReadSurfacePixelFloat(self.ptr, x, y, &r, &g, &b, &a));
+        try errify(c.SDL_ReadSurfacePixelFloat(self.ptr, @intCast(x), @intCast(y), &r, &g, &b, &a));
         return .{ .r = r, .g = g, .b = b, .a = a };
     }
 
     /// Writes a single pixel to the surface.
-    pub inline fn writePixel(self: *const Surface, x: c_int, y: c_int, r: u8, g: u8, b: u8, a: u8) !void {
-        try errify(c.SDL_WriteSurfacePixel(self.ptr, x, y, r, g, b, a));
+    pub inline fn writePixel(self: *const Surface, x: usize, y: usize, r: u8, g: u8, b: u8, a: u8) !void {
+        try errify(c.SDL_WriteSurfacePixel(self.ptr, @intCast(x), @intCast(y), r, g, b, a));
     }
 
     /// Writes a single pixel to the surface using floating point values.
-    pub inline fn writePixelFloat(self: *const Surface, x: c_int, y: c_int, r: f32, g: f32, b: f32, a: f32) !void {
-        try errify(c.SDL_WriteSurfacePixelFloat(self.ptr, x, y, r, g, b, a));
+    pub inline fn writePixelFloat(self: *const Surface, x: usize, y: usize, r: f32, g: f32, b: f32, a: f32) !void {
+        try errify(c.SDL_WriteSurfacePixelFloat(self.ptr, @intCast(x), @intCast(y), r, g, b, a));
     }
 
     /// Performs a low-level surface blitting only.
@@ -367,10 +367,10 @@ pub const Surface = struct {
     pub inline fn blit9Grid(
         self: *const Surface,
         src_rect: ?rect.Rectangle,
-        left_width: c_int,
-        right_width: c_int,
-        top_height: c_int,
-        bottom_height: c_int,
+        left_width: usize,
+        right_width: usize,
+        top_height: usize,
+        bottom_height: usize,
         scal: f32,
         scale_mode: ScaleMode,
         dst: *Surface,
@@ -381,10 +381,10 @@ pub const Surface = struct {
         try errify(c.SDL_BlitSurface9Grid(
             self.ptr,
             src_rect_ptr,
-            left_width,
-            right_width,
-            top_height,
-            bottom_height,
+            @intCast(left_width),
+            @intCast(right_width),
+            @intCast(top_height),
+            @intCast(bottom_height),
             scal,
             scale_mode,
             dst.ptr,
@@ -400,79 +400,79 @@ pub const Surface = struct {
 
 /// Copy a block of pixels of one format to another format.
 pub inline fn convertPixels(
-    width: c_int,
-    height: c_int,
+    width: usize,
+    height: usize,
     src_format: PixelFormat,
     src: *const anyopaque,
-    src_pitch: c_int,
+    src_pitch: usize,
     dst_format: PixelFormat,
     dst: *anyopaque,
-    dst_pitch: c_int,
+    dst_pitch: usize,
 ) !void {
     try errify(c.SDL_ConvertPixels(
-        width,
-        height,
+        @intCast(width),
+        @intCast(height),
         @intFromEnum(src_format),
         src,
-        src_pitch,
+        @intCast(src_pitch),
         @intFromEnum(dst_format),
         dst,
-        dst_pitch,
+        @intCast(dst_pitch),
     ));
 }
 
 /// Copy a block of pixels of one format and colorspace to another format and colorspace.
 pub inline fn convertPixelsAndColorspace(
-    width: c_int,
-    height: c_int,
+    width: usize,
+    height: usize,
     src_format: PixelFormat,
     src_colorspace: c.SDL_Colorspace,
     src_properties: c.SDL_PropertiesID,
     src: *const anyopaque,
-    src_pitch: c_int,
+    src_pitch: usize,
     dst_format: PixelFormat,
     dst_colorspace: c.SDL_Colorspace,
     dst_properties: c.SDL_PropertiesID,
     dst: *anyopaque,
-    dst_pitch: c_int,
+    dst_pitch: usize,
 ) !void {
     try errify(c.SDL_ConvertPixelsAndColorspace(
-        width,
-        height,
+        @intCast(width),
+        @intCast(height),
         @intFromEnum(src_format),
         src_colorspace,
         src_properties,
         src,
-        src_pitch,
+        @intCast(src_pitch),
         @intFromEnum(dst_format),
         dst_colorspace,
         dst_properties,
         dst,
-        dst_pitch,
+        @intCast(dst_pitch),
     ));
 }
 
 /// Premultiply the alpha on a block of pixels.
 pub inline fn premultiplyAlpha(
-    width: c_int,
-    height: c_int,
+    width: usize,
+    height: usize,
     src_format: PixelFormat,
     src: *const anyopaque,
-    src_pitch: c_int,
+    src_pitch: usize,
     dst_format: PixelFormat,
     dst: *anyopaque,
-    dst_pitch: c_int,
+    dst_pitch: usize,
     linear: bool,
 ) !void {
     try errify(c.SDL_PremultiplyAlpha(
-        width,
-        height,
+        @intCast(width),
+        @intCast(height),
         @intFromEnum(src_format),
         src,
-        src_pitch,
+        @intCast(src_pitch),
         @intFromEnum(dst_format),
         dst,
-        dst_pitch,
+        @intCast(dst_pitch),
         linear,
     ));
 }

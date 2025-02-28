@@ -41,9 +41,8 @@ pub fn build(b: *std.Build) void {
         .link_libc = true,
     });
 
-    const zsdl = b.addLibrary(.{
+    const zsdl = b.addStaticLibrary(.{
         .root_module = zsdl_mod,
-        .linkage = .static,
         .name = "zsdl",
     });
 

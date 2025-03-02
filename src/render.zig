@@ -9,6 +9,7 @@ const rectl = @import("rect.zig");
 const FRect = rectl.FRect;
 const Rect = rectl.Rect;
 const FPoint = rectl.FPoint;
+const Surface = @import("surface.zig").Surface;
 const video = @import("video.zig");
 const Window = video.Window;
 const WindowFlags = video.WindowFlags;
@@ -272,21 +273,23 @@ pub const Renderer = struct {
     }
 
     /// Create a texture for a rendering context.
-    pub inline fn createTexture(self: *const Renderer, format: PixelFormat, access: TextureAccess, w: c_int, h: c_int) !Texture {
-        const texture = try errify(c.SDL_CreateTexture(
-            self.ptr,
-            @intFromEnum(format),
-            @intFromEnum(access),
-            w,
-            h,
-        ));
-        return Texture{ .ptr = texture };
+    pub inline fn createTexture(self: *const Renderer, format: PixelFormat, access: TextureAccess, w: usize, h: usize) !Texture {
+        return .{
+            .ptr = try errify(c.SDL_CreateTexture(
+                self.ptr,
+                @intFromEnum(format),
+                @intFromEnum(access),
+                w,
+                h,
+            )),
+        };
     }
 
     /// Create a texture from an existing surface.
-    pub inline fn createTextureFromSurface(self: *const Renderer, surface: *c.SDL_Surface) !Texture {
-        const texture = try errify(c.SDL_CreateTextureFromSurface(self.ptr, surface));
-        return Texture{ .ptr = texture };
+    pub inline fn createTextureFromSurface(self: *const Renderer, surface: *Surface) !Texture {
+        return .{
+            .ptr = try errify(c.SDL_CreateTextureFromSurface(self.ptr, surface.ptr)),
+        };
     }
 
     /// Create a texture with specified properties.

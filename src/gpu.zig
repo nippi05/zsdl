@@ -6,6 +6,7 @@ const internal = @import("internal.zig");
 const errify = internal.errify;
 const Window = @import("video.zig").Window;
 const FColor = @import("pixels.zig").FColor;
+const Rectangle = @import("rect.zig").Rectangle;
 const FlipMode = @import("surface.zig").FlipMode;
 
 pub const Viewport = extern struct {
@@ -838,13 +839,13 @@ pub const TextureUsageFlags = extern struct {
 
     pub inline fn fromInt(flags: c.SDL_GPUTextureUsageFlags) TextureUsageFlags {
         return .{
-            .sampler = flags & c.SDL_GPU_TEXTUREUSAGE_SAMPLER,
-            .color_target = flags & c.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET,
-            .depth_stencil_target = flags & c.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
-            .graphics_storage_read = flags & c.SDL_GPU_TEXTUREUSAGE_GRAPHICS_STORAGE_READ,
-            .compute_storage_read = flags & c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_READ,
-            .compute_storage_write = flags & c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_WRITE,
-            .compute_storage_simultaneous_read_write = flags & c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_SIMULTANEOUS_READ_WRITE,
+            .sampler = flags & c.SDL_GPU_TEXTUREUSAGE_SAMPLER != 0,
+            .color_target = flags & c.SDL_GPU_TEXTUREUSAGE_COLOR_TARGET != 0,
+            .depth_stencil_target = flags & c.SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET != 0,
+            .graphics_storage_read = flags & c.SDL_GPU_TEXTUREUSAGE_GRAPHICS_STORAGE_READ != 0,
+            .compute_storage_read = flags & c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_READ != 0,
+            .compute_storage_write = flags & c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_WRITE != 0,
+            .compute_storage_simultaneous_read_write = flags & c.SDL_GPU_TEXTUREUSAGE_COMPUTE_STORAGE_SIMULTANEOUS_READ_WRITE != 0,
         };
     }
 };
@@ -1315,17 +1316,17 @@ pub const RenderPass = struct {
     }
 
     /// Set the current viewport state.
-    pub inline fn setViewport(self: *const RenderPass, viewport: *const Viewport) void {
-        c.SDL_SetGPUViewport(self.ptr, viewport);
+    pub inline fn setViewport(self: *const RenderPass, viewport: Viewport) void {
+        c.SDL_SetGPUViewport(self.ptr, @ptrCast(&viewport));
     }
 
     /// Set the current scissor state.
-    pub inline fn setScissor(self: *const RenderPass, scissor: *const c.SDL_Rect) void {
-        c.SDL_SetGPUScissor(self.ptr, scissor);
+    pub inline fn setScissor(self: *const RenderPass, scissor: Rectangle) void {
+        c.SDL_SetGPUScissor(self.ptr, @ptrCast(&scissor));
     }
 
     /// Set the current blend constants.
-    pub inline fn setBlendConstants(self: *const RenderPass, blend_constants: c.SDL_FColor) void {
+    pub inline fn setBlendConstants(self: *const RenderPass, blend_constants: FColor) void {
         c.SDL_SetGPUBlendConstants(self.ptr, blend_constants);
     }
 

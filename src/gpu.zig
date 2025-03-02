@@ -1341,8 +1341,8 @@ pub const RenderPass = struct {
     }
 
     /// Bind an index buffer for use with subsequent draw calls.
-    pub inline fn bindIndexBuffer(self: *const RenderPass, binding: *const BufferBinding, index_element_size: c.SDL_GPUIndexElementSize) void {
-        c.SDL_BindGPUIndexBuffer(self.ptr, binding, index_element_size);
+    pub inline fn bindIndexBuffer(self: *const RenderPass, binding: *const BufferBinding, index_element_size: IndexElementSize) void {
+        c.SDL_BindGPUIndexBuffer(self.ptr, binding, @intFromEnum(index_element_size));
     }
 
     /// Bind texture-sampler pairs for use on the vertex shader.

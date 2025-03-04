@@ -80,42 +80,42 @@ pub inline fn getMouseFocus() ?Window {
     return null;
 }
 
-/// Query SDL's cache for the synchronous mouse button state and position
+/// Query SDL's cache for the synchronous mouse button state and position.
 pub inline fn getMouseState(x: *f32, y: *f32) MouseButtonFlags {
     return MouseButtonFlags.fromInt(c.SDL_GetMouseState(x, y));
 }
 
-/// Query the platform for the asynchronous mouse button state and position
+/// Query the platform for the asynchronous mouse button state and position.
 pub inline fn getGlobalMouseState(x: *f32, y: *f32) MouseButtonFlags {
     return MouseButtonFlags.fromInt(c.SDL_GetGlobalMouseState(x, y));
 }
 
-/// Query SDL's cache for the synchronous mouse button state and accumulated delta
+/// Query SDL's cache for the synchronous mouse button state and accumulated delta.
 pub inline fn getRelativeMouseState(x: *f32, y: *f32) MouseButtonFlags {
     return MouseButtonFlags.fromInt(c.SDL_GetRelativeMouseState(x, y));
 }
 
-/// Move the mouse cursor to the given position within the window
+/// Move the mouse cursor to the given position within the window.
 pub inline fn warpMouseInWindow(window: Window, x: f32, y: f32) void {
     c.SDL_WarpMouseInWindow(window.ptr, x, y);
 }
 
-/// Move the mouse to the given position in global screen space
+/// Move the mouse to the given position in global screen space.
 pub inline fn warpMouseGlobal(x: f32, y: f32) !void {
     try errify(c.SDL_WarpMouseGlobal(x, y));
 }
 
-/// Set relative mouse mode for a window
+/// Set relative mouse mode for a window.
 pub inline fn setWindowRelativeMouseMode(window: Window, enabled: bool) !void {
     try errify(c.SDL_SetWindowRelativeMouseMode(window.ptr, enabled));
 }
 
-/// Query whether relative mouse mode is enabled for a window
+/// Query whether relative mouse mode is enabled for a window.
 pub inline fn getWindowRelativeMouseMode(window: Window) bool {
     return c.SDL_GetWindowRelativeMouseMode(window.ptr);
 }
 
-/// Capture the mouse and to track input outside an SDL window
+/// Capture the mouse and to track input outside an SDL window.
 pub inline fn captureMouse(enabled: bool) !void {
     try errify(c.SDL_CaptureMouse(enabled));
 }
@@ -123,33 +123,33 @@ pub inline fn captureMouse(enabled: bool) !void {
 pub const Cursor = struct {
     ptr: *c.SDL_Cursor,
 
-    /// Create a cursor using the specified bitmap data and mask
+    /// Create a cursor using the specified bitmap data and mask.
     pub inline fn create(data: [*]const u8, mask: [*]const u8, w: i32, h: i32, hot_x: i32, hot_y: i32) !Cursor {
         return Cursor{ .ptr = try errify(c.SDL_CreateCursor(data, mask, w, h, hot_x, hot_y)) };
     }
 
-    /// Create a color cursor
+    /// Create a color cursor.
     pub inline fn createColor(surface: *c.SDL_Surface, hot_x: i32, hot_y: i32) !Cursor {
         return Cursor{ .ptr = try errify(c.SDL_CreateColorCursor(surface, hot_x, hot_y)) };
     }
 
-    /// Create a system cursor
+    /// Create a system cursor.
     pub inline fn createSystem(id: SystemCursor) !Cursor {
         return Cursor{ .ptr = try errify(c.SDL_CreateSystemCursor(@intFromEnum(id))) };
     }
 
-    /// Free a previously-created cursor
+    /// Free a previously-created cursor.
     pub inline fn destroy(self: Cursor) void {
         c.SDL_DestroyCursor(self.ptr);
     }
 
-    /// Set the active cursor
+    /// Set the active cursor.
     pub inline fn set(self: Cursor) !void {
         try errify(c.SDL_SetCursor(self.ptr));
     }
 };
 
-/// Get the active cursor
+/// Get the active cursor.
 pub inline fn getCursor() ?Cursor {
     if (c.SDL_GetCursor()) |ptr| {
         return Cursor{ .ptr = ptr };
@@ -157,22 +157,22 @@ pub inline fn getCursor() ?Cursor {
     return null;
 }
 
-/// Get the default cursor
+/// Get the default cursor.
 pub inline fn getDefaultCursor() !Cursor {
     return Cursor{ .ptr = try errify(c.SDL_GetDefaultCursor()) };
 }
 
-/// Show the cursor
+/// Show the cursor.
 pub inline fn showCursor() !void {
     try errify(c.SDL_ShowCursor());
 }
 
-/// Hide the cursor
+/// Hide the cursor.
 pub inline fn hideCursor() !void {
     try errify(c.SDL_HideCursor());
 }
 
-/// Return whether the cursor is currently being shown
+/// Return whether the cursor is currently being shown.
 pub inline fn cursorVisible() bool {
     return c.SDL_CursorVisible();
 }

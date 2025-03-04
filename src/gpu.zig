@@ -1,7 +1,7 @@
 const std = @import("std");
 
 const c = @import("c.zig").c;
-const Error = @import("Error.zig");
+const @"error" = @import("error.zig");
 const internal = @import("internal.zig");
 const errify = internal.errify;
 const Window = @import("video.zig").Window;

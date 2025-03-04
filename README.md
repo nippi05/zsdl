@@ -65,7 +65,7 @@ pub fn main() !void {
 | Hints | ❌ |
 | Error | 🧪 |
 | Properties | ❌ |
-| Log | ❌ |
+| Log | ✅ |
 | Video | 🧪 |
 | Events | 🧪 |
 | Keyboard | 🧪 |

@@ -14,6 +14,7 @@ const internal = @import("internal.zig");
 const errify = internal.errify;
 pub const joystick = @import("joystick.zig");
 pub const keyboard = @import("keyboard.zig");
+pub const log = @import("log.zig");
 pub const mouse = @import("mouse.zig");
 pub const pixels = @import("pixels.zig");
 pub const power = @import("power.zig");

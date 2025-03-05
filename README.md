@@ -55,15 +55,14 @@ pub fn main() !void {
         }
     }
 }
-
 ```
 
 ## Support
 | Category | Status |
 |:-|:-:|
-| Init | 🧪 |
+| Init | ✅ |
 | Hints | ❌ |
-| Error | 🧪 |
+| Error | ✅ |
 | Properties | ❌ |
 | Log | ✅ |
 | Video | 🧪 |

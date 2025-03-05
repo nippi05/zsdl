@@ -1,11 +1,11 @@
 const std = @import("std");
 
+pub const @"error" = @import("error.zig");
 pub const c = @import("c.zig").c;
 pub const MainThreadCallback = c.SDL_MainThreadCallback;
 pub const camera = @import("camera.zig");
 pub const clipboard = @import("clipboard.zig");
 pub const dialog = @import("dialog.zig");
-pub const @"error" = @import("error.zig");
 pub const events = @import("events.zig");
 pub const gamepad = @import("gamepad.zig");
 pub const gpu = @import("gpu.zig");

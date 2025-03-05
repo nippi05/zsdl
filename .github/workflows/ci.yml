@@ -9,7 +9,7 @@ permissions:
   pages: write
   id-token: write
 env:
-  ZIG_VERSION: 2024.11.0-mach
+  ZIG_VERSION: 0.14.0
 concurrency:
   group: "pages"
   cancel-in-progress: false

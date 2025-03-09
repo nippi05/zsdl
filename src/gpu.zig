@@ -908,7 +908,7 @@ pub const Device = struct {
 
     /// Check if a window supports the specified present mode.
     pub inline fn windowSupportsPresentMode(self: *const Device, window: *const Window, present_mode: PresentMode) bool {
-        return c.SDL_WindowSupportsGPUPresentMode(self.ptr, window.ptr, @bitCast(present_mode));
+        return c.SDL_WindowSupportsGPUPresentMode(self.ptr, window.ptr, @intFromEnum(present_mode));
     }
 
     /// Claim a window, creating a swapchain structure for it.
@@ -923,7 +923,7 @@ pub const Device = struct {
 
     /// Change the swapchain parameters for the given claimed window.
     pub inline fn setSwapchainParameters(self: *const Device, window: Window, swapchain_composition: SwapchainComposition, present_mode: PresentMode) !void {
-        try errify(c.SDL_SetGPUSwapchainParameters(self.ptr, window.ptr, @bitCast(swapchain_composition), @bitCast(present_mode)));
+        try errify(c.SDL_SetGPUSwapchainParameters(self.ptr, window.ptr, @intFromEnum(swapchain_composition), @intFromEnum(present_mode)));
     }
 
     /// Configure the maximum allowed number of frames in flight.
@@ -958,22 +958,22 @@ pub const Device = struct {
 
     /// Get the texel block size for a texture format.
     pub inline fn textureFormatTexelBlockSize(format: TextureFormat) u32 {
-        return c.SDL_GPUTextureFormatTexelBlockSize(@bitCast(format));
+        return c.SDL_GPUTextureFormatTexelBlockSize(@intFromEnum(format));
     }
 
     /// Check if a texture format is supported for a given type and usage.
     pub inline fn textureSupportsFormat(self: *const Device, format: TextureFormat, @"type": TextureType, usage: TextureUsageFlags) bool {
-        return c.SDL_GPUTextureSupportsFormat(self.ptr, @bitCast(format), @bitCast(@"type"), usage.toInt());
+        return c.SDL_GPUTextureSupportsFormat(self.ptr, @intFromEnum(format), @intFromEnum(@"type"), usage.toInt());
     }
 
     /// Check if a sample count for a texture format is supported.
     pub inline fn textureSupportsSampleCount(self: *const Device, format: TextureFormat, sample_count: SampleCount) bool {
-        return c.SDL_GPUTextureSupportsSampleCount(self.ptr, @bitCast(format), @bitCast(sample_count));
+        return c.SDL_GPUTextureSupportsSampleCount(self.ptr, @intFromEnum(format), @intFromEnum(sample_count));
     }
 
     /// Calculate the size in bytes of a texture format with dimensions.
     pub inline fn calculateTextureFormatSize(format: TextureFormat, width: u32, height: u32, depth_or_layer_count: u32) u32 {
-        return c.SDL_CalculateGPUTextureFormatSize(@bitCast(format), width, height, depth_or_layer_count);
+        return c.SDL_CalculateGPUTextureFormatSize(@intFromEnum(format), width, height, depth_or_layer_count);
     }
 
     /// Suspend GPU operation on Xbox when receiving SDL_EVENT_DID_ENTER_BACKGROUND event.
@@ -1159,7 +1159,7 @@ pub const RenderPass = struct {
 
     /// Bind an index buffer for use with subsequent draw calls.
     pub inline fn bindIndexBuffer(self: *const RenderPass, binding: *const BufferBinding, index_element_size: IndexElementSize) void {
-        c.SDL_BindGPUIndexBuffer(self.ptr, @ptrCast(binding), @bitCast(index_element_size));
+        c.SDL_BindGPUIndexBuffer(self.ptr, @ptrCast(binding), @intFromEnum(index_element_size));
     }
 
     /// Bind texture-sampler pairs for use on the vertex shader.

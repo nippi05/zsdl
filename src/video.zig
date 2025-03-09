@@ -663,7 +663,7 @@ pub const Window = struct {
     }
 
     /// Get a window's mouse grab mode.
-    pub inline fn getMouseGrab(self: *const Window) !void {
+    pub inline fn getMouseGrab(self: *const Window) bool {
         return c.SDL_GetWindowMouseGrab(self.ptr);
     }
 

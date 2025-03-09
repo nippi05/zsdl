@@ -194,12 +194,11 @@ test "graphics pipeline" {
         .transfer_buffer = transfer_buffer,
         .offset = 0,
     };
-    var buf_region: gpu.BufferRegion = .{
+    copy_pass.uploadToBuffer(&buf_location, &.{
         .buffer = vertex_buffer,
         .offset = 0,
         .size = @sizeOf(@TypeOf(vertices)),
-    };
-    copy_pass.uploadToBuffer(&buf_location, &buf_region, false);
+    }, false);
     copy_pass.end();
     try cmd_buffer.submit();
     device.releaseTransferBuffer(transfer_buffer);
@@ -313,13 +312,13 @@ test "graphics pipeline" {
         var swapchain_tex_size_h: u32 = undefined;
         const swapchain_tex = try cmd_buffer.waitAndAcquireSwapchainTexture(window, &swapchain_tex_size_w, &swapchain_tex_size_h);
 
-        const color_target = std.mem.zeroInit(gpu.ColorTargetInfo, .{
+        const color_target: gpu.ColorTargetInfo = .{
             .texture = swapchain_tex,
             .load_op = .clear,
             .store_op = .store,
-        });
+        };
 
-        const depth_target = std.mem.zeroInit(gpu.DepthStencilTargetInfo, .{
+        const depth_target: gpu.DepthStencilTargetInfo = .{
             .clear_depth = 1,
             .load_op = .clear,
             .store_op = .dont_care,
@@ -327,7 +326,7 @@ test "graphics pipeline" {
             .stencil_store_op = .dont_care,
             .texture = depth_texture,
             .cycle = true,
-        });
+        };
 
         const vertex_binding: gpu.BufferBinding = .{
             .buffer = vertex_buffer,
@@ -374,6 +373,8 @@ test "graphics pipeline" {
         render_pass.bindVertexBuffers(0, &.{vertex_binding});
         render_pass.drawPrimitives(vertices.len, 1, 0, 0);
         render_pass.end();
-        try cmd_buffer.submit();
+        const fence = try cmd_buffer.submitAndAcquireFence();
+        try device.waitForFences(true, &.{fence});
+        device.releaseFence(fence);
     }
 }

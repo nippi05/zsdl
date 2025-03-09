@@ -112,12 +112,12 @@ pub const ColorTargetBlendState = extern struct {
 
     pub inline fn toNative(self: *const ColorTargetBlendState) c.SDL_GPUColorTargetBlendState {
         return .{
-            .src_color_blendfactor = @bitCast(self.src_color_blendfactor),
-            .dst_color_blendfactor = @bitCast(self.dst_color_blendfactor),
-            .color_blend_op = @bitCast(self.color_blend_op),
-            .src_alpha_blendfactor = @bitCast(self.src_alpha_blendfactor),
-            .dst_alpha_blendfactor = @bitCast(self.dst_alpha_blendfactor),
-            .alpha_blend_op = @bitCast(self.alpha_blend_op),
+            .src_color_blendfactor = @intFromEnum(self.src_color_blendfactor),
+            .dst_color_blendfactor = @intFromEnum(self.dst_color_blendfactor),
+            .color_blend_op = @intFromEnum(self.color_blend_op),
+            .src_alpha_blendfactor = @intFromEnum(self.src_alpha_blendfactor),
+            .dst_alpha_blendfactor = @intFromEnum(self.dst_alpha_blendfactor),
+            .alpha_blend_op = @intFromEnum(self.alpha_blend_op),
             .color_write_mask = self.color_write_mask.toInt(),
             .enable_blend = self.enable_blend,
             .enable_color_write_mask = self.enable_color_write_mask,
@@ -942,8 +942,8 @@ pub const Device = struct {
     }
 
     /// Block the thread until the given fences are signaled.
-    pub inline fn waitForFences(self: *const Device, wait_all: bool, fences: [*]const *Fence, num_fences: u32) !void {
-        try errify(c.SDL_WaitForGPUFences(self.ptr, wait_all, fences, num_fences));
+    pub inline fn waitForFences(self: *const Device, wait_all: bool, fences: []const *Fence) !void {
+        try errify(c.SDL_WaitForGPUFences(self.ptr, wait_all, @ptrCast(fences.ptr), @intCast(fences.len)));
     }
 
     /// Check the status of a fence.
@@ -1261,32 +1261,32 @@ pub const CopyPass = struct {
     ptr: *c.SDL_GPUCopyPass,
 
     /// Upload data from a transfer buffer to a texture.
-    pub inline fn uploadToTexture(self: *const CopyPass, source: *const TextureTransferInfo, destination: *TextureRegion, cycle: bool) void {
+    pub inline fn uploadToTexture(self: *const CopyPass, source: *const TextureTransferInfo, destination: *const TextureRegion, cycle: bool) void {
         c.SDL_UploadToGPUTexture(self.ptr, @ptrCast(source), @ptrCast(destination), cycle);
     }
 
     /// Upload data from a transfer buffer to a buffer.
-    pub inline fn uploadToBuffer(self: *const CopyPass, source: *const TransferBufferLocation, destination: *BufferRegion, cycle: bool) void {
+    pub inline fn uploadToBuffer(self: *const CopyPass, source: *const TransferBufferLocation, destination: *const BufferRegion, cycle: bool) void {
         c.SDL_UploadToGPUBuffer(self.ptr, @ptrCast(source), @ptrCast(destination), cycle);
     }
 
     /// Perform a texture-to-texture copy.
-    pub inline fn copyTextureToTexture(self: *const CopyPass, source: *const TextureLocation, destination: *TextureLocation, w: u32, h: u32, d: u32, cycle: bool) void {
+    pub inline fn copyTextureToTexture(self: *const CopyPass, source: *const TextureLocation, destination: *const TextureLocation, w: u32, h: u32, d: u32, cycle: bool) void {
         c.SDL_CopyGPUTextureToTexture(self.ptr, @ptrCast(source), @ptrCast(destination), w, h, d, cycle);
     }
 
     /// Perform a buffer-to-buffer copy.
-    pub inline fn copyBufferToBuffer(self: *const CopyPass, source: *const BufferLocation, destination: *BufferLocation, size: u32, cycle: bool) void {
+    pub inline fn copyBufferToBuffer(self: *const CopyPass, source: *const BufferLocation, destination: *const BufferLocation, size: u32, cycle: bool) void {
         c.SDL_CopyGPUBufferToBuffer(self.ptr, @ptrCast(source), @ptrCast(destination), size, cycle);
     }
 
     /// Copy data from a texture to a transfer buffer on the GPU timeline.
-    pub inline fn downloadFromTexture(self: *const CopyPass, source: *const TextureRegion, destination: *TextureTransferInfo) void {
+    pub inline fn downloadFromTexture(self: *const CopyPass, source: *const TextureRegion, destination: *const TextureTransferInfo) void {
         c.SDL_DownloadFromGPUTexture(self.ptr, @ptrCast(source), @ptrCast(destination));
     }
 
     /// Copy data from a buffer to a transfer buffer on the GPU timeline.
-    pub inline fn downloadFromBuffer(self: *const CopyPass, source: *const BufferRegion, destination: *TransferBufferLocation) void {
+    pub inline fn downloadFromBuffer(self: *const CopyPass, source: *const BufferRegion, destination: *const TransferBufferLocation) void {
         c.SDL_DownloadFromGPUBuffer(self.ptr, @ptrCast(source), @ptrCast(destination));
     }
 

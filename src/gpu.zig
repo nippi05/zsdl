@@ -1,152 +1,7 @@
 const std = @import("std");
 
-const c = @import("c.zig").c;
 const @"error" = @import("error.zig");
-const internal = @import("internal.zig");
-const errify = internal.errify;
-const Window = @import("video.zig").Window;
-const FColor = @import("pixels.zig").FColor;
-const Rectangle = @import("rect.zig").Rectangle;
-const FlipMode = @import("surface.zig").FlipMode;
-
-pub const Viewport = extern struct {
-    x: f32,
-    y: f32,
-    w: f32,
-    h: f32,
-    min_depth: f32,
-    max_depth: f32,
-};
-
-pub const BufferBinding = extern struct {
-    buffer: *Buffer,
-    offset: u32,
-};
-
-pub const BufferLocation = extern struct {
-    buffer: *Buffer,
-    offset: u32,
-};
-
-pub const BufferRegion = extern struct {
-    buffer: *Buffer,
-    offset: u32,
-    size: u32,
-};
-
-pub const TextureSamplerBinding = extern struct {
-    texture: *Texture,
-    sampler: *Sampler,
-};
-
-pub const TextureLocation = extern struct {
-    texture: *Texture,
-    mip_level: u32,
-    layer: u32,
-    x: u32,
-    y: u32,
-    z: u32,
-};
-
-pub const TextureRegion = extern struct {
-    texture: *Texture,
-    mip_level: u32,
-    layer: u32,
-    x: u32,
-    y: u32,
-    z: u32,
-    w: u32,
-    h: u32,
-    d: u32,
-};
-
-pub const TextureTransferInfo = extern struct {
-    transfer_buffer: *TransferBuffer,
-    offset: u32,
-    pixels_per_row: u32,
-    rows_per_layer: u32,
-};
-
-pub const TransferBufferUsage = enum(u32) {
-    upload = c.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
-    download = c.SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
-};
-
-pub const TransferBufferLocation = extern struct {
-    transfer_buffer: *TransferBuffer,
-    offset: u32,
-};
-
-pub const StorageTextureReadWriteBinding = extern struct {
-    texture: *Texture,
-    mip_level: u32,
-    layer: u32,
-    cycle: bool,
-    padding1: u8,
-    padding2: u8,
-    padding3: u8,
-};
-
-pub const StorageBufferReadWriteBinding = extern struct {
-    buffer: *Buffer,
-    cycle: bool,
-    padding1: u8,
-    padding2: u8,
-    padding3: u8,
-};
-
-pub const BlitRegion = extern struct {
-    texture: *Texture,
-    mip_level: u32,
-    layer_or_depth_plane: u32,
-    x: u32,
-    y: u32,
-    w: u32,
-    h: u32,
-};
-
-pub const ColorTargetInfo = extern struct {
-    texture: *allowzero Texture,
-    mip_level: u32,
-    layer_or_depth_plane: u32,
-    clear_color: FColor,
-    load_op: LoadOp,
-    store_op: StoreOp,
-    resolve_texture: *allowzero Texture,
-    resolve_mip_level: u32,
-    resolve_layer: u32,
-    cycle: bool,
-    cycle_resolve_texture: bool,
-    padding1: u8,
-    padding2: u8,
-};
-
-pub const DepthStencilTargetInfo = extern struct {
-    texture: *allowzero Texture,
-    clear_depth: f32,
-    load_op: LoadOp,
-    store_op: StoreOp,
-    stencil_load_op: LoadOp,
-    stencil_store_op: StoreOp,
-    cycle: bool,
-    clear_stencil: u8,
-    padding1: u8,
-    padding2: u8,
-};
-
-pub const BlitInfo = extern struct {
-    source: BlitRegion,
-    destination: BlitRegion,
-    load_op: LoadOp,
-    clear_color: FColor,
-    flip_mode: FlipMode,
-    filter: Filter,
-    cycle: bool,
-    padding1: u8,
-    padding2: u8,
-    padding3: u8,
-};
-
+const c = @import("c.zig").c;
 pub const Fence = c.SDL_GPUFence;
 pub const Buffer = c.SDL_GPUBuffer;
 pub const Texture = c.SDL_GPUTexture;
@@ -155,21 +10,77 @@ pub const Sampler = c.SDL_GPUSampler;
 pub const Shader = c.SDL_GPUShader;
 pub const ComputePipeline = c.SDL_GPUComputePipeline;
 pub const GraphicsPipeline = c.SDL_GPUGraphicsPipeline;
+pub const Viewport = c.SDL_GPUViewport;
+pub const BufferBinding = c.SDL_GPUBufferBinding;
+pub const BufferLocation = c.SDL_GPUBufferLocation;
+pub const BufferRegion = c.SDL_GPUBufferRegion;
+pub const TextureSamplerBinding = c.SDL_GPUTextureSamplerBinding;
+pub const TextureLocation = c.SDL_GPUTextureLocation;
+pub const TextureRegion = c.SDL_GPUTextureRegion;
+pub const TextureTransferInfo = c.SDL_GPUTextureTransferInfo;
+pub const TransferBufferLocation = c.SDL_GPUTransferBufferLocation;
+pub const StorageTextureReadWriteBinding = c.SDL_GPUStorageTextureReadWriteBinding;
+pub const StorageBufferReadWriteBinding = c.SDL_GPUStorageBufferReadWriteBinding;
+pub const BlitRegion = c.SDL_GPUBlitRegion;
+const FColor = @import("pixels.zig").FColor;
+const FlipMode = @import("surface.zig").FlipMode;
+const internal = @import("internal.zig");
+const errify = internal.errify;
+const Rectangle = @import("rect.zig").Rectangle;
+const Window = @import("video.zig").Window;
+
+pub const TransferBufferUsage = enum(u32) {
+    upload = c.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
+    download = c.SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
+};
+
+pub const ColorTargetInfo = extern struct {
+    texture: *allowzero Texture = std.mem.zeroes(*allowzero Texture),
+    mip_level: u32 = std.mem.zeroes(u32),
+    layer_or_depth_plane: u32 = std.mem.zeroes(u32),
+    clear_color: FColor = std.mem.zeroes(FColor),
+    load_op: LoadOp = std.mem.zeroes(LoadOp),
+    store_op: StoreOp = std.mem.zeroes(StoreOp),
+    resolve_texture: *allowzero Texture = std.mem.zeroes(*allowzero Texture),
+    resolve_mip_level: u32 = std.mem.zeroes(u32),
+    resolve_layer: u32 = std.mem.zeroes(u32),
+    cycle: bool = std.mem.zeroes(bool),
+    cycle_resolve_texture: bool = std.mem.zeroes(bool),
+    _padding1: u8 = std.mem.zeroes(u8),
+    _padding2: u8 = std.mem.zeroes(u8),
+};
+
+pub const DepthStencilTargetInfo = extern struct {
+    texture: *allowzero Texture = std.mem.zeroes(*allowzero Texture),
+    clear_depth: f32 = std.mem.zeroes(f32),
+    load_op: LoadOp = std.mem.zeroes(LoadOp),
+    store_op: StoreOp = std.mem.zeroes(StoreOp),
+    stencil_load_op: LoadOp = std.mem.zeroes(LoadOp),
+    stencil_store_op: StoreOp = std.mem.zeroes(StoreOp),
+    cycle: bool = std.mem.zeroes(bool),
+    clear_stencil: u8 = std.mem.zeroes(u8),
+    _padding1: u8 = std.mem.zeroes(u8),
+    _padding2: u8 = std.mem.zeroes(u8),
+};
+
+pub const BlitInfo = extern struct {
+    source: BlitRegion = std.mem.zeroes(BlitRegion),
+    destination: BlitRegion = std.mem.zeroes(BlitRegion),
+    load_op: LoadOp = std.mem.zeroes(LoadOp),
+    clear_color: FColor = std.mem.zeroes(FColor),
+    flip_mode: FlipMode = std.mem.zeroes(FlipMode),
+    filter: Filter = std.mem.zeroes(Filter),
+    cycle: bool = std.mem.zeroes(bool),
+    _padding1: u8 = std.mem.zeroes(u8),
+    _padding2: u8 = std.mem.zeroes(u8),
+    _padding3: u8 = std.mem.zeroes(u8),
+};
 
 pub const StencilOpState = extern struct {
-    fail_op: StencilOp,
-    pass_op: StencilOp,
-    depth_fail_op: StencilOp,
-    compare_op: CompareOp,
-
-    pub inline fn toNative(self: *const StencilOpState) c.SDL_GPUStencilOpState {
-        return .{
-            .fail_op = @intFromEnum(self.fail_op),
-            .pass_op = @intFromEnum(self.pass_op),
-            .depth_fail_op = @intFromEnum(self.depth_fail_op),
-            .compare_op = @intFromEnum(self.compare_op),
-        };
-    }
+    fail_op: StencilOp = std.mem.zeroes(StencilOp),
+    pass_op: StencilOp = std.mem.zeroes(StencilOp),
+    depth_fail_op: StencilOp = std.mem.zeroes(StencilOp),
+    compare_op: CompareOp = std.mem.zeroes(CompareOp),
 };
 
 pub const ShaderStage = enum(u32) {
@@ -178,48 +89,35 @@ pub const ShaderStage = enum(u32) {
 };
 
 pub const DepthStencilState = extern struct {
-    compare_op: CompareOp,
+    compare_op: CompareOp = std.mem.zeroes(CompareOp),
     back_stencil_state: StencilOpState = std.mem.zeroes(StencilOpState),
     front_stencil_state: StencilOpState = std.mem.zeroes(StencilOpState),
-    compare_mask: u8 = 0,
-    write_mask: u8 = 0,
-    enable_depth_test: bool = false,
-    enable_depth_write: bool = false,
-    enable_stencil_test: bool = false,
-
-    pub inline fn toNative(self: *const DepthStencilState) c.SDL_GPUDepthStencilState {
-        return .{
-            .compare_op = @intFromEnum(self.compare_op),
-            .back_stencil_state = self.back_stencil_state.toNative(),
-            .front_stencil_state = self.front_stencil_state.toNative(),
-            .compare_mask = self.compare_mask,
-            .write_mask = self.write_mask,
-            .enable_depth_test = self.enable_depth_test,
-            .enable_depth_write = self.enable_depth_write,
-            .enable_stencil_test = self.enable_stencil_test,
-        };
-    }
+    compare_mask: u8 = std.mem.zeroes(u8),
+    write_mask: u8 = std.mem.zeroes(u8),
+    enable_depth_test: bool = std.mem.zeroes(bool),
+    enable_depth_write: bool = std.mem.zeroes(bool),
+    enable_stencil_test: bool = std.mem.zeroes(bool),
 };
 
 pub const ColorTargetBlendState = extern struct {
-    src_color_blendfactor: BlendFactor,
-    dst_color_blendfactor: BlendFactor,
-    color_blend_op: BlendOp,
-    src_alpha_blendfactor: BlendFactor,
-    dst_alpha_blendfactor: BlendFactor,
-    alpha_blend_op: BlendOp,
-    color_write_mask: ColorComponentFlags,
-    enable_blend: bool,
-    enable_color_write_mask: bool,
+    src_color_blendfactor: BlendFactor = std.mem.zeroes(BlendFactor),
+    dst_color_blendfactor: BlendFactor = std.mem.zeroes(BlendFactor),
+    color_blend_op: BlendOp = std.mem.zeroes(BlendOp),
+    src_alpha_blendfactor: BlendFactor = std.mem.zeroes(BlendFactor),
+    dst_alpha_blendfactor: BlendFactor = std.mem.zeroes(BlendFactor),
+    alpha_blend_op: BlendOp = std.mem.zeroes(BlendOp),
+    color_write_mask: ColorComponentFlags = std.mem.zeroes(ColorComponentFlags),
+    enable_blend: bool = std.mem.zeroes(bool),
+    enable_color_write_mask: bool = std.mem.zeroes(bool),
 
     pub inline fn toNative(self: *const ColorTargetBlendState) c.SDL_GPUColorTargetBlendState {
         return .{
-            .src_color_blendfactor = @intFromEnum(self.src_color_blendfactor),
-            .dst_color_blendfactor = @intFromEnum(self.dst_color_blendfactor),
-            .color_blend_op = @intFromEnum(self.color_blend_op),
-            .src_alpha_blendfactor = @intFromEnum(self.src_alpha_blendfactor),
-            .dst_alpha_blendfactor = @intFromEnum(self.dst_alpha_blendfactor),
-            .alpha_blend_op = @intFromEnum(self.alpha_blend_op),
+            .src_color_blendfactor = @bitCast(self.src_color_blendfactor),
+            .dst_color_blendfactor = @bitCast(self.dst_color_blendfactor),
+            .color_blend_op = @bitCast(self.color_blend_op),
+            .src_alpha_blendfactor = @bitCast(self.src_alpha_blendfactor),
+            .dst_alpha_blendfactor = @bitCast(self.dst_alpha_blendfactor),
+            .alpha_blend_op = @bitCast(self.alpha_blend_op),
             .color_write_mask = self.color_write_mask.toInt(),
             .enable_blend = self.enable_blend,
             .enable_color_write_mask = self.enable_color_write_mask,
@@ -228,57 +126,29 @@ pub const ColorTargetBlendState = extern struct {
 };
 
 pub const ColorTargetDescription = extern struct {
-    format: TextureFormat,
+    format: TextureFormat = std.mem.zeroes(TextureFormat),
     blend_state: ColorTargetBlendState = std.mem.zeroes(ColorTargetBlendState),
-
-    pub inline fn toNative(self: *const ColorTargetDescription) c.SDL_GPUColorTargetDescription {
-        return .{
-            .format = @intFromEnum(self.format),
-            .blend_state = self.blend_state.toNative(),
-        };
-    }
 };
 
 pub const MultisampleState = extern struct {
-    sample_count: SampleCount,
-    sample_mask: u32 = 0,
-    enable_mask: bool = false,
-
-    pub inline fn toNative(self: *const MultisampleState) c.SDL_GPUMultisampleState {
-        return .{
-            .sample_count = @intFromEnum(self.sample_count),
-            .sample_mask = self.sample_mask,
-            .enable_mask = self.enable_mask,
-        };
-    }
+    sample_count: SampleCount = std.mem.zeroes(SampleCount),
+    sample_mask: u32 = std.mem.zeroes(u32),
+    enable_mask: bool = std.mem.zeroes(bool),
 };
 
 pub const RasterizerState = extern struct {
-    fill_mode: FillMode,
-    cull_mode: CullMode,
-    front_face: FrontFace,
-    depth_bias_constant_factor: f32 = 0,
-    depth_bias_clamp: f32 = 0,
-    depth_bias_slope_factor: f32 = 0,
-    enable_depth_bias: bool,
-    enable_depth_clip: bool,
-
-    pub inline fn toNative(self: *const RasterizerState) c.SDL_GPURasterizerState {
-        return .{
-            .fill_mode = @intFromEnum(self.fill_mode),
-            .cull_mode = @intFromEnum(self.cull_mode),
-            .front_face = @intFromEnum(self.front_face),
-            .depth_bias_constant_factor = self.depth_bias_constant_factor,
-            .depth_bias_clamp = self.depth_bias_clamp,
-            .depth_bias_slope_factor = self.depth_bias_slope_factor,
-            .enable_depth_bias = self.enable_depth_bias,
-            .enable_depth_clip = self.enable_depth_clip,
-        };
-    }
+    fill_mode: FillMode = std.mem.zeroes(FillMode),
+    cull_mode: CullMode = std.mem.zeroes(CullMode),
+    front_face: FrontFace = std.mem.zeroes(FrontFace),
+    depth_bias_constant_factor: f32 = std.mem.zeroes(f32),
+    depth_bias_clamp: f32 = std.mem.zeroes(f32),
+    depth_bias_slope_factor: f32 = std.mem.zeroes(f32),
+    enable_depth_bias: bool = std.mem.zeroes(bool),
+    enable_depth_clip: bool = std.mem.zeroes(bool),
 };
 
 pub const GraphicsPipelineTargetInfo = struct {
-    color_target_descriptions: []const ColorTargetDescription = std.mem.zeroes([]const ColorTargetDescription),
+    color_target_descriptions: []const ColorTargetDescription = &.{},
     depth_stencil_format: TextureFormat = std.mem.zeroes(TextureFormat),
     has_depth_stencil_target: bool = std.mem.zeroes(bool),
 
@@ -353,10 +223,10 @@ pub const VertexElementFormat = enum(u32) {
 };
 
 pub const ColorComponentFlags = extern struct {
-    r: bool = false,
-    g: bool = false,
-    b: bool = false,
-    a: bool = false,
+    r: bool = std.mem.zeroes(bool),
+    g: bool = std.mem.zeroes(bool),
+    b: bool = std.mem.zeroes(bool),
+    a: bool = std.mem.zeroes(bool),
 
     pub inline fn toInt(self: ColorComponentFlags) c.SDL_GPUColorComponentFlags {
         return (if (self.r) c.SDL_GPU_COLORCOMPONENT_R else 0) |
@@ -376,12 +246,12 @@ pub const ColorComponentFlags = extern struct {
 };
 
 pub const BufferUsageFlags = extern struct {
-    vertex: bool = false,
-    index: bool = false,
-    indirect: bool = false,
-    storage_graphics_read: bool = false,
-    storage_compute_read: bool = false,
-    storage_compute_write: bool = false,
+    vertex: bool = std.mem.zeroes(bool),
+    index: bool = std.mem.zeroes(bool),
+    indirect: bool = std.mem.zeroes(bool),
+    storage_graphics_read: bool = std.mem.zeroes(bool),
+    storage_compute_read: bool = std.mem.zeroes(bool),
+    storage_compute_write: bool = std.mem.zeroes(bool),
 
     pub inline fn toInt(self: BufferUsageFlags) c.SDL_GPUBufferUsageFlags {
         return (if (self.vertex) c.SDL_GPU_BUFFERUSAGE_VERTEX else 0) |
@@ -409,15 +279,6 @@ pub const VertexBufferDescription = extern struct {
     pitch: u32,
     input_rate: VertexInputRate,
     instance_step_rate: u32,
-
-    pub inline fn toNative(self: *const VertexBufferDescription) c.SDL_GPUVertexBufferDescription {
-        return .{
-            .slot = self.slot,
-            .pitch = self.pitch,
-            .input_rate = @intFromEnum(self.input_rate),
-            .instance_step_rate = self.instance_step_rate,
-        };
-    }
 };
 
 pub const VertexAttribute = extern struct {
@@ -425,15 +286,6 @@ pub const VertexAttribute = extern struct {
     buffer_slot: u32,
     format: VertexElementFormat,
     offset: u32,
-
-    pub inline fn toNative(self: *const VertexAttribute) c.SDL_GPUVertexAttribute {
-        return .{
-            .location = self.location,
-            .buffer_slot = self.buffer_slot,
-            .format = @intFromEnum(self.format),
-            .offset = self.offset,
-        };
-    }
 };
 
 pub const VertexInputState = struct {
@@ -453,7 +305,7 @@ pub const VertexInputState = struct {
 pub const ComputePipelineCreateInfo = struct {
     code: []const u8,
     entrypoint: []const u8,
-    format: u32,
+    format: ShaderFormat,
     num_samplers: u32,
     num_readonly_storage_textures: u32,
     num_readonly_storage_buffers: u32,
@@ -486,8 +338,8 @@ pub const ComputePipelineCreateInfo = struct {
 };
 
 pub const GraphicsPipelineCreateInfo = struct {
-    vertex_shader: *Shader,
-    fragment_shader: *Shader,
+    vertex_shader: *allowzero Shader = std.mem.zeroes(*allowzero Shader),
+    fragment_shader: *allowzero Shader = std.mem.zeroes(*allowzero Shader),
     vertex_input_state: VertexInputState = std.mem.zeroes(VertexInputState),
     primitive_type: PrimitiveType = std.mem.zeroes(PrimitiveType),
     rasterizer_state: RasterizerState = std.mem.zeroes(RasterizerState),
@@ -502,9 +354,9 @@ pub const GraphicsPipelineCreateInfo = struct {
             .fragment_shader = self.fragment_shader,
             .vertex_input_state = self.vertex_input_state.toNative(),
             .primitive_type = @intFromEnum(self.primitive_type),
-            .rasterizer_state = self.rasterizer_state.toNative(),
-            .multisample_state = self.multisample_state.toNative(),
-            .depth_stencil_state = self.depth_stencil_state.toNative(),
+            .rasterizer_state = @bitCast(self.rasterizer_state),
+            .multisample_state = @bitCast(self.multisample_state),
+            .depth_stencil_state = @bitCast(self.depth_stencil_state),
             .target_info = self.target_info.toNative(),
             .props = self.props,
         };
@@ -528,30 +380,30 @@ pub const SamplerAddressMode = enum(u32) {
 };
 
 pub const SamplerCreateInfo = extern struct {
-    min_filter: Filter,
-    mag_filter: Filter,
-    mipmap_mode: SamplerMipmapMode,
-    address_mode_u: SamplerAddressMode,
-    address_mode_v: SamplerAddressMode,
-    address_mode_w: SamplerAddressMode,
-    mip_lod_bias: f32,
-    max_anisotropy: f32,
-    compare_op: CompareOp,
-    min_lod: f32,
-    max_lod: f32,
-    enable_anisotropy: bool,
-    enable_compare: bool,
+    min_filter: Filter = std.mem.zeroes(Filter),
+    mag_filter: Filter = std.mem.zeroes(Filter),
+    mipmap_mode: SamplerMipmapMode = std.mem.zeroes(SamplerMipmapMode),
+    address_mode_u: SamplerAddressMode = std.mem.zeroes(SamplerAddressMode),
+    address_mode_v: SamplerAddressMode = std.mem.zeroes(SamplerAddressMode),
+    address_mode_w: SamplerAddressMode = std.mem.zeroes(SamplerAddressMode),
+    mip_lod_bias: f32 = std.mem.zeroes(f32),
+    max_anisotropy: f32 = std.mem.zeroes(f32),
+    compare_op: CompareOp = std.mem.zeroes(CompareOp),
+    min_lod: f32 = std.mem.zeroes(f32),
+    max_lod: f32 = std.mem.zeroes(f32),
+    enable_anisotropy: bool = std.mem.zeroes(bool),
+    enable_compare: bool = std.mem.zeroes(bool),
 };
 
 pub const ShaderCreateInfo = struct {
-    code: []const u8,
-    entrypoint: []const u8,
-    format: ShaderFormat,
-    stage: ShaderStage,
-    num_samplers: u32,
-    num_storage_textures: u32,
-    num_storage_buffers: u32,
-    num_uniform_buffers: u32,
+    code: []const u8 = &.{},
+    entrypoint: []const u8 = &.{},
+    format: ShaderFormat = std.mem.zeroes(ShaderFormat),
+    stage: ShaderStage = std.mem.zeroes(ShaderStage),
+    num_samplers: u32 = std.mem.zeroes(u32),
+    num_storage_textures: u32 = std.mem.zeroes(u32),
+    num_storage_buffers: u32 = std.mem.zeroes(u32),
+    num_uniform_buffers: u32 = std.mem.zeroes(u32),
 
     pub inline fn toNative(self: *const ShaderCreateInfo) c.SDL_GPUShaderCreateInfo {
         return .{
@@ -569,15 +421,15 @@ pub const ShaderCreateInfo = struct {
 };
 
 pub const TextureCreateInfo = extern struct {
-    type: TextureType,
-    format: TextureFormat,
-    usage: TextureUsageFlags,
-    width: usize,
-    height: usize,
-    layer_count_or_depth: u32,
-    num_levels: u32,
-    sample_count: SampleCount,
-    props: c.SDL_PropertiesID,
+    type: TextureType = std.mem.zeroes(TextureType),
+    format: TextureFormat = std.mem.zeroes(TextureFormat),
+    usage: TextureUsageFlags = std.mem.zeroes(TextureUsageFlags),
+    width: usize = std.mem.zeroes(usize),
+    height: usize = std.mem.zeroes(usize),
+    layer_count_or_depth: u32 = std.mem.zeroes(u32),
+    num_levels: u32 = std.mem.zeroes(u32),
+    sample_count: SampleCount = std.mem.zeroes(SampleCount),
+    props: c.SDL_PropertiesID = 0,
 
     pub inline fn toNative(self: *const TextureCreateInfo) c.SDL_GPUTextureCreateInfo {
         return .{
@@ -594,59 +446,35 @@ pub const TextureCreateInfo = extern struct {
     }
 };
 
-pub const MemoryFlags = extern struct {
-    host_visible: bool = false,
-    device_local: bool = false,
-
-    pub inline fn toInt(self: MemoryFlags) u32 {
-        return (if (self.host_visible) c.SDL_GPU_MEMORYFLAGS_HOST_VISIBLE else 0) |
-            (if (self.device_local) c.SDL_GPU_MEMORYFLAGS_DEVICE_LOCAL else 0);
-    }
-
-    pub inline fn fromInt(flags: u32) MemoryFlags {
-        return .{
-            .host_visible = (flags & c.SDL_GPU_MEMORYFLAGS_HOST_VISIBLE) != 0,
-            .device_local = (flags & c.SDL_GPU_MEMORYFLAGS_DEVICE_LOCAL) != 0,
-        };
-    }
-};
-
 pub const BufferCreateInfo = extern struct {
-    size: u32,
-    usage: BufferUsageFlags,
+    usage: BufferUsageFlags = std.mem.zeroes(BufferUsageFlags),
+    size: u32 = std.mem.zeroes(u32),
 
     pub inline fn toNative(self: *const BufferCreateInfo) c.SDL_GPUBufferCreateInfo {
         return .{
-            .size = self.size,
             .usage = self.usage.toInt(),
-        };
-    }
-};
-
-pub const TransferBufferCreateInfo = extern struct {
-    size: u32,
-    usage: TransferBufferUsage,
-
-    pub inline fn toNative(self: *const TransferBufferCreateInfo) c.SDL_GPUTransferBufferCreateInfo {
-        return .{
             .size = self.size,
-            .usage = @intFromEnum(self.usage),
             .props = 0,
         };
     }
 };
 
+pub const TransferBufferCreateInfo = extern struct {
+    usage: TransferBufferUsage = std.mem.zeroes(TransferBufferUsage),
+    size: u32 = std.mem.zeroes(u32),
+};
+
 pub const DeviceProperties = struct {
     debug_mode: ?bool = null,
     prefer_low_power: ?bool = null,
-    name: ?[*:0]const u8 = null,
+    name: ?[:0]const u8 = null,
     shaders_private: ?bool = null,
     shaders_spirv: ?bool = null,
     shaders_dxbc: ?bool = null,
     shaders_dxil: ?bool = null,
     shaders_msl: ?bool = null,
     shaders_metallib: ?bool = null,
-    d3d12_semantic_name: ?[*:0]const u8 = null,
+    d3d12_semantic_name: ?[:0]const u8 = null,
 
     inline fn apply(self: DeviceProperties, props: c.SDL_PropertiesID) void {
         if (self.debug_mode) |dm| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, dm);
@@ -663,12 +491,12 @@ pub const DeviceProperties = struct {
 };
 
 pub const ShaderFormat = extern struct {
-    private: bool = false,
-    spirv: bool = false,
-    dxbc: bool = false,
-    dxil: bool = false,
-    msl: bool = false,
-    metallib: bool = false,
+    private: bool = std.mem.zeroes(bool),
+    spirv: bool = std.mem.zeroes(bool),
+    dxbc: bool = std.mem.zeroes(bool),
+    dxil: bool = std.mem.zeroes(bool),
+    msl: bool = std.mem.zeroes(bool),
+    metallib: bool = std.mem.zeroes(bool),
 
     pub inline fn toInt(self: *const ShaderFormat) c.SDL_GPUShaderFormat {
         return (if (self.private) c.SDL_GPU_SHADERFORMAT_PRIVATE else 0) |
@@ -680,17 +508,6 @@ pub const ShaderFormat = extern struct {
     }
 
     pub inline fn fromInt(flags: c.SDL_GPUShaderFormat) ShaderFormat {
-        return .{
-            .private = flags & c.SDL_GPU_SHADERFORMAT_PRIVATE != 0,
-            .spirv = flags & c.SDL_GPU_SHADERFORMAT_SPIRV != 0,
-            .dxbc = flags & c.SDL_GPU_SHADERFORMAT_DXBC != 0,
-            .dxil = flags & c.SDL_GPU_SHADERFORMAT_DXIL != 0,
-            .msl = flags & c.SDL_GPU_SHADERFORMAT_MSL != 0,
-            .metallib = flags & c.SDL_GPU_SHADERFORMAT_METALLIB != 0,
-        };
-    }
-
-    pub inline fn fromEnum(flags: c.SDL_GPUShaderFormat) ShaderFormat {
         return .{
             .private = flags & c.SDL_GPU_SHADERFORMAT_PRIVATE != 0,
             .spirv = flags & c.SDL_GPU_SHADERFORMAT_SPIRV != 0,
@@ -819,13 +636,13 @@ pub const TextureType = enum(u32) {
 };
 
 pub const TextureUsageFlags = extern struct {
-    sampler: bool = false,
-    color_target: bool = false,
-    depth_stencil_target: bool = false,
-    graphics_storage_read: bool = false,
-    compute_storage_read: bool = false,
-    compute_storage_write: bool = false,
-    compute_storage_simultaneous_read_write: bool = false,
+    sampler: bool = std.mem.zeroes(bool),
+    color_target: bool = std.mem.zeroes(bool),
+    depth_stencil_target: bool = std.mem.zeroes(bool),
+    graphics_storage_read: bool = std.mem.zeroes(bool),
+    compute_storage_read: bool = std.mem.zeroes(bool),
+    compute_storage_write: bool = std.mem.zeroes(bool),
+    compute_storage_simultaneous_read_write: bool = std.mem.zeroes(bool),
 
     pub inline fn toInt(self: TextureUsageFlags) c.SDL_GPUTextureUsageFlags {
         return (if (self.sampler) c.SDL_GPU_TEXTUREUSAGE_SAMPLER else 0) |
@@ -945,7 +762,7 @@ pub const Device = struct {
     ptr: *c.SDL_GPUDevice,
 
     /// Check for GPU runtime support with specified format flags and name.
-    pub inline fn supportsShaderFormats(flags: ShaderFormat, name: [*:0]const u8) bool {
+    pub inline fn supportsShaderFormats(flags: ShaderFormat, name: ?[*:0]const u8) bool {
         return c.SDL_GPUSupportsShaderFormats(flags, name);
     }
 
@@ -1004,7 +821,7 @@ pub const Device = struct {
 
     /// Create a graphics pipeline object to be used in a graphics workflow.
     pub inline fn createGraphicsPipeline(self: *const Device, createinfo: GraphicsPipelineCreateInfo) !*GraphicsPipeline {
-        return try errify(c.SDL_CreateGPUGraphicsPipeline(self.ptr, &createinfo.toNative()));
+        return try errify(c.SDL_CreateGPUGraphicsPipeline(self.ptr, @ptrCast(&createinfo.toNative())));
     }
 
     /// Create a sampler object to be used when binding textures in a graphics workflow.
@@ -1029,16 +846,16 @@ pub const Device = struct {
 
     /// Create a transfer buffer to be used when uploading to or downloading from graphics resources.
     pub inline fn createTransferBuffer(self: *const Device, createinfo: TransferBufferCreateInfo) !*TransferBuffer {
-        return try errify(c.SDL_CreateGPUTransferBuffer(self.ptr, @ptrCast(&createinfo.toNative())));
+        return try errify(c.SDL_CreateGPUTransferBuffer(self.ptr, @ptrCast(&createinfo)));
     }
 
     /// Set an arbitrary string constant to label a buffer.
-    pub inline fn setBufferName(self: *const Device, buffer: *Buffer, text: [*:0]const u8) void {
+    pub inline fn setBufferName(self: *const Device, buffer: *Buffer, text: [:0]const u8) void {
         c.SDL_SetGPUBufferName(self.ptr, buffer, text);
     }
 
     /// Set an arbitrary string constant to label a texture.
-    pub inline fn setTextureName(self: *const Device, texture: *Texture, text: [*:0]const u8) void {
+    pub inline fn setTextureName(self: *const Device, texture: *Texture, text: [:0]const u8) void {
         c.SDL_SetGPUTextureName(self.ptr, texture, text);
     }
 
@@ -1091,7 +908,7 @@ pub const Device = struct {
 
     /// Check if a window supports the specified present mode.
     pub inline fn windowSupportsPresentMode(self: *const Device, window: *const Window, present_mode: PresentMode) bool {
-        return c.SDL_WindowSupportsGPUPresentMode(self.ptr, window.ptr, @intFromEnum(present_mode));
+        return c.SDL_WindowSupportsGPUPresentMode(self.ptr, window.ptr, @bitCast(present_mode));
     }
 
     /// Claim a window, creating a swapchain structure for it.
@@ -1106,7 +923,7 @@ pub const Device = struct {
 
     /// Change the swapchain parameters for the given claimed window.
     pub inline fn setSwapchainParameters(self: *const Device, window: Window, swapchain_composition: SwapchainComposition, present_mode: PresentMode) !void {
-        try errify(c.SDL_SetGPUSwapchainParameters(self.ptr, window.ptr, @intFromEnum(swapchain_composition), @intFromEnum(present_mode)));
+        try errify(c.SDL_SetGPUSwapchainParameters(self.ptr, window.ptr, @bitCast(swapchain_composition), @bitCast(present_mode)));
     }
 
     /// Configure the maximum allowed number of frames in flight.
@@ -1141,22 +958,22 @@ pub const Device = struct {
 
     /// Get the texel block size for a texture format.
     pub inline fn textureFormatTexelBlockSize(format: TextureFormat) u32 {
-        return c.SDL_TextureFormatTexelBlockSize(format);
+        return c.SDL_GPUTextureFormatTexelBlockSize(@bitCast(format));
     }
 
     /// Check if a texture format is supported for a given type and usage.
-    pub inline fn textureSupportsFormat(self: *const Device, format: TextureFormat, type_: TextureType, usage: TextureUsageFlags) bool {
-        return c.SDL_TextureSupportsFormat(self.ptr, format, type_, usage);
+    pub inline fn textureSupportsFormat(self: *const Device, format: TextureFormat, @"type": TextureType, usage: TextureUsageFlags) bool {
+        return c.SDL_GPUTextureSupportsFormat(self.ptr, @bitCast(format), @bitCast(@"type"), usage.toInt());
     }
 
     /// Check if a sample count for a texture format is supported.
     pub inline fn textureSupportsSampleCount(self: *const Device, format: TextureFormat, sample_count: SampleCount) bool {
-        return c.SDL_TextureSupportsSampleCount(self.ptr, format, sample_count);
+        return c.SDL_GPUTextureSupportsSampleCount(self.ptr, @bitCast(format), @bitCast(sample_count));
     }
 
     /// Calculate the size in bytes of a texture format with dimensions.
     pub inline fn calculateTextureFormatSize(format: TextureFormat, width: u32, height: u32, depth_or_layer_count: u32) u32 {
-        return c.SDL_CalculateGPUTextureFormatSize(format, width, height, depth_or_layer_count);
+        return c.SDL_CalculateGPUTextureFormatSize(@bitCast(format), width, height, depth_or_layer_count);
     }
 
     /// Suspend GPU operation on Xbox when receiving SDL_EVENT_DID_ENTER_BACKGROUND event.
@@ -1204,12 +1021,12 @@ pub const CommandBuffer = struct {
     }
 
     /// Insert an arbitrary string label into the command buffer callstream.
-    pub inline fn insertDebugLabel(self: *const CommandBuffer, text: [*:0]const u8) void {
+    pub inline fn insertDebugLabel(self: *const CommandBuffer, text: [:0]const u8) void {
         c.SDL_InsertGPUDebugLabel(self.ptr, text);
     }
 
     /// Begin a debug group with an arbitrary name.
-    pub inline fn pushDebugGroup(self: *const CommandBuffer, name: [*:0]const u8) void {
+    pub inline fn pushDebugGroup(self: *const CommandBuffer, name: [:0]const u8) void {
         c.SDL_PushGPUDebugGroup(self.ptr, name);
     }
 
@@ -1288,8 +1105,8 @@ pub const CommandBuffer = struct {
         self: *const CommandBuffer,
         window: *const Window,
         swapchain_texture: **Texture,
-        swapchain_texture_width: *u32,
-        swapchain_texture_height: *u32,
+        swapchain_texture_width: ?*u32,
+        swapchain_texture_height: ?*u32,
     ) !void {
         try errify(c.SDL_AcquireGPUSwapchainTexture(self.ptr, window.ptr, swapchain_texture, swapchain_texture_width, swapchain_texture_height));
     }
@@ -1342,7 +1159,7 @@ pub const RenderPass = struct {
 
     /// Bind an index buffer for use with subsequent draw calls.
     pub inline fn bindIndexBuffer(self: *const RenderPass, binding: *const BufferBinding, index_element_size: IndexElementSize) void {
-        c.SDL_BindGPUIndexBuffer(self.ptr, @ptrCast(binding), @intFromEnum(index_element_size));
+        c.SDL_BindGPUIndexBuffer(self.ptr, @ptrCast(binding), @bitCast(index_element_size));
     }
 
     /// Bind texture-sampler pairs for use on the vertex shader.
@@ -1411,17 +1228,17 @@ pub const ComputePass = struct {
 
     /// Bind texture-sampler pairs for use on the compute shader.
     pub inline fn bindComputeSamplers(self: *const ComputePass, first_slot: u32, texture_sampler_bindings: []const TextureSamplerBinding) void {
-        c.SDL_BindGPUComputeSamplers(self.ptr, first_slot, @intCast(texture_sampler_bindings.ptr), @intCast(texture_sampler_bindings.len));
+        c.SDL_BindGPUComputeSamplers(self.ptr, first_slot, @ptrCast(texture_sampler_bindings.ptr), @intCast(texture_sampler_bindings.len));
     }
 
     /// Bind storage textures as readonly for use on the compute pipeline.
     pub inline fn bindComputeStorageTextures(self: *const ComputePass, first_slot: u32, storage_textures: []const *Texture) void {
-        c.SDL_BindGPUComputeStorageTextures(self.ptr, first_slot, @intCast(storage_textures.ptr), @intCast(storage_textures.len));
+        c.SDL_BindGPUComputeStorageTextures(self.ptr, first_slot, @ptrCast(storage_textures.ptr), @intCast(storage_textures.len));
     }
 
     /// Bind storage buffers as readonly for use on the compute pipeline.
     pub inline fn bindComputeStorageBuffers(self: *const ComputePass, first_slot: u32, storage_buffers: []const *Buffer) void {
-        c.SDL_BindGPUComputeStorageBuffers(self.ptr, first_slot, @intCast(storage_buffers.ptr), @intCast(storage_buffers.len));
+        c.SDL_BindGPUComputeStorageBuffers(self.ptr, first_slot, @ptrCast(storage_buffers.ptr), @intCast(storage_buffers.len));
     }
 
     /// Dispatch compute work.

@@ -258,8 +258,8 @@ test "graphics pipeline" {
     const depth_texture = try device.createTexture(.{
         .type = .@"2d",
         .format = .d16_unorm,
-        .width = window_size.width,
-        .height = window_size.height,
+        .width = @intCast(window_size.width),
+        .height = @intCast(window_size.height),
         .layer_count_or_depth = 1,
         .num_levels = 1,
         .sample_count = .@"1",
@@ -271,8 +271,8 @@ test "graphics pipeline" {
     const msaa_texture = try device.createTexture(.{
         .type = .@"2d",
         .format = device.getSwapchainTextureFormat(window),
-        .width = window_size.width,
-        .height = window_size.height,
+        .width = @intCast(window_size.width),
+        .height = @intCast(window_size.height),
         .layer_count_or_depth = 1,
         .num_levels = 1,
         .sample_count = .@"1",
@@ -284,8 +284,8 @@ test "graphics pipeline" {
     const resolve_texture = try device.createTexture(.{
         .type = .@"2d",
         .format = device.getSwapchainTextureFormat(window),
-        .width = window_size.width,
-        .height = window_size.height,
+        .width = @intCast(window_size.width),
+        .height = @intCast(window_size.height),
         .layer_count_or_depth = 1,
         .num_levels = 1,
         .sample_count = .@"1",

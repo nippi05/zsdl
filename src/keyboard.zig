@@ -4,9 +4,9 @@ const c = @import("c.zig").c;
 pub const KeyboardID = c.SDL_KeyboardID;
 const internal = @import("internal.zig");
 const errify = internal.errify;
-const errifyWithValue = internal.errifyfyWithValue;
+const errifyWithValue = internal.errifyWithValue;
 const rect = @import("rect.zig");
-const Rect = rect.Rectangle;
+const Rect = rect.Rect;
 const video = @import("video.zig");
 const Window = video.Window;
 const PropertiesID = video.PropertiesID;
@@ -276,7 +276,7 @@ pub const Keycode = enum(u32) {
     }
 
     /// Gets the scancode corresponding to the given key code according to the current keyboard layout.
-    pub inline fn getScancode(self: Keycode, modstate: Keymod) Scancode {
+    pub inline fn getScancode(self: Keycode, modstate: ?Keymod) Scancode {
         return @enumFromInt(c.SDL_GetScancodeFromKey(@intFromEnum(self), @intFromEnum(modstate)));
     }
 
@@ -628,10 +628,12 @@ pub inline fn getKeyboardFocus() ?Window {
 
 /// Gets a snapshot of the current state of the keyboard.
 pub inline fn getKeyboardState() ![]const bool {
-    var numkeys: c_int = undefined;
-    const state = try errify(c.SDL_GetKeyboardState(&numkeys));
-    const len = if (numkeys) |n| @as(usize, @intCast(n.*)) else 512;
-    return @ptrCast(state[0..len]);
+    var numkeys: ?c_int = null;
+    const state = c.SDL_GetKeyboardState(@ptrCast(&numkeys));
+    if (numkeys) |n| {
+        return @ptrCast(state[0..@intCast(n)]);
+    }
+    return &.{};
 }
 
 /// Clears the state of the keyboard.
@@ -665,8 +667,8 @@ pub inline fn clearComposition(window: Window) !void {
 }
 
 /// Sets the area used to type Unicode text input.
-pub inline fn setTextInputArea(window: Window, rectangle: Rect, cursor: c_int) !void {
-    try errify(c.SDL_SetTextInputArea(window.ptr, @ptrCast(rectangle), cursor));
+pub inline fn setTextInputArea(window: Window, rectangle: ?Rect, cursor: c_int) !void {
+    try errify(c.SDL_SetTextInputArea(window.ptr, @ptrCast(&rectangle), cursor));
 }
 
 /// Gets the area used to type Unicode text input.

@@ -26,7 +26,7 @@ const FColor = @import("pixels.zig").FColor;
 const FlipMode = @import("surface.zig").FlipMode;
 const internal = @import("internal.zig");
 const errify = internal.errify;
-const Rect = @import("rect.zig").Rectangle;
+const Rect = @import("rect.zig").Rect;
 const Window = @import("video.zig").Window;
 
 pub const TransferBufferUsage = enum(u32) {

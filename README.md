@@ -456,7 +456,7 @@ pub fn main() !void {
 | Haptic | ✅ | Audio | ❌ | Gpu | ✅ |
 | Clipboard | ✅ | Dialog | ✅ | Filesystem | ❌ |
 | Iostream | ❌ | Atomic | ❌ | Time | ❌ |
-| Timer | 🧪 | Render | 🧪 | Pixels | ✅ |
+| Timer | ✅ | Render | 🧪 | Pixels | ✅ |
 | Surface | 🧪 | Platform | ❌ | Misc | ❌ |
 | Main | ❌ | Strings | ❌ | CPU | ❌ |
 | Intrinsics | ❌ | Locale | ❌ | System | ❌ |

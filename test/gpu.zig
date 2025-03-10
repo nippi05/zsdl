@@ -290,7 +290,7 @@ test "gpu comprehensive test" {
 
         render_pass.setViewport(viewport);
 
-        const scissor = zsdl.rect.Rectangle{
+        const scissor = zsdl.rect.Rect{
             .x = 0,
             .y = 0,
             .w = @intCast(width),

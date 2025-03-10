@@ -184,16 +184,16 @@ pub const Surface = struct {
     }
 
     /// Sets the clipping rectangle for the surface.
-    pub inline fn setClipRect(self: *const Surface, rect_opt: ?rect.Rectangle) void {
+    pub inline fn setClipRect(self: *const Surface, rect_opt: ?rect.Rect) void {
         const rect_ptr = if (rect_opt) |r| &r.toNative() else null;
         try errify(c.SDL_SetSurfaceClipRect(self.ptr, rect_ptr));
     }
 
     /// Gets the clipping rectangle for the surface.
-    pub inline fn getClipRect(self: *const Surface) !rect.Rectangle {
+    pub inline fn getClipRect(self: *const Surface) !rect.Rect {
         var r: c.SDL_Rect = undefined;
         try errify(c.SDL_GetSurfaceClipRect(self.ptr, &r));
-        return rect.Rectangle.fromNative(r);
+        return rect.Rect.fromNative(r);
     }
 
     /// Flips the surface vertically or horizontally.
@@ -247,13 +247,13 @@ pub const Surface = struct {
     }
 
     /// Performs a fast fill of a rectangle with a specific color.
-    pub inline fn fillRect(self: *const Surface, rect_opt: ?rect.Rectangle, color: u32) !void {
+    pub inline fn fillRect(self: *const Surface, rect_opt: ?rect.Rect, color: u32) !void {
         const rect_ptr = if (rect_opt) |r| &r.toNative() else null;
         try errify(c.SDL_FillSurfaceRect(self.ptr, rect_ptr, color));
     }
 
     /// Performs a fast fill of a set of rectangles with a specific color.
-    pub inline fn fillRects(self: *const Surface, rects: []const rect.Rectangle, color: u32) !void {
+    pub inline fn fillRects(self: *const Surface, rects: []const rect.Rect, color: u32) !void {
         var native_rects = try std.ArrayList(c.SDL_Rect).initCapacity(std.heap.c_allocator, rects.len);
         defer native_rects.deinit();
 
@@ -265,9 +265,9 @@ pub const Surface = struct {
     }
 
     /// Performs a fast blit from the source surface to the destination surface.
-    pub inline fn blit(self: *const Surface, src_rect: ?rect.Rectangle) !rect.Rectangle {
+    pub inline fn blit(self: *const Surface, src_rect: ?rect.Rect) !rect.Rect {
         const src_rect_ptr = if (src_rect) |r| &r else null;
-        var dst: rect.Rectangle = undefined;
+        var dst: rect.Rect = undefined;
 
         try errify(c.SDL_BlitSurface(self.ptr, src_rect_ptr, &dst, &dst));
 
@@ -277,9 +277,9 @@ pub const Surface = struct {
     /// Performs a scaled blit from the source surface to the destination surface.
     pub inline fn blitScaled(
         self: *const Surface,
-        src_rect: ?rect.Rectangle,
+        src_rect: ?rect.Rect,
         dst: *Surface,
-        dst_rect: ?rect.Rectangle,
+        dst_rect: ?rect.Rect,
         scale_mode: ScaleMode,
     ) !void {
         const src_rect_ptr = if (src_rect) |r| &r.toNative() else null;
@@ -328,22 +328,22 @@ pub const Surface = struct {
     }
 
     /// Performs a low-level surface blitting only.
-    pub inline fn blitUnchecked(self: *const Surface, src_rect: rect.Rectangle, dst: *Surface, dst_rect: rect.Rectangle) !void {
+    pub inline fn blitUnchecked(self: *const Surface, src_rect: rect.Rect, dst: *Surface, dst_rect: rect.Rect) !void {
         try errify(c.SDL_BlitSurfaceUnchecked(self.ptr, &src_rect.toNative(), dst.ptr, &dst_rect.toNative()));
     }
 
     /// Performs a low-level surface scaled blitting only.
-    pub inline fn blitUncheckedScaled(self: *const Surface, src_rect: rect.Rectangle, dst: *Surface, dst_rect: rect.Rectangle, scale_mode: ScaleMode) !void {
+    pub inline fn blitUncheckedScaled(self: *const Surface, src_rect: rect.Rect, dst: *Surface, dst_rect: rect.Rect, scale_mode: ScaleMode) !void {
         try errify(c.SDL_BlitSurfaceUncheckedScaled(self.ptr, &src_rect.toNative(), dst.ptr, &dst_rect.toNative(), scale_mode));
     }
 
     /// Performs a stretched pixel copy from one surface to another.
-    pub inline fn stretch(self: *const Surface, src_rect: rect.Rectangle, dst: *Surface, dst_rect: rect.Rectangle, scale_mode: ScaleMode) !void {
+    pub inline fn stretch(self: *const Surface, src_rect: rect.Rect, dst: *Surface, dst_rect: rect.Rect, scale_mode: ScaleMode) !void {
         try errify(c.SDL_StretchSurface(self.ptr, &src_rect.toNative(), dst.ptr, &dst_rect.toNative(), scale_mode));
     }
 
     /// Performs a tiled blit to a destination surface.
-    pub inline fn blitTiled(self: *const Surface, src_rect: ?rect.Rectangle, dst: *Surface, dst_rect: ?rect.Rectangle) !void {
+    pub inline fn blitTiled(self: *const Surface, src_rect: ?rect.Rect, dst: *Surface, dst_rect: ?rect.Rect) !void {
         const src_rect_ptr = if (src_rect) |r| &r.toNative() else null;
         const dst_rect_ptr = if (dst_rect) |r| &r.toNative() else null;
         try errify(c.SDL_BlitSurfaceTiled(self.ptr, src_rect_ptr, dst.ptr, dst_rect_ptr));
@@ -352,11 +352,11 @@ pub const Surface = struct {
     /// Performs a scaled and tiled blit to a destination surface.
     pub inline fn blitTiledWithScale(
         self: *const Surface,
-        src_rect: ?rect.Rectangle,
+        src_rect: ?rect.Rect,
         scal: f32,
         scale_mode: ScaleMode,
         dst: *Surface,
-        dst_rect: ?rect.Rectangle,
+        dst_rect: ?rect.Rect,
     ) !void {
         const src_rect_ptr = if (src_rect) |r| &r.toNative() else null;
         const dst_rect_ptr = if (dst_rect) |r| &r.toNative() else null;
@@ -366,7 +366,7 @@ pub const Surface = struct {
     /// Performs a scaled blit using the 9-grid algorithm.
     pub inline fn blit9Grid(
         self: *const Surface,
-        src_rect: ?rect.Rectangle,
+        src_rect: ?rect.Rect,
         left_width: usize,
         right_width: usize,
         top_height: usize,
@@ -374,7 +374,7 @@ pub const Surface = struct {
         scal: f32,
         scale_mode: ScaleMode,
         dst: *Surface,
-        dst_rect: ?rect.Rectangle,
+        dst_rect: ?rect.Rect,
     ) !void {
         const src_rect_ptr = if (src_rect) |r| &r.toNative() else null;
         const dst_rect_ptr = if (dst_rect) |r| &r.toNative() else null;

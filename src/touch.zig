@@ -5,8 +5,6 @@ const errify = internal.errify;
 const video = @import("video.zig");
 const Window = video.Window;
 const rect = @import("rect.zig");
-const Rectangle = rect.Rectangle;
-const PropertiesID = video.PropertiesID;
 
 pub const TouchID = c.SDL_TouchID;
 pub const FingerID = c.SDL_FingerID;

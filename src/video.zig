@@ -11,7 +11,7 @@ const errifyWithValue = internal.errifyWithValue;
 const pixels = @import("pixels.zig");
 const PixelFormat = pixels.PixelFormat;
 const rect = @import("rect.zig");
-const Rectangle = rect.Rectangle;
+const Rect = rect.Rectangle;
 const Point = rect.Point;
 const Size = rect.Size;
 const AspectRatio = rect.AspectRatio;
@@ -93,7 +93,7 @@ pub const WindowProperties = struct {
 };
 
 /// Get the number of video drivers compiled into SDL.
-pub inline fn getNumVideoDrivers() comptime_int {
+pub inline fn getNumVideoDrivers() c_int {
     return c.SDL_GetNumVideoDrivers();
 }
 
@@ -107,7 +107,7 @@ pub inline fn getCurrentVideoDriver() []const u8 {
     return std.mem.span(c.SDL_GetCurrentVideoDriver());
 }
 
-pub const SystemTheme = enum(c_int) {
+pub const SystemTheme = enum(u32) {
     unknown = c.SDL_SYSTEM_THEME_UNKNOWN,
     light = c.SDL_SYSTEM_THEME_LIGHT,
     dark = c.SDL_SYSTEM_THEME_DARK,
@@ -149,7 +149,7 @@ pub const Display = packed struct {
     }
 
     /// Get the display primarily containing a rect.
-    pub inline fn getForRect(rectangle: Rectangle) !Display {
+    pub inline fn getForRect(rectangle: Rect) !Display {
         return .{
             .id = try errify(c.SDL_GetDisplayForRect(@ptrCast(rectangle))),
         };
@@ -173,15 +173,15 @@ pub const Display = packed struct {
     }
 
     /// Get the desktop area represented by a display.
-    pub inline fn getBounds(self: *const Display) !Rectangle {
-        var bounds: Rectangle = undefined;
+    pub inline fn getBounds(self: *const Display) !Rect {
+        var bounds: Rect = undefined;
         try errify(c.SDL_GetDisplayBounds(self.id, @ptrCast(&bounds)));
         return bounds;
     }
 
     /// Get the usable desktop area represented by a display, in screen coordinates.
-    pub inline fn getUsableBounds(self: *const Display) !Rectangle {
-        var bounds: Rectangle = undefined;
+    pub inline fn getUsableBounds(self: *const Display) !Rect {
+        var bounds: Rect = undefined;
         try errify(c.SDL_GetDisplayUsableBounds(self.id, @ptrCast(&bounds)));
         return bounds;
     }
@@ -491,8 +491,8 @@ pub const Window = struct {
     }
 
     /// Get the safe area for this window.
-    pub inline fn getSafeArea(self: *const Window) !Rectangle {
-        var rectangle: Rectangle = undefined;
+    pub inline fn getSafeArea(self: *const Window) !Rect {
+        var rectangle: Rect = undefined;
         try errify(c.SDL_GetWindowSafeArea(self.ptr, @ptrCast(&rectangle)));
         return rectangle;
     }
@@ -638,7 +638,7 @@ pub const Window = struct {
     }
 
     /// Copy areas of the window surface to the screen.
-    pub inline fn updateSurfaceRects(self: *const Window, rects: []const Rectangle) !void {
+    pub inline fn updateSurfaceRects(self: *const Window, rects: []const Rect) !void {
         try errify(c.SDL_UpdateWindowSurfaceRects(self.ptr, @ptrCast(rects.ptr), @intCast(rects.len)));
     }
 
@@ -678,12 +678,12 @@ pub const Window = struct {
     }
 
     /// Confines the cursor to the specified area of a window.
-    pub inline fn setMouseRect(self: *const Window, rectangle: Rectangle) !void {
+    pub inline fn setMouseRect(self: *const Window, rectangle: Rect) !void {
         try errify(c.SDL_SetWindowMouseRect(self.ptr, @ptrCast(&rectangle)));
     }
 
     /// Get the mouse confinement rectangle of a window.
-    pub inline fn getMouseRect(self: *const Window) ?Rectangle {
+    pub inline fn getMouseRect(self: *const Window) ?Rect {
         if (c.SDL_GetWindowMouseRect(self.ptr)) |ptr| {
             return ptr.*;
         }
@@ -760,7 +760,7 @@ pub inline fn disableScreenSaver() !void {
     try errify(c.SDL_DisableScreenSaver());
 }
 
-pub const GLattr = enum(c_int) {
+pub const GLattr = enum(u32) {
     red_size = c.SDL_GL_RED_SIZE,
     green_size = c.SDL_GL_GREEN_SIZE,
     blue_size = c.SDL_GL_BLUE_SIZE,

@@ -6,7 +6,7 @@ const internal = @import("internal.zig");
 const errify = internal.errify;
 const errifyWithValue = internal.errifyfyWithValue;
 const rect = @import("rect.zig");
-const Rectangle = rect.Rectangle;
+const Rect = rect.Rectangle;
 const video = @import("video.zig");
 const Window = video.Window;
 const PropertiesID = video.PropertiesID;
@@ -665,13 +665,13 @@ pub inline fn clearComposition(window: Window) !void {
 }
 
 /// Sets the area used to type Unicode text input.
-pub inline fn setTextInputArea(window: Window, rectangle: Rectangle, cursor: c_int) !void {
+pub inline fn setTextInputArea(window: Window, rectangle: Rect, cursor: c_int) !void {
     try errify(c.SDL_SetTextInputArea(window.ptr, @ptrCast(rectangle), cursor));
 }
 
 /// Gets the area used to type Unicode text input.
-pub inline fn getTextInputArea(window: Window, cursor: ?*c_int) !Rectangle {
-    var rectangle: Rectangle = undefined;
+pub inline fn getTextInputArea(window: Window, cursor: ?*c_int) !Rect {
+    var rectangle: Rect = undefined;
     try errify(c.SDL_GetTextInputArea(window.ptr, @ptrCast(&rectangle), cursor));
     return rectangle;
 }

@@ -460,7 +460,7 @@ pub fn main() !void {
 | Surface | 🧪 | Platform | ❌ | Misc | ❌ |
 | Main | ❌ | Strings | ❌ | CPU | ❌ |
 | Intrinsics | ❌ | Locale | ❌ | System | ❌ |
-| Metal | ❌ | Vulkan | ❌ | | |
+| Metal | ❌ | Vulkan | ❌ | Rect | ✅ |
 
 Legend:
 - ✅ Fully implemented

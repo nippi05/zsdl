@@ -1,15 +1,15 @@
 const std = @import("std");
 
-const GUID = @import("Guid.zig").GUID;
 const c = @import("c.zig").c;
+const GUID = @import("Guid.zig").GUID;
 const internal = @import("internal.zig");
 const errify = internal.errify;
 const errifyWithValue = internal.errifyWithValue;
 const joystick = @import("joystick.zig");
-const power = @import("power.zig");
 const JoystickID = joystick.JoystickID;
 const Joystick = joystick.Joystick;
 const JoystickConnectionState = joystick.JoystickConnectionState;
+const power = @import("power.zig");
 
 pub const GamepadType = enum(u32) {
     unknown = c.SDL_GAMEPAD_TYPE_UNKNOWN,

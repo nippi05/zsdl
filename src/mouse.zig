@@ -5,7 +5,6 @@ pub const MouseID = c.SDL_MouseID;
 const internal = @import("internal.zig");
 const errify = internal.errify;
 const rect = @import("rect.zig");
-const Rectangle = rect.Rectangle;
 const Surface = @import("surface.zig").Surface;
 const video = @import("video.zig");
 const Window = video.Window;

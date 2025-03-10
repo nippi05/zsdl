@@ -26,7 +26,7 @@ const FColor = @import("pixels.zig").FColor;
 const FlipMode = @import("surface.zig").FlipMode;
 const internal = @import("internal.zig");
 const errify = internal.errify;
-const Rectangle = @import("rect.zig").Rectangle;
+const Rect = @import("rect.zig").Rectangle;
 const Window = @import("video.zig").Window;
 
 pub const TransferBufferUsage = enum(u32) {
@@ -1139,7 +1139,7 @@ pub const RenderPass = struct {
     }
 
     /// Set the current scissor state.
-    pub inline fn setScissor(self: *const RenderPass, scissor: Rectangle) void {
+    pub inline fn setScissor(self: *const RenderPass, scissor: Rect) void {
         c.SDL_SetGPUScissor(self.ptr, @ptrCast(&scissor));
     }
 

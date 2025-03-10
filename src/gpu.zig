@@ -1104,11 +1104,12 @@ pub const CommandBuffer = struct {
     pub inline fn acquireSwapchainTexture(
         self: *const CommandBuffer,
         window: *const Window,
-        swapchain_texture: **Texture,
         swapchain_texture_width: ?*u32,
         swapchain_texture_height: ?*u32,
-    ) !void {
-        try errify(c.SDL_AcquireGPUSwapchainTexture(self.ptr, window.ptr, swapchain_texture, swapchain_texture_width, swapchain_texture_height));
+    ) !*Texture {
+        var texture: *Texture = undefined;
+        try errify(c.SDL_AcquireGPUSwapchainTexture(self.ptr, window.ptr, @ptrCast(&texture), swapchain_texture_width, swapchain_texture_height));
+        return texture;
     }
 
     /// Wait and acquire a swapchain texture.

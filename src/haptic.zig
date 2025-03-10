@@ -1,38 +1,178 @@
 const std = @import("std");
-const internal = @import("internal.zig");
-const Joystick = @import("joystick.zig").Joystick;
+
 const c = @import("c.zig").c;
-const errify = internal.errify;
-
 pub const HapticID = c.SDL_HapticID;
-pub const HapticEffect = c.SDL_HapticEffect;
+const internal = @import("internal.zig");
+const errify = internal.errify;
+const errifyWithValue = internal.errifyWithValue;
+const Joystick = @import("joystick.zig").Joystick;
 
-pub const Haptic = struct {
+pub const HapticDirectionType = enum(u8) {
+    polar = c.SDL_HAPTIC_POLAR,
+    cartesian = c.SDL_HAPTIC_CARTESIAN,
+    spherical = c.SDL_HAPTIC_SPHERICAL,
+    steering_axis = c.SDL_HAPTIC_STEERING_AXIS,
+};
+
+pub const HapticDirection = extern struct {
+    type: HapticDirectionType = std.mem.zeroes(HapticDirectionType),
+    dir: [3]i32 = [_]i32{0} ** 3,
+
+    pub inline fn north() HapticDirection {
+        return .{
+            .type = .polar,
+            .dir = [_]i32{ 0, 0, 0 },
+        };
+    }
+
+    pub inline fn east() HapticDirection {
+        return .{
+            .type = .polar,
+            .dir = [_]i32{ 9000, 0, 0 },
+        };
+    }
+
+    pub inline fn south() HapticDirection {
+        return .{
+            .type = .polar,
+            .dir = [_]i32{ 18000, 0, 0 },
+        };
+    }
+
+    pub inline fn west() HapticDirection {
+        return .{
+            .type = .polar,
+            .dir = [_]i32{ 27000, 0, 0 },
+        };
+    }
+
+    pub inline fn cartesian(x: i32, y: i32, z: i32) HapticDirection {
+        return .{
+            .type = .cartesian,
+            .dir = [_]i32{ x, y, z },
+        };
+    }
+};
+
+pub const HapticEffectType = enum(u16) {
+    constant = c.SDL_HAPTIC_CONSTANT,
+    sine = c.SDL_HAPTIC_SINE,
+    square = c.SDL_HAPTIC_SQUARE,
+    triangle = c.SDL_HAPTIC_TRIANGLE,
+    sawtoothup = c.SDL_HAPTIC_SAWTOOTHUP,
+    sawtoothdown = c.SDL_HAPTIC_SAWTOOTHDOWN,
+    ramp = c.SDL_HAPTIC_RAMP,
+    spring = c.SDL_HAPTIC_SPRING,
+    damper = c.SDL_HAPTIC_DAMPER,
+    inertia = c.SDL_HAPTIC_INERTIA,
+    friction = c.SDL_HAPTIC_FRICTION,
+    leftright = c.SDL_HAPTIC_LEFTRIGHT,
+    custom = c.SDL_HAPTIC_CUSTOM,
+};
+
+pub const HapticConstant = extern struct {
+    type: HapticEffectType,
+    direction: HapticDirection = std.mem.zeroes(HapticDirection),
+    length: u32 = std.mem.zeroes(u32),
+    delay: u16 = std.mem.zeroes(u16),
+    button: u16 = std.mem.zeroes(u16),
+    interval: u16 = std.mem.zeroes(u16),
+    level: i16 = std.mem.zeroes(i16),
+    attack_length: u16 = std.mem.zeroes(u16),
+    attack_level: u16 = std.mem.zeroes(u16),
+    fade_length: u16 = std.mem.zeroes(u16),
+    fade_level: u16 = std.mem.zeroes(u16),
+};
+
+pub const HapticPeriodic = extern struct {
+    type: HapticEffectType,
+    direction: HapticDirection = std.mem.zeroes(HapticDirection),
+    length: u32 = std.mem.zeroes(u32),
+    delay: u16 = std.mem.zeroes(u16),
+    button: u16 = std.mem.zeroes(u16),
+    interval: u16 = std.mem.zeroes(u16),
+    period: u16 = std.mem.zeroes(u16),
+    magnitude: i16 = std.mem.zeroes(i16),
+    offset: i16 = std.mem.zeroes(i16),
+    phase: u16 = std.mem.zeroes(u16),
+    attack_length: u16 = std.mem.zeroes(u16),
+    attack_level: u16 = std.mem.zeroes(u16),
+    fade_length: u16 = std.mem.zeroes(u16),
+    fade_level: u16 = std.mem.zeroes(u16),
+};
+
+pub const HapticCondition = extern struct {
+    type: HapticEffectType,
+    direction: HapticDirection = std.mem.zeroes(HapticDirection),
+    length: u32 = std.mem.zeroes(u32),
+    delay: u16 = std.mem.zeroes(u16),
+    button: u16 = std.mem.zeroes(u16),
+    interval: u16 = std.mem.zeroes(u16),
+    right_sat: [3]u16 = [_]u16{0} ** 3,
+    left_sat: [3]u16 = [_]u16{0} ** 3,
+    right_coeff: [3]i16 = [_]i16{0} ** 3,
+    left_coeff: [3]i16 = [_]i16{0} ** 3,
+    deadband: [3]u16 = [_]u16{0} ** 3,
+    center: [3]i16 = [_]i16{0} ** 3,
+};
+
+pub const HapticRamp = extern struct {
+    type: HapticEffectType,
+    direction: HapticDirection = std.mem.zeroes(HapticDirection),
+    length: u32 = std.mem.zeroes(u32),
+    delay: u16 = std.mem.zeroes(u16),
+    button: u16 = std.mem.zeroes(u16),
+    interval: u16 = std.mem.zeroes(u16),
+    start: i16 = std.mem.zeroes(i16),
+    end: i16 = std.mem.zeroes(i16),
+    attack_length: u16 = std.mem.zeroes(u16),
+    attack_level: u16 = std.mem.zeroes(u16),
+    fade_length: u16 = std.mem.zeroes(u16),
+    fade_level: u16 = std.mem.zeroes(u16),
+};
+
+pub const HapticLeftRight = extern struct {
+    type: HapticEffectType,
+    length: u32 = std.mem.zeroes(u32),
+    large_magnitude: u16 = std.mem.zeroes(u16),
+    small_magnitude: u16 = std.mem.zeroes(u16),
+};
+
+pub const HapticCustom = extern struct {
+    type: HapticEffectType,
+    direction: HapticDirection = std.mem.zeroes(HapticDirection),
+    length: u32 = std.mem.zeroes(u32),
+    delay: u16 = std.mem.zeroes(u16),
+    button: u16 = std.mem.zeroes(u16),
+    interval: u16 = std.mem.zeroes(u16),
+    channels: u8 = std.mem.zeroes(u8),
+    period: u16 = std.mem.zeroes(u16),
+    samples: u16 = std.mem.zeroes(u16),
+    data: [*]allowzero u16 = std.mem.zeroes([*]allowzero u16),
+    attack_length: u16 = std.mem.zeroes(u16),
+    attack_level: u16 = std.mem.zeroes(u16),
+    fade_length: u16 = std.mem.zeroes(u16),
+    fade_level: u16 = std.mem.zeroes(u16),
+};
+
+pub const HapticEffect = union(HapticEffectType) {
+    constant: HapticConstant,
+    sine: HapticPeriodic,
+    square: HapticPeriodic,
+    triangle: HapticPeriodic,
+    sawtoothup: HapticPeriodic,
+    sawtoothdown: HapticPeriodic,
+    ramp: HapticRamp,
+    spring: HapticCondition,
+    damper: HapticCondition,
+    inertia: HapticCondition,
+    friction: HapticCondition,
+    leftright: HapticLeftRight,
+    custom: HapticCustom,
+};
+
+pub const Haptic = extern struct {
     ptr: *c.SDL_Haptic,
-
-    /// Get a list of currently connected haptic devices.
-    pub inline fn getHaptics(count: *c_int) ![*]HapticID {
-        return try errify(c.SDL_GetHaptics(count));
-    }
-
-    /// Get the implementation dependent name of a haptic device.
-    pub inline fn getHapticNameForID(instance_id: HapticID) ?[*:0]const u8 {
-        return c.SDL_GetHapticNameForID(instance_id);
-    }
-
-    /// Open a haptic device for use.
-    pub inline fn openHaptic(instance_id: HapticID) !Haptic {
-        const ptr = try errify(c.SDL_OpenHaptic(instance_id));
-        return Haptic{ .ptr = ptr };
-    }
-
-    /// Get the SDL_Haptic associated with an instance ID, if it has been opened.
-    pub inline fn getHapticFromID(instance_id: HapticID) ?Haptic {
-        if (c.SDL_GetHapticFromID(instance_id)) |ptr| {
-            return Haptic{ .ptr = ptr };
-        }
-        return null;
-    }
 
     /// Get the instance ID of an opened haptic device.
     pub inline fn getID(self: *const Haptic) HapticID {
@@ -42,23 +182,6 @@ pub const Haptic = struct {
     /// Get the implementation dependent name of a haptic device.
     pub inline fn getName(self: *const Haptic) ?[*:0]const u8 {
         return c.SDL_GetHapticName(self.ptr);
-    }
-
-    /// Try to open a haptic device from the current mouse.
-    pub inline fn openHapticFromMouse() !Haptic {
-        const ptr = try errify(c.SDL_OpenHapticFromMouse());
-        return Haptic{ .ptr = ptr };
-    }
-
-    /// Query if a joystick has haptic features.
-    pub inline fn isJoystickHaptic(joystick: *Joystick) bool {
-        return c.SDL_IsJoystickHaptic(joystick.ptr);
-    }
-
-    /// Open a haptic device for use from a joystick device.
-    pub inline fn openHapticFromJoystick(joystick: *Joystick) !Haptic {
-        const ptr = try errify(c.SDL_OpenHapticFromJoystick(joystick.ptr));
-        return Haptic{ .ptr = ptr };
     }
 
     /// Close a haptic device previously opened with SDL_OpenHaptic().
@@ -88,17 +211,17 @@ pub const Haptic = struct {
 
     /// Check to see if an effect is supported by a haptic device.
     pub inline fn effectSupported(self: *const Haptic, effect: *const HapticEffect) bool {
-        return c.SDL_HapticEffectSupported(self.ptr, effect);
+        return c.SDL_HapticEffectSupported(self.ptr, @ptrCast(effect));
     }
 
     /// Create a new haptic effect on a specified device.
     pub inline fn createEffect(self: *const Haptic, effect: *const HapticEffect) !c_int {
-        return try errify(c.SDL_CreateHapticEffect(self.ptr, effect));
+        return try errifyWithValue(c.SDL_CreateHapticEffect(self.ptr, @ptrCast(effect)), -1);
     }
 
     /// Update the properties of an effect.
     pub inline fn updateEffect(self: *const Haptic, effect: c_int, data: *const HapticEffect) !void {
-        try errify(c.SDL_UpdateHapticEffect(self.ptr, effect, data));
+        try errify(c.SDL_UpdateHapticEffect(self.ptr, effect, @ptrCast(data)));
     }
 
     /// Run the haptic effect on its associated haptic device.
@@ -167,7 +290,53 @@ pub const Haptic = struct {
     }
 };
 
+/// Get a list of currently connected haptic devices.
+pub inline fn getHaptics() ![]HapticID {
+    var count: c_int = undefined;
+    const haptic_ids = try errify(c.SDL_GetHaptics(&count));
+    return haptic_ids[0..@intCast(count)];
+}
+
+/// Get the implementation dependent name of a haptic device.
+pub inline fn getHapticNameForID(instance_id: HapticID) ?[*:0]const u8 {
+    return c.SDL_GetHapticNameForID(instance_id);
+}
+
+/// Open a haptic device for use.
+pub inline fn openHaptic(instance_id: HapticID) !Haptic {
+    return .{
+        .ptr = try errify(c.SDL_OpenHaptic(instance_id)),
+    };
+}
+
+/// Get the SDL_Haptic associated with an instance ID, if it has been opened.
+pub inline fn getHapticFromID(instance_id: HapticID) ?Haptic {
+    if (c.SDL_GetHapticFromID(instance_id)) |ptr| {
+        return Haptic{ .ptr = ptr };
+    }
+    return null;
+}
+
 /// Query whether or not the current mouse has haptic capabilities.
 pub inline fn isMouseHaptic() bool {
     return c.SDL_IsMouseHaptic();
+}
+
+/// Try to open a haptic device from the current mouse.
+pub inline fn openHapticFromMouse() !Haptic {
+    return .{
+        .ptr = try errify(c.SDL_OpenHapticFromMouse()),
+    };
+}
+
+/// Query if a joystick has haptic features.
+pub inline fn isJoystickHaptic(joystick: *Joystick) bool {
+    return c.SDL_IsJoystickHaptic(joystick.ptr);
+}
+
+/// Open a haptic device for use from a joystick device.
+pub inline fn openHapticFromJoystick(joystick: *Joystick) !Haptic {
+    return .{
+        .ptr = try errify(c.SDL_OpenHapticFromJoystick(joystick.ptr)),
+    };
 }

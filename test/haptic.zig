@@ -1,6 +1,5 @@
 const std = @import("std");
 const zsdl = @import("zsdl");
-const log = zsdl.log;
 const haptic = zsdl.haptic;
 const Haptic = haptic.Haptic;
 
@@ -11,18 +10,15 @@ test "SDL haptic enumeration" {
     });
     defer zsdl.quit();
 
-    var count: c_int = 0;
-    const haptic_devices = haptic.getHaptics(&count) catch |err| {
+    const haptic_devices = haptic.getHaptics() catch |err| {
         std.debug.print("Error getting haptics: {}\n", .{err});
         return;
     };
-    defer std.c.free(haptic_devices);
 
-    std.debug.print("Found {} haptic device(s)\n", .{count});
+    std.debug.print("Found {} haptic device(s)\n", .{haptic_devices.len});
 
-    if (count > 0) {
-        for (0..@intCast(usize, count)) |i| {
-            const id = haptic_devices[i];
+    if (haptic_devices.len > 0) {
+        for (haptic_devices, 0..) |id, i| {
             if (haptic.getHapticNameForID(id)) |name| {
                 std.debug.print("Haptic device {}: {s}\n", .{ i, name });
             } else {
@@ -41,14 +37,12 @@ test "SDL haptic device capabilities" {
     });
     defer zsdl.quit();
 
-    var count: c_int = 0;
-    const haptic_devices = haptic.getHaptics(&count) catch |err| {
+    const haptic_devices = haptic.getHaptics() catch |err| {
         std.debug.print("Error getting haptics: {}\n", .{err});
         return;
     };
-    defer std.c.free(haptic_devices);
 
-    if (count == 0) {
+    if (haptic_devices.len == 0) {
         std.debug.print("No haptic devices found, skipping capability test\n", .{});
         return;
     }
@@ -96,14 +90,12 @@ test "SDL haptic rumble" {
     });
     defer zsdl.quit();
 
-    var count: c_int = 0;
-    const haptic_devices = haptic.getHaptics(&count) catch |err| {
+    const haptic_devices = haptic.getHaptics() catch |err| {
         std.debug.print("Error getting haptics: {}\n", .{err});
         return;
     };
-    defer std.c.free(haptic_devices);
 
-    if (count == 0) {
+    if (haptic_devices.len == 0) {
         std.debug.print("No haptic devices found, skipping rumble test\n", .{});
         return;
     }
@@ -150,14 +142,12 @@ test "SDL haptic effects" {
     });
     defer zsdl.quit();
 
-    var count: c_int = 0;
-    const haptic_devices = haptic.getHaptics(&count) catch |err| {
+    const haptic_devices = haptic.getHaptics() catch |err| {
         std.debug.print("Error getting haptics: {}\n", .{err});
         return;
     };
-    defer std.c.free(haptic_devices);
 
-    if (count == 0) {
+    if (haptic_devices.len == 0) {
         std.debug.print("No haptic devices found, skipping effects test\n", .{});
         return;
     }
@@ -170,19 +160,23 @@ test "SDL haptic effects" {
     defer device.close();
 
     // Create a simple constant effect
-    var effect: haptic.HapticEffect = undefined;
-    effect.type = @intCast(u16, zsdl.c.SDL_HAPTIC_CONSTANT);
-    effect.constant.direction.type = zsdl.c.SDL_HAPTIC_POLAR;
-    effect.constant.direction.dir[0] = 0; // North
-    effect.constant.length = 1000;
-    effect.constant.delay = 0;
-    effect.constant.button = 0;
-    effect.constant.interval = 0;
-    effect.constant.level = 5000;
-    effect.constant.attack_length = 100;
-    effect.constant.attack_level = 0;
-    effect.constant.fade_length = 100;
-    effect.constant.fade_level = 0;
+    var effect: haptic.HapticEffect = .{
+        .constant = .{
+            .type = .constant,
+            .direction = .{
+                .type = .polar,
+            },
+            .length = 1000,
+            .delay = 0,
+            .button = 0,
+            .interval = 0,
+            .level = 5000,
+            .attack_length = 100,
+            .attack_level = 0,
+            .fade_length = 100,
+            .fade_level = 0,
+        },
+    };
 
     // Check if the effect is supported
     const supported = device.effectSupported(&effect);
@@ -251,6 +245,49 @@ test "SDL haptic mouse" {
     }
 }
 
+test "SDL haptic getHapticFromID" {
+    try zsdl.init(.{
+        .haptic = true,
+        .joystick = true,
+    });
+    defer zsdl.quit();
+
+    const haptic_devices = haptic.getHaptics() catch |err| {
+        std.debug.print("Error getting haptics: {}\n", .{err});
+        return;
+    };
+
+    if (haptic_devices.len == 0) {
+        std.debug.print("No haptic devices found, skipping getHapticFromID test\n", .{});
+        return;
+    }
+
+    // Open the first haptic device
+    var device = haptic.openHaptic(haptic_devices[0]) catch |err| {
+        std.debug.print("Error opening haptic device: {}\n", .{err});
+        return;
+    };
+    defer device.close();
+
+    // Get the device ID
+    const id = device.getID();
+    std.debug.print("Device ID: {}\n", .{id});
+
+    // Test getHapticFromID
+    if (haptic.getHapticFromID(id)) |obtained_device| {
+        std.debug.print("Successfully retrieved device via getHapticFromID\n", .{});
+
+        // Compare pointers
+        if (obtained_device.ptr == device.ptr) {
+            std.debug.print("Device pointers match\n", .{});
+        } else {
+            std.debug.print("Device pointers don't match (unexpected)\n", .{});
+        }
+    } else {
+        std.debug.print("Failed to retrieve device via getHapticFromID (unexpected)\n", .{});
+    }
+}
+
 test "SDL haptic controls" {
     try zsdl.init(.{
         .haptic = true,
@@ -258,14 +295,12 @@ test "SDL haptic controls" {
     });
     defer zsdl.quit();
 
-    var count: c_int = 0;
-    const haptic_devices = haptic.getHaptics(&count) catch |err| {
+    const haptic_devices = haptic.getHaptics() catch |err| {
         std.debug.print("Error getting haptics: {}\n", .{err});
         return;
     };
-    defer std.c.free(haptic_devices);
 
-    if (count == 0) {
+    if (haptic_devices.len == 0) {
         std.debug.print("No haptic devices found, skipping controls test\n", .{});
         return;
     }
@@ -313,4 +348,36 @@ test "SDL haptic controls" {
     } else {
         std.debug.print("Device does not support pause/resume\n", .{});
     }
+}
+
+test "SDL haptic stopEffects" {
+    try zsdl.init(.{
+        .haptic = true,
+        .joystick = true,
+    });
+    defer zsdl.quit();
+
+    const haptic_devices = haptic.getHaptics() catch |err| {
+        std.debug.print("Error getting haptics: {}\n", .{err});
+        return;
+    };
+
+    if (haptic_devices.len == 0) {
+        std.debug.print("No haptic devices found, skipping stopEffects test\n", .{});
+        return;
+    }
+
+    // Open the first haptic device
+    var device = haptic.openHaptic(haptic_devices[0]) catch |err| {
+        std.debug.print("Error opening haptic device: {}\n", .{err});
+        return;
+    };
+    defer device.close();
+
+    // Test stopEffects function
+    std.debug.print("Testing stopEffects...\n", .{});
+    device.stopEffects() catch |err| {
+        std.debug.print("Error stopping effects: {}\n", .{err});
+    };
+    std.debug.print("All effects stopped\n", .{});
 }

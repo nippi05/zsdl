@@ -1,38 +1,28 @@
 const std = @import("std");
-const internal = @import("internal.zig");
+
 const c = @import("c.zig").c;
+pub const CameraID = c.SDL_CameraID;
+const internal = @import("internal.zig");
 const errify = internal.errify;
 const pixels = @import("pixels.zig");
+const PixelFormat = pixels.PixelFormat;
+const Colorspace = pixels.Colorspace;
 const surface = @import("surface.zig");
+pub const Surface = surface.Surface;
 
-pub const CameraID = c.SDL_CameraID;
 pub const CameraSpec = extern struct {
-    format: pixels.PixelFormat,
-    colorspace: pixels.ColorSpace,
-    width: c_int,
-    height: c_int,
-    framerate_numerator: c_int,
-    framerate_denominator: c_int,
+    format: PixelFormat = std.mem.zeroes(PixelFormat),
+    colorspace: Colorspace = std.mem.zeroes(Colorspace),
+    width: usize = std.mem.zeroes(usize),
+    height: usize = std.mem.zeroes(usize),
+    framerate_numerator: usize = std.mem.zeroes(usize),
+    framerate_denominator: usize = std.mem.zeroes(usize),
 };
 
 pub const CameraPosition = enum(u32) {
     unknown = c.SDL_CAMERA_POSITION_UNKNOWN,
     front_facing = c.SDL_CAMERA_POSITION_FRONT_FACING,
     back_facing = c.SDL_CAMERA_POSITION_BACK_FACING,
-};
-pub const Surface = surface.Surface;
-pub const CameraProperties = extern struct {
-    name: ?[*:0]const u8 = null,
-    device_name: ?[*:0]const u8 = null,
-    position: ?CameraPosition = null,
-    format: ?*CameraSpec = null,
-    frame_format: ?c.SDL_PixelFormat = null,
-    frame_width: ?c_int = null,
-    frame_height: ?c_int = null,
-    frame_rate_numerator: ?c_int = null,
-    frame_rate_denominator: ?c_int = null,
-    colorspace: ?c.SDL_Colorspace = null,
-    permission_state: ?c_int = null,
 };
 
 /// Use this function to get the number of built-in camera drivers.
@@ -57,33 +47,33 @@ pub inline fn getCameras() ![]CameraID {
     return @ptrCast(camera_ids[0..@intCast(count)]);
 }
 
-/// Get the list of native formats/sizes a camera supports.
-pub inline fn getCameraSupportedFormats(instance_id: CameraID) ![]CameraSpec {
-    var count: c_int = undefined;
-    const formats = try errify(c.SDL_GetCameraSupportedFormats(instance_id, &count));
-    return @as([*]CameraSpec, @ptrCast(formats))[0..@intCast(count)];
-}
-
-/// Get the human-readable device name for a camera.
-pub inline fn getCameraName(instance_id: CameraID) ![]const u8 {
-    return std.mem.span(try errify(c.SDL_GetCameraName(instance_id)));
-}
-
-/// Get the position of the camera in relation to the system.
-pub inline fn getCameraPosition(instance_id: CameraID) !CameraPosition {
-    return @enumFromInt(c.SDL_GetCameraPosition(instance_id));
-}
-
 pub const Camera = struct {
     ptr: *c.SDL_Camera,
     id: CameraID,
 
     /// Open a video recording device (a "camera").
-    pub inline fn open(instance_id: CameraID, spec: CameraSpec) !Camera {
+    pub inline fn open(instance_id: CameraID, spec: ?CameraSpec) !Camera {
         return Camera{
             .ptr = try errify(c.SDL_OpenCamera(instance_id, @ptrCast(&spec))),
             .id = instance_id,
         };
+    }
+
+    /// Get the list of native formats/sizes a camera supports.
+    pub inline fn getSupportedFormats(self: *const Camera) ![]CameraSpec {
+        var count: c_int = undefined;
+        const formats = try errify(c.SDL_GetCameraSupportedFormats(self.id, &count));
+        return @as([*]CameraSpec, @ptrCast(formats))[0..@intCast(count)];
+    }
+
+    /// Get the human-readable device name for a camera.
+    pub inline fn getName(self: *const Camera) ![]const u8 {
+        return std.mem.span(try errify(c.SDL_GetCameraName(self.id)));
+    }
+
+    /// Get the position of the camera in relation to the system.
+    pub inline fn getPosition(self: *const Camera) CameraPosition {
+        return @enumFromInt(c.SDL_GetCameraPosition(self.id));
     }
 
     /// Query if camera access has been approved by the user.
@@ -109,7 +99,7 @@ pub const Camera = struct {
     }
 
     /// Acquire a frame.
-    pub inline fn acquireFrame(self: *const Camera, timestamp_ns: *u64) !Surface {
+    pub inline fn acquireFrame(self: *const Camera, timestamp_ns: ?*u64) !Surface {
         return .{
             .ptr = try errify(c.SDL_AcquireCameraFrame(self.ptr, timestamp_ns)),
         };
@@ -125,3 +115,20 @@ pub const Camera = struct {
         c.SDL_CloseCamera(self.ptr);
     }
 };
+
+/// Get the list of native formats/sizes a camera supports.
+pub inline fn getCameraSupportedFormats(instance_id: CameraID) ![]CameraSpec {
+    var count: c_int = undefined;
+    const formats = try errify(c.SDL_GetCameraSupportedFormats(instance_id, &count));
+    return @as([*]CameraSpec, @ptrCast(formats))[0..@intCast(count)];
+}
+
+/// Get the human-readable device name for a camera.
+pub inline fn getCameraName(instance_id: CameraID) ![]const u8 {
+    return std.mem.span(try errify(c.SDL_GetCameraName(instance_id)));
+}
+
+/// Get the position of the camera in relation to the system.
+pub inline fn getCameraPosition(instance_id: CameraID) CameraPosition {
+    return @enumFromInt(c.SDL_GetCameraPosition(instance_id));
+}

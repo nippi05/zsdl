@@ -2,6 +2,7 @@
     .name = .zsdl,
     .version = "0.0.0",
     .fingerprint = 0x36e4ca3db18b22c3,
+    .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .sdl = .{
             .url = "git+https://github.com/castholm/SDL#dbb1b96360658f5845ff6fac380c4f13d7276dc2",

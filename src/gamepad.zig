@@ -23,6 +23,7 @@ pub const GamepadType = enum(u32) {
     nintendo_switch_joycon_left = c.SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_LEFT,
     nintendo_switch_joycon_right = c.SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_RIGHT,
     nintendo_switch_joycon_pair = c.SDL_GAMEPAD_TYPE_NINTENDO_SWITCH_JOYCON_PAIR,
+    count = c.SDL_GAMEPAD_TYPE_COUNT,
 };
 
 pub const GamepadButton = enum(i32) {
@@ -85,6 +86,18 @@ pub const Gamepad = struct {
         return .{
             .ptr = try errify(c.SDL_OpenGamepad(instance_id)),
         };
+    }
+
+    /// Get the SDL_Gamepad associated with a player index.
+    pub inline fn getGamepadFromPlayerIndex(player_index: i32) !Gamepad {
+        return .{
+            .ptr = try errify(c.SDL_GetGamepadFromPlayerIndex(player_index)),
+        };
+    }
+
+    /// Get the instance ID of an opened gamepad.
+    pub inline fn getID(self: *const Gamepad) !JoystickID {
+        return try errify(c.SDL_GetGamepadID(self.ptr));
     }
 
     /// Get the SDL_Gamepad associated with a joystick instance ID, if it has been opened.

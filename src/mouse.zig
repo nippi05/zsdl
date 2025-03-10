@@ -1,11 +1,12 @@
 const std = @import("std");
 
-const internal = @import("internal.zig");
 const c = @import("c.zig").c;
-const errify = internal.errify;
 pub const MouseID = c.SDL_MouseID;
+const internal = @import("internal.zig");
+const errify = internal.errify;
 const rect = @import("rect.zig");
 const Rectangle = rect.Rectangle;
+const Surface = @import("surface.zig").Surface;
 const video = @import("video.zig");
 const Window = video.Window;
 
@@ -38,11 +39,11 @@ pub const MouseWheelDirection = enum(u32) {
 };
 
 pub const MouseButtonFlags = struct {
-    left: bool = false,
-    middle: bool = false,
-    right: bool = false,
-    x1: bool = false,
-    x2: bool = false,
+    left: bool = std.mem.zeroes(bool),
+    middle: bool = std.mem.zeroes(bool),
+    right: bool = std.mem.zeroes(bool),
+    x1: bool = std.mem.zeroes(bool),
+    x2: bool = std.mem.zeroes(bool),
 
     pub inline fn fromInt(flags: u32) MouseButtonFlags {
         return .{
@@ -53,7 +54,26 @@ pub const MouseButtonFlags = struct {
             .x2 = flags & c.SDL_BUTTON_X2MASK != 0,
         };
     }
+
+    pub inline fn toInt(self: MouseButtonFlags) u32 {
+        var result: u32 = 0;
+        if (self.left) result |= c.SDL_BUTTON_LMASK;
+        if (self.middle) result |= c.SDL_BUTTON_MMASK;
+        if (self.right) result |= c.SDL_BUTTON_RMASK;
+        if (self.x1) result |= c.SDL_BUTTON_X1MASK;
+        if (self.x2) result |= c.SDL_BUTTON_X2MASK;
+        return result;
+    }
 };
+
+pub const MouseMotionTransformCallback = fn (
+    userdata: ?*anyopaque,
+    timestamp: u64,
+    window: Window,
+    mouseID: MouseID,
+    x: *f32,
+    y: *f32,
+) callconv(.C) void;
 
 /// Return whether a mouse is currently connected.
 pub inline fn hasMouse() bool {
@@ -81,28 +101,34 @@ pub inline fn getMouseFocus() ?Window {
 }
 
 /// Query SDL's cache for the synchronous mouse button state and position.
-pub inline fn getMouseState(x: *f32, y: *f32) MouseButtonFlags {
+pub inline fn getMouseState(x: ?*f32, y: ?*f32) MouseButtonFlags {
     return MouseButtonFlags.fromInt(c.SDL_GetMouseState(x, y));
 }
 
 /// Query the platform for the asynchronous mouse button state and position.
-pub inline fn getGlobalMouseState(x: *f32, y: *f32) MouseButtonFlags {
+pub inline fn getGlobalMouseState(x: ?*f32, y: ?*f32) MouseButtonFlags {
     return MouseButtonFlags.fromInt(c.SDL_GetGlobalMouseState(x, y));
 }
 
 /// Query SDL's cache for the synchronous mouse button state and accumulated delta.
-pub inline fn getRelativeMouseState(x: *f32, y: *f32) MouseButtonFlags {
+pub inline fn getRelativeMouseState(x: ?*f32, y: ?*f32) MouseButtonFlags {
     return MouseButtonFlags.fromInt(c.SDL_GetRelativeMouseState(x, y));
 }
 
 /// Move the mouse cursor to the given position within the window.
-pub inline fn warpMouseInWindow(window: Window, x: f32, y: f32) void {
-    c.SDL_WarpMouseInWindow(window.ptr, x, y);
+pub inline fn warpMouseInWindow(window: ?Window, x: f32, y: f32) void {
+    const window_ptr = if (window) |w| w.ptr else null;
+    c.SDL_WarpMouseInWindow(window_ptr, x, y);
 }
 
 /// Move the mouse to the given position in global screen space.
 pub inline fn warpMouseGlobal(x: f32, y: f32) !void {
     try errify(c.SDL_WarpMouseGlobal(x, y));
+}
+
+/// Set a user-defined function by which to transform relative mouse inputs.
+pub inline fn setRelativeMouseTransform(callback: ?*const MouseMotionTransformCallback, userdata: ?*anyopaque) !void {
+    try errify(c.SDL_SetRelativeMouseTransform(callback, userdata));
 }
 
 /// Set relative mouse mode for a window.
@@ -125,17 +151,23 @@ pub const Cursor = struct {
 
     /// Create a cursor using the specified bitmap data and mask.
     pub inline fn create(data: [*]const u8, mask: [*]const u8, w: i32, h: i32, hot_x: i32, hot_y: i32) !Cursor {
-        return Cursor{ .ptr = try errify(c.SDL_CreateCursor(data, mask, w, h, hot_x, hot_y)) };
+        return Cursor{
+            .ptr = try errify(c.SDL_CreateCursor(data, mask, w, h, hot_x, hot_y)),
+        };
     }
 
     /// Create a color cursor.
-    pub inline fn createColor(surface: *c.SDL_Surface, hot_x: i32, hot_y: i32) !Cursor {
-        return Cursor{ .ptr = try errify(c.SDL_CreateColorCursor(surface, hot_x, hot_y)) };
+    pub inline fn createColor(surface: Surface, hot_x: i32, hot_y: i32) !Cursor {
+        return Cursor{
+            .ptr = try errify(c.SDL_CreateColorCursor(surface.ptr, hot_x, hot_y)),
+        };
     }
 
     /// Create a system cursor.
     pub inline fn createSystem(id: SystemCursor) !Cursor {
-        return Cursor{ .ptr = try errify(c.SDL_CreateSystemCursor(@intFromEnum(id))) };
+        return Cursor{
+            .ptr = try errify(c.SDL_CreateSystemCursor(@intFromEnum(id))),
+        };
     }
 
     /// Free a previously-created cursor.

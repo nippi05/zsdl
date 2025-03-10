@@ -63,6 +63,7 @@ pub fn main() !void {
 </details>
 <details>
 <summary>GPU Spinning Cube</summary>
+
 ```zig
 const zsdl = @import("zsdl");
 const std = @import("std");

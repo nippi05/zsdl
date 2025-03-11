@@ -447,12 +447,12 @@ pub fn main() !void {
 |:-|:-:|:-|:-:|:-|:-:|
 | Init | ✅ | Camera | ✅ | Hints | ❌ |
 | Properties | ❌ | Log | ✅ | Video | 🧪 |
-| Events | 🧪 | Keyboard | ✅ | Mouse | ✅ |
+| Events | ✅ | Keyboard | ✅ | Mouse | ✅ |
 | Touch | ✅ | Gamepad | ✅ | Joystick | 🧪 |
 | Haptic | ✅ | Audio | ❌ | Gpu | ✅ |
 | Clipboard | ✅ | Dialog | ✅ | Filesystem | ❌ |
 | Iostream | ❌ | Atomic | ❌ | Time | ❌ |
-| Timer | ✅ | Render | 🧪 | Pixels | ✅ |
+| Timer | ✅ | Render | ✅ | Pixels | ✅ |
 | Surface | ✅ | Platform | ❌ | Misc | ❌ |
 | Main | ❌ | Strings | ❌ | CPU | ❌ |
 | Intrinsics | ❌ | Locale | ❌ | System | ❌ |

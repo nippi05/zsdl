@@ -1,14 +1,16 @@
 const std = @import("std");
 
+const BlendMode = @import("blendmode.zig").BlendMode;
 const c = @import("c.zig").c;
 const internal = @import("internal.zig");
 const errify = internal.errify;
 const pixelsl = @import("pixels.zig");
 const PixelFormat = pixelsl.PixelFormat;
-const rectl = @import("rect.zig");
-const FRect = rectl.FRect;
-const Rect = rectl.Rect;
-const FPoint = rectl.FPoint;
+const rect_mod = @import("rect.zig");
+const FRect = rect_mod.FRect;
+const Rect = rect_mod.Rect;
+const FPoint = rect_mod.FPoint;
+const ScaleMode = @import("surface.zig").ScaleMode;
 const Surface = @import("surface.zig").Surface;
 const video = @import("video.zig");
 const Window = video.Window;
@@ -110,7 +112,10 @@ pub const Renderer = struct {
 
     /// Get the name of a built in 2D rendering driver.
     pub inline fn getRenderDriver(index: c_int) ?[]const u8 {
-        return std.mem.span(try errify(c.SDL_GetRenderDriver(index)));
+        if (c.SDL_GetRenderDriver(index)) |d| {
+            return std.mem.span(d);
+        }
+        return null;
     }
 
     /// Create a window and default renderer.
@@ -137,7 +142,7 @@ pub const Renderer = struct {
     }
 
     /// Create a 2D rendering context for a window.
-    pub inline fn create(window: Window, name: []const u8) !Renderer {
+    pub inline fn create(window: Window, name: [:0]const u8) !Renderer {
         const renderer = try errify(c.SDL_CreateRenderer(window.ptr, name));
         return Renderer{
             .ptr = renderer,
@@ -156,10 +161,9 @@ pub const Renderer = struct {
     }
 
     /// Create a 2D software rendering context for a surface.
-    pub inline fn createSoftwareRenderer(surface: *c.SDL_Surface) !Renderer {
-        const renderer = try errify(c.SDL_CreateSoftwareRenderer(surface));
-        return Renderer{
-            .ptr = renderer,
+    pub inline fn createSoftwareRenderer(surface: *Surface) !Renderer {
+        return .{
+            .ptr = try errify(c.SDL_CreateSoftwareRenderer(surface.ptr)),
         };
     }
 
@@ -170,15 +174,24 @@ pub const Renderer = struct {
 
     /// Get the current render target.
     pub inline fn getRenderTarget(self: *const Renderer) Texture {
-        const texture = c.SDL_GetRenderTarget(self.ptr);
-        return Texture{
-            .ptr = texture,
+        return .{
+            .ptr = c.SDL_GetRenderTarget(self.ptr),
         };
     }
 
     /// Set device independent resolution and presentation mode for rendering.
-    pub inline fn setRenderLogicalPresentation(self: *const Renderer, w: c_int, h: c_int, mode: RendererLogicalPresentation) !void {
-        try errify(c.SDL_SetRenderLogicalPresentation(self.ptr, w, h, @intFromEnum(mode)));
+    pub inline fn setRenderLogicalPresentation(
+        self: *const Renderer,
+        w: c_int,
+        h: c_int,
+        mode: RendererLogicalPresentation,
+    ) !void {
+        try errify(c.SDL_SetRenderLogicalPresentation(
+            self.ptr,
+            w,
+            h,
+            @intFromEnum(mode),
+        ));
     }
 
     /// Get device independent resolution and presentation mode for rendering.
@@ -187,29 +200,56 @@ pub const Renderer = struct {
         var h: c_int = undefined;
         var mode: c.SDL_RendererLogicalPresentation = undefined;
         try errify(c.SDL_GetRenderLogicalPresentation(self.ptr, &w, &h, &mode));
-        return .{ .w = w, .h = h, .mode = @enumFromInt(mode) };
+        return .{
+            .w = w,
+            .h = h,
+            .mode = @enumFromInt(mode),
+        };
     }
 
     /// Get the final presentation rectangle for rendering.
     pub inline fn getRenderLogicalPresentationRect(self: *const Renderer) !FRect {
         var rect: FRect = undefined;
-        try errify(c.SDL_GetRenderLogicalPresentationRect(self.ptr, &rect));
+        try errify(c.SDL_GetRenderLogicalPresentationRect(self.ptr, @ptrCast(&rect)));
         return rect;
     }
 
     /// Get a point in render coordinates when given a point in window coordinates.
-    pub inline fn renderCoordinatesFromWindow(self: *const Renderer, window_x: f32, window_y: f32) !struct { x: f32, y: f32 } {
+    pub inline fn renderCoordinatesFromWindow(
+        self: *const Renderer,
+        window_x: f32,
+        window_y: f32,
+    ) !FPoint {
         var x: f32 = undefined;
         var y: f32 = undefined;
-        try errify(c.SDL_RenderCoordinatesFromWindow(self.ptr, window_x, window_y, &x, &y));
-        return .{ .x = x, .y = y };
+        try errify(c.SDL_RenderCoordinatesFromWindow(
+            self.ptr,
+            window_x,
+            window_y,
+            &x,
+            &y,
+        ));
+        return .{
+            .x = x,
+            .y = y,
+        };
     }
 
     /// Get a point in window coordinates when given a point in render coordinates.
-    pub inline fn renderCoordinatesToWindow(self: *const Renderer, x: f32, y: f32) !struct { window_x: f32, window_y: f32 } {
+    pub inline fn renderCoordinatesToWindow(
+        self: *const Renderer,
+        x: f32,
+        y: f32,
+    ) !struct { window_x: f32, window_y: f32 } {
         var window_x: f32 = undefined;
         var window_y: f32 = undefined;
-        try errify(c.SDL_RenderCoordinatesToWindow(self.ptr, x, y, &window_x, &window_y));
+        try errify(c.SDL_RenderCoordinatesToWindow(
+            self.ptr,
+            x,
+            y,
+            &window_x,
+            &window_y,
+        ));
         return .{ .window_x = window_x, .window_y = window_y };
     }
 
@@ -219,14 +259,17 @@ pub const Renderer = struct {
     }
 
     /// Set the drawing area for rendering on the current target.
-    pub inline fn setRenderViewport(self: *const Renderer, rect: ?*const c.SDL_Rect) !void {
-        try errify(c.SDL_SetRenderViewport(self.ptr, rect));
+    pub inline fn setRenderViewport(self: *const Renderer, rect: ?Rect) !void {
+        try errify(c.SDL_SetRenderViewport(
+            self.ptr,
+            @ptrCast(&rect),
+        ));
     }
 
     /// Get the drawing area for the current target.
-    pub inline fn getRenderViewport(self: *const Renderer) !c.SDL_Rect {
-        var rect: c.SDL_Rect = undefined;
-        try errify(c.SDL_GetRenderViewport(self.ptr, &rect));
+    pub inline fn getRenderViewport(self: *const Renderer) !Rect {
+        var rect: Rect = undefined;
+        try errify(c.SDL_GetRenderViewport(self.ptr, @ptrCast(&rect)));
         return rect;
     }
 
@@ -237,31 +280,42 @@ pub const Renderer = struct {
 
     /// Get the safe area for rendering within the current viewport.
     pub inline fn getRenderSafeArea(self: *const Renderer) !Rect {
-        var rect: c.SDL_Rect = undefined;
-        try errify(c.SDL_GetRenderSafeArea(self.ptr, &rect));
+        var rect: Rect = undefined;
+        try errify(c.SDL_GetRenderSafeArea(self.ptr, @ptrCast(&rect)));
         return rect;
     }
 
     /// Set the clip rectangle for rendering on the specified target.
-    pub inline fn setRenderClipRect(self: *const Renderer, rect: Rect) !void {
-        try errify(c.SDL_SetRenderClipRect(self.ptr, rect));
+    pub inline fn setRenderClipRect(self: *const Renderer, rect: ?Rect) !void {
+        try errify(c.SDL_SetRenderClipRect(
+            self.ptr,
+            @ptrCast(&rect),
+        ));
     }
 
     /// Get the clip rectangle for the current target.
     pub inline fn getRenderClipRect(self: *const Renderer) !Rect {
         var rect: Rect = undefined;
-        try errify(c.SDL_GetRenderClipRect(self.ptr, &rect));
+        try errify(c.SDL_GetRenderClipRect(self.ptr, @ptrCast(&rect)));
         return rect;
     }
 
     /// Get whether clipping is enabled on the given renderer.
-    pub inline fn renderClipEnabled(self: *const Renderer) !bool {
-        return errify(c.SDL_RenderClipEnabled(self.ptr));
+    pub inline fn renderClipEnabled(self: *const Renderer) bool {
+        return c.SDL_RenderClipEnabled(self.ptr);
     }
 
     /// Set the drawing scale for rendering on the current target.
-    pub inline fn setRenderScale(self: *const Renderer, scale_x: f32, scale_y: f32) !void {
-        try errify(c.SDL_SetRenderScale(self.ptr, scale_x, scale_y));
+    pub inline fn setRenderScale(
+        self: *const Renderer,
+        scale_x: f32,
+        scale_y: f32,
+    ) !void {
+        try errify(c.SDL_SetRenderScale(
+            self.ptr,
+            scale_x,
+            scale_y,
+        ));
     }
 
     /// Get the drawing scale for the current target.
@@ -273,20 +327,26 @@ pub const Renderer = struct {
     }
 
     /// Create a texture for a rendering context.
-    pub inline fn createTexture(self: *const Renderer, format: PixelFormat, access: TextureAccess, w: usize, h: usize) !Texture {
+    pub inline fn createTexture(
+        self: *const Renderer,
+        format: PixelFormat,
+        access: TextureAccess,
+        w: usize,
+        h: usize,
+    ) !Texture {
         return .{
             .ptr = try errify(c.SDL_CreateTexture(
                 self.ptr,
                 @intFromEnum(format),
                 @intFromEnum(access),
-                w,
-                h,
+                @intCast(w),
+                @intCast(h),
             )),
         };
     }
 
     /// Create a texture from an existing surface.
-    pub inline fn createTextureFromSurface(self: *const Renderer, surface: *Surface) !Texture {
+    pub inline fn createTextureFromSurface(self: *const Renderer, surface: Surface) !Texture {
         return .{
             .ptr = try errify(c.SDL_CreateTextureFromSurface(self.ptr, surface.ptr)),
         };
@@ -341,13 +401,37 @@ pub const Renderer = struct {
     }
 
     /// Set the color used for drawing operations.
-    pub inline fn setDrawColor(self: *const Renderer, r: u8, g: u8, b: u8, a: u8) !void {
-        try errify(c.SDL_SetRenderDrawColor(self.ptr, r, g, b, a));
+    pub inline fn setDrawColor(
+        self: *const Renderer,
+        r: u8,
+        g: u8,
+        b: u8,
+        a: u8,
+    ) !void {
+        try errify(c.SDL_SetRenderDrawColor(
+            self.ptr,
+            r,
+            g,
+            b,
+            a,
+        ));
     }
 
     /// Set the color used for drawing operations (Rect, Line and Clear).
-    pub inline fn setDrawColorFloat(self: *const Renderer, r: f32, g: f32, b: f32, a: f32) !void {
-        try errify(c.SDL_SetRenderDrawColorFloat(self.ptr, r, g, b, a));
+    pub inline fn setDrawColorFloat(
+        self: *const Renderer,
+        r: f32,
+        g: f32,
+        b: f32,
+        a: f32,
+    ) !void {
+        try errify(c.SDL_SetRenderDrawColorFloat(
+            self.ptr,
+            r,
+            g,
+            b,
+            a,
+        ));
     }
 
     /// Get the color used for drawing operations.
@@ -400,72 +484,218 @@ pub const Renderer = struct {
     }
 
     /// Draw a point on the current rendering target at subpixel precision.
-    pub inline fn drawPoint(self: *const Renderer, x: f32, y: f32) !void {
-        try errify(c.SDL_RenderPoint(self.ptr, x, y));
+    pub inline fn drawPoint(
+        self: *const Renderer,
+        x: f32,
+        y: f32,
+    ) !void {
+        try errify(c.SDL_RenderPoint(
+            self.ptr,
+            x,
+            y,
+        ));
     }
 
     /// Draw multiple points on the current rendering target at subpixel precision.
     pub inline fn drawPoints(self: *const Renderer, points: []const FPoint) !void {
-        try errify(c.SDL_RenderPoints(self.ptr, @ptrCast(points.ptr), @intCast(points.len)));
+        try errify(c.SDL_RenderPoints(
+            self.ptr,
+            @ptrCast(points.ptr),
+            @intCast(points.len),
+        ));
     }
 
     /// Draw a line on the current rendering target at subpixel precision.
-    pub inline fn drawLine(self: *const Renderer, x1: f32, y1: f32, x2: f32, y2: f32) !void {
-        try errify(c.SDL_RenderLine(self.ptr, x1, y1, x2, y2));
+    pub inline fn drawLine(
+        self: *const Renderer,
+        x1: f32,
+        y1: f32,
+        x2: f32,
+        y2: f32,
+    ) !void {
+        try errify(c.SDL_RenderLine(
+            self.ptr,
+            x1,
+            y1,
+            x2,
+            y2,
+        ));
     }
 
     /// Draw a series of connected lines on the current rendering target at subpixel precision.
     pub inline fn drawLines(self: *const Renderer, points: []const FPoint) !void {
-        try errify(c.SDL_RenderLines(self.ptr, points.ptr, @intCast(points.len)));
+        try errify(c.SDL_RenderLines(
+            self.ptr,
+            @ptrCast(points.ptr),
+            @intCast(points.len),
+        ));
     }
 
     /// Draw a rectangle on the current rendering target at subpixel precision.
     pub inline fn drawRect(self: *const Renderer, rect: ?*const FRect) !void {
-        try errify(c.SDL_RenderRect(self.ptr, rect));
+        try errify(c.SDL_RenderRect(
+            self.ptr,
+            @ptrCast(&rect),
+        ));
     }
 
     /// Draw some number of rectangles on the current rendering target at subpixel precision.
     pub inline fn drawRects(self: *const Renderer, rects: []const FRect) !void {
-        try errify(c.SDL_RenderRects(self.ptr, rects.ptr, @intCast(rects.len)));
+        try errify(c.SDL_RenderRects(
+            self.ptr,
+            @ptrCast(rects.ptr),
+            @intCast(rects.len),
+        ));
     }
 
     /// Fill a rectangle on the current rendering target with the drawing color at subpixel precision.
     pub inline fn fillRect(self: *const Renderer, rect: ?*const FRect) !void {
-        try errify(c.SDL_RenderFillRect(self.ptr, rect));
+        try errify(c.SDL_RenderFillRect(
+            self.ptr,
+            @ptrCast(&rect),
+        ));
     }
 
     /// Fill some number of rectangles on the current rendering target with the drawing color at subpixel precision.
     pub inline fn fillRects(self: *const Renderer, rects: []const FRect) !void {
-        try errify(c.SDL_RenderFillRects(self.ptr, rects.ptr, @intCast(rects.len)));
+        try errify(c.SDL_RenderFillRects(
+            self.ptr,
+            @ptrCast(rects.ptr),
+            @intCast(rects.len),
+        ));
     }
 
     /// Copy a portion of the texture to the current rendering target at subpixel precision.
-    pub inline fn copyTexture(self: *const Renderer, texture: *const Texture, src_rect: ?*const FRect, dst_rect: ?*const FRect) !void {
-        try errify(c.SDL_RenderTexture(self.ptr, texture.ptr, src_rect, dst_rect));
+    pub inline fn copyTexture(
+        self: *const Renderer,
+        texture: *const Texture,
+        src_rect: ?*const FRect,
+        dst_rect: ?*const FRect,
+    ) !void {
+        try errify(c.SDL_RenderTexture(
+            self.ptr,
+            texture.ptr,
+            if (src_rect) |r| @ptrCast(r) else null,
+            if (dst_rect) |r| @ptrCast(r) else null,
+        ));
     }
 
     /// Copy a portion of the source texture to the current rendering target, with rotation and flipping, at subpixel precision.
-    pub inline fn copyTextureRotated(self: *const Renderer, texture: *const Texture, src_rect: ?*const FRect, dst_rect: ?*const FRect, angle: f64, center: ?FPoint, flip: c.SDL_FlipMode) !void {
-        try errify(c.SDL_RenderTextureRotated(self.ptr, texture.ptr, src_rect, dst_rect, angle, @ptrCast(&center), flip));
+    pub inline fn copyTextureRotated(
+        self: *const Renderer,
+        texture: *const Texture,
+        src_rect: ?*const FRect,
+        dst_rect: ?*const FRect,
+        angle: f64,
+        center: ?*const FPoint,
+        flip: c.SDL_FlipMode,
+    ) !void {
+        try errify(c.SDL_RenderTextureRotated(
+            self.ptr,
+            texture.ptr,
+            if (src_rect) |r| @ptrCast(r) else null,
+            if (dst_rect) |r| @ptrCast(r) else null,
+            angle,
+            if (center) |ce| @ptrCast(ce) else null,
+            flip,
+        ));
     }
 
     /// Copy a portion of the source texture to the current rendering target, with affine transform, at subpixel precision.
-    pub inline fn copyTextureAffine(self: *const Renderer, texture: *const Texture, src_rect: ?*const FRect, origin: ?*const FPoint, right: ?*const FPoint, down: ?FPoint) !void {
-        try errify(c.SDL_RenderTextureAffine(self.ptr, texture.ptr, src_rect, origin, right, @ptrCast(&down)));
+    pub inline fn copyTextureAffine(
+        self: *const Renderer,
+        texture: *const Texture,
+        src_rect: ?*const FRect,
+        origin: ?*const FPoint,
+        right: ?*const FPoint,
+        down: ?*const FPoint,
+    ) !void {
+        try errify(c.SDL_RenderTextureAffine(
+            self.ptr,
+            texture.ptr,
+            if (src_rect) |r| @ptrCast(r) else null,
+            if (origin) |o| @ptrCast(o) else null,
+            if (right) |r| @ptrCast(r) else null,
+            if (down) |d| @ptrCast(d) else null,
+        ));
     }
 
     /// Tile a portion of the texture to the current rendering target at subpixel precision.
-    pub inline fn copyTextureTiled(self: *const Renderer, texture: *const Texture, src_rect: ?*const FRect, scale: f32, dst_rect: ?*const FRect) !void {
-        try errify(c.SDL_RenderTextureTiled(self.ptr, texture.ptr, src_rect, scale, dst_rect));
+    pub inline fn copyTextureTiled(
+        self: *const Renderer,
+        texture: *const Texture,
+        src_rect: ?*const FRect,
+        scale: f32,
+        dst_rect: ?*const FRect,
+    ) !void {
+        try errify(c.SDL_RenderTextureTiled(
+            self.ptr,
+            texture.ptr,
+            if (src_rect) |r| @ptrCast(r) else null,
+            scale,
+            if (dst_rect) |r| @ptrCast(r) else null,
+        ));
     }
 
     /// Perform a scaled copy using the 9-grid algorithm to the current rendering target at subpixel precision.
-    pub inline fn copyTexture9Grid(self: *const Renderer, texture: *const Texture, src_rect: ?*const FRect, left_width: f32, right_width: f32, top_height: f32, bottom_height: f32, scale: f32, dst_rect: ?*const FRect) !void {
-        try errify(c.SDL_RenderTexture9Grid(self.ptr, texture.ptr, src_rect, left_width, right_width, top_height, bottom_height, scale, dst_rect));
+    pub inline fn copyTexture9Grid(
+        self: *const Renderer,
+        texture: *const Texture,
+        src_rect: ?*const FRect,
+        left_width: f32,
+        right_width: f32,
+        top_height: f32,
+        bottom_height: f32,
+        scale: f32,
+        dst_rect: ?*const FRect,
+    ) !void {
+        try errify(c.SDL_RenderTexture9Grid(
+            self.ptr,
+            texture.ptr,
+            if (src_rect) |r| @ptrCast(r) else null,
+            left_width,
+            right_width,
+            top_height,
+            bottom_height,
+            scale,
+            if (dst_rect) |r| @ptrCast(r) else null,
+        ));
     }
 
+    /// Perform a scaled copy using the 9-grid algorithm with tiling to the current rendering target at subpixel precision.
+    // pub inline fn copyTexture9GridTiled(
+    //     self: *const Renderer,
+    //     texture: *const Texture,
+    //     src_rect: ?*const FRect,
+    //     left_width: f32,
+    //     right_width: f32,
+    //     top_height: f32,
+    //     bottom_height: f32,
+    //     scale: f32,
+    //     dst_rect: ?*const FRect,
+    //     tileScale: f32,
+    // ) !void {
+    //     try errify(c.SDL_RenderTexture9GridTiled(
+    //         self.ptr,
+    //         texture.ptr,
+    //         if (src_rect) |r| @ptrCast(r) else null,
+    //         left_width,
+    //         right_width,
+    //         top_height,
+    //         bottom_height,
+    //         scale,
+    //         if (dst_rect) |r| @ptrCast(r) else null,
+    //         tileScale,
+    //     ));
+    // }
+
     /// Render a list of triangles, optionally using a texture and indices into the vertex array.
-    pub inline fn drawGeometry(self: *const Renderer, texture: ?*Texture, vertices: []const c.SDL_Vertex, indices: ?[]const c_int) !void {
+    pub inline fn drawGeometry(
+        self: *const Renderer,
+        texture: ?*Texture,
+        vertices: []const c.SDL_Vertex,
+        indices: ?[]const c_int,
+    ) !void {
         try errify(c.SDL_RenderGeometry(
             self.ptr,
             if (texture) |t| t.ptr else null,
@@ -477,7 +707,19 @@ pub const Renderer = struct {
     }
 
     /// Render a list of triangles with raw vertex data.
-    pub inline fn drawGeometryRaw(self: *const Renderer, texture: ?*Texture, xy: []const f32, xy_stride: c_int, color: []const c.SDL_FColor, color_stride: c_int, uv: []const f32, uv_stride: c_int, indices: ?[]const u8, size_indices: c_int) !void {
+    pub inline fn drawGeometryRaw(
+        self: *const Renderer,
+        texture: ?*Texture,
+        xy: []const f32,
+        xy_stride: c_int,
+        color: []const c.SDL_FColor,
+        color_stride: c_int,
+        uv: []const f32,
+        uv_stride: c_int,
+        num_vertices: c_int,
+        indices: ?[]const u8,
+        size_indices: c_int,
+    ) !void {
         try errify(c.SDL_RenderGeometryRaw(
             self.ptr,
             if (texture) |t| t.ptr else null,
@@ -487,7 +729,7 @@ pub const Renderer = struct {
             color_stride,
             uv.ptr,
             uv_stride,
-            @intCast(xy.len),
+            num_vertices,
             if (indices) |i| i.ptr else null,
             if (indices) |i| @intCast(i.len) else 0,
             size_indices,
@@ -495,8 +737,11 @@ pub const Renderer = struct {
     }
 
     /// Read pixels from the current rendering target.
-    pub inline fn readPixels(self: *const Renderer, rect: ?*const c.SDL_Rect) !*c.SDL_Surface {
-        const surface = c.SDL_RenderReadPixels(self.ptr, rect);
+    pub inline fn readPixels(self: *const Renderer, rect: ?Rect) !*c.SDL_Surface {
+        const surface = c.SDL_RenderReadPixels(
+            self.ptr,
+            @ptrCast(&rect),
+        );
         try errify(surface != null);
         return surface.?;
     }
@@ -522,8 +767,18 @@ pub const Renderer = struct {
     }
 
     /// Add a set of synchronization semaphores for the current frame.
-    pub inline fn addVulkanRenderSemaphores(self: *const Renderer, wait_stage_mask: u32, wait_semaphore: i64, signal_semaphore: i64) !void {
-        try errify(c.SDL_AddVulkanRenderSemaphores(self.ptr, wait_stage_mask, wait_semaphore, signal_semaphore));
+    pub inline fn addVulkanRenderSemaphores(
+        self: *const Renderer,
+        wait_stage_mask: u32,
+        wait_semaphore: i64,
+        signal_semaphore: i64,
+    ) !void {
+        try errify(c.SDL_AddVulkanRenderSemaphores(
+            self.ptr,
+            wait_stage_mask,
+            wait_semaphore,
+            signal_semaphore,
+        ));
     }
 
     /// Toggle VSync of the given renderer.
@@ -538,14 +793,54 @@ pub const Renderer = struct {
         return vsync;
     }
 
+    /// Set default scale mode for new textures for given renderer.
+    // pub inline fn setDefaultTextureScaleMode(
+    //     self: *const Renderer,
+    //     scale_mode: c.SDL_ScaleMode,
+    // ) !void {
+    //     try errify(c.SDL_SetDefaultTextureScaleMode(
+    //         self.ptr,
+    //         scale_mode,
+    //     ));
+    // }
+
+    /// Get default texture scale mode of the given renderer.
+    pub inline fn getDefaultTextureScaleMode(self: *const Renderer) !c.SDL_ScaleMode {
+        var scale_mode: c.SDL_ScaleMode = undefined;
+        try errify(c.SDL_GetDefaultTextureScaleMode(self.ptr, &scale_mode));
+        return scale_mode;
+    }
+
     /// Draw debug text to an SDL_Renderer.
-    pub inline fn drawDebugText(self: *const Renderer, x: f32, y: f32, text: [*:0]const u8) !void {
-        try errify(c.SDL_RenderDebugText(self.ptr, x, y, text));
+    pub inline fn drawDebugText(
+        self: *const Renderer,
+        x: f32,
+        y: f32,
+        text: [*:0]const u8,
+    ) !void {
+        try errify(c.SDL_RenderDebugText(
+            self.ptr,
+            x,
+            y,
+            text,
+        ));
     }
 
     /// Draw debug text to an SDL_Renderer with format.
-    pub inline fn drawDebugTextFormat(self: *const Renderer, x: f32, y: f32, comptime format: []const u8, args: anytype) !void {
-        try errify(c.SDL_RenderDebugTextFormat(self.ptr, x, y, format.ptr, args));
+    pub inline fn drawDebugTextFormat(
+        self: *const Renderer,
+        x: f32,
+        y: f32,
+        comptime format: []const u8,
+        args: anytype,
+    ) !void {
+        try errify(c.SDL_RenderDebugTextFormat(
+            self.ptr,
+            x,
+            y,
+            format.ptr,
+            args,
+        ));
     }
 
     /// Destroy the renderer and free all associated textures.
@@ -573,13 +868,33 @@ pub const Texture = struct {
     }
 
     /// Set an additional color value multiplied into render copy operations.
-    pub inline fn setColorMod(self: *const Texture, r: u8, g: u8, b: u8) !void {
-        try errify(c.SDL_SetTextureColorMod(self.ptr, r, g, b));
+    pub inline fn setColorMod(
+        self: *const Texture,
+        r: u8,
+        g: u8,
+        b: u8,
+    ) !void {
+        try errify(c.SDL_SetTextureColorMod(
+            self.ptr,
+            r,
+            g,
+            b,
+        ));
     }
 
     /// Set an additional color value multiplied into render copy operations.
-    pub inline fn setColorModFloat(self: *const Texture, r: f32, g: f32, b: f32) !void {
-        try errify(c.SDL_SetTextureColorModFloat(self.ptr, r, g, b));
+    pub inline fn setColorModFloat(
+        self: *const Texture,
+        r: f32,
+        g: f32,
+        b: f32,
+    ) !void {
+        try errify(c.SDL_SetTextureColorModFloat(
+            self.ptr,
+            r,
+            g,
+            b,
+        ));
     }
 
     /// Get the additional color value multiplied into render copy operations.
@@ -625,15 +940,15 @@ pub const Texture = struct {
     }
 
     /// Set the blend mode for a texture.
-    pub inline fn setBlendMode(self: *const Texture, blend_mode: c.SDL_BlendMode) !void {
-        try errify(c.SDL_SetTextureBlendMode(self.ptr, blend_mode));
+    pub inline fn setBlendMode(self: *const Texture, blend_mode: BlendMode) !void {
+        try errify(c.SDL_SetTextureBlendMode(self.ptr, @intFromEnum(blend_mode)));
     }
 
     /// Get the blend mode used for texture copy operations.
-    pub inline fn getBlendMode(self: *const Texture) !c.SDL_BlendMode {
+    pub inline fn getBlendMode(self: *const Texture) !BlendMode {
         var blend_mode: c.SDL_BlendMode = undefined;
         try errify(c.SDL_GetTextureBlendMode(self.ptr, &blend_mode));
-        return blend_mode;
+        return @enumFromInt(blend_mode);
     }
 
     /// Set the scale mode used for texture scale operations.
@@ -642,39 +957,90 @@ pub const Texture = struct {
     }
 
     /// Get the scale mode used for texture scale operations.
-    pub inline fn getScaleMode(self: *const Texture) !c.SDL_ScaleMode {
+    pub inline fn getScaleMode(self: *const Texture) !ScaleMode {
         var scale_mode: c.SDL_ScaleMode = undefined;
         try errify(c.SDL_GetTextureScaleMode(self.ptr, &scale_mode));
-        return scale_mode;
+        return @enumFromInt(scale_mode);
     }
 
     /// Update the given texture rectangle with new pixel data.
-    pub inline fn update(self: *const Texture, rect: ?*const c.SDL_Rect, pixels: *const anyopaque, pitch: c_int) !void {
-        try errify(c.SDL_UpdateTexture(self.ptr, rect, pixels, pitch));
+    pub inline fn update(
+        self: *const Texture,
+        rect: ?Rect,
+        pixels: *const anyopaque,
+        pitch: c_int,
+    ) !void {
+        try errify(c.SDL_UpdateTexture(
+            self.ptr,
+            @ptrCast(&rect),
+            pixels,
+            pitch,
+        ));
     }
 
     /// Update a rectangle within a planar YV12 or IYUV texture with new pixel data.
-    pub inline fn updateYUV(self: *const Texture, rect: ?*const c.SDL_Rect, y_plane: [*]const u8, y_pitch: c_int, u_plane: [*]const u8, u_pitch: c_int, v_plane: [*]const u8, v_pitch: c_int) !void {
-        try errify(c.SDL_UpdateYUVTexture(self.ptr, rect, y_plane, y_pitch, u_plane, u_pitch, v_plane, v_pitch));
+    pub inline fn updateYUV(
+        self: *const Texture,
+        rect: ?Rect,
+        y_plane: [*]const u8,
+        y_pitch: c_int,
+        u_plane: [*]const u8,
+        u_pitch: c_int,
+        v_plane: [*]const u8,
+        v_pitch: c_int,
+    ) !void {
+        try errify(c.SDL_UpdateYUVTexture(
+            self.ptr,
+            @ptrCast(&rect),
+            y_plane,
+            y_pitch,
+            u_plane,
+            u_pitch,
+            v_plane,
+            v_pitch,
+        ));
     }
 
     /// Update a rectangle within a planar NV12 or NV21 texture with new pixels.
-    pub inline fn updateNV(self: *const Texture, rect: ?*const c.SDL_Rect, y_plane: [*]const u8, y_pitch: c_int, uv_plane: [*]const u8, uv_pitch: c_int) !void {
-        try errify(c.SDL_UpdateNVTexture(self.ptr, rect, y_plane, y_pitch, uv_plane, uv_pitch));
+    pub inline fn updateNV(
+        self: *const Texture,
+        rect: ?Rect,
+        y_plane: [*]const u8,
+        y_pitch: c_int,
+        uv_plane: [*]const u8,
+        uv_pitch: c_int,
+    ) !void {
+        try errify(c.SDL_UpdateNVTexture(
+            self.ptr,
+            @ptrCast(&rect),
+            y_plane,
+            y_pitch,
+            uv_plane,
+            uv_pitch,
+        ));
     }
 
     /// Lock a portion of the texture for write-only pixel access.
-    pub inline fn lock(self: *const Texture, rect: ?*const c.SDL_Rect) !struct { pixels: *anyopaque, pitch: c_int } {
+    pub inline fn lock(self: *const Texture, rect: ?Rect) !struct { pixels: *anyopaque, pitch: c_int } {
         var pixels: ?*anyopaque = undefined;
         var pitch: c_int = undefined;
-        try errify(c.SDL_LockTexture(self.ptr, rect, &pixels, &pitch));
+        try errify(c.SDL_LockTexture(
+            self.ptr,
+            @ptrCast(&rect),
+            &pixels,
+            &pitch,
+        ));
         return .{ .pixels = pixels.?, .pitch = pitch };
     }
 
     /// Lock a portion of the texture for write-only pixel access and expose it as a SDL surface.
-    pub inline fn lockToSurface(self: *const Texture, rect: ?*const c.SDL_Rect) !*c.SDL_Surface {
+    pub inline fn lockToSurface(self: *const Texture, rect: ?Rect) !*c.SDL_Surface {
         var surface: ?*c.SDL_Surface = undefined;
-        try errify(c.SDL_LockTextureToSurface(self.ptr, rect, &surface));
+        try errify(c.SDL_LockTextureToSurface(
+            self.ptr,
+            @ptrCast(&rect),
+            &surface,
+        ));
         return surface.?;
     }
 

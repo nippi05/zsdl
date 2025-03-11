@@ -9,7 +9,7 @@ const Colorspace = pixels.Colorspace;
 const Palette = pixels.Palette;
 const rect = @import("rect.zig");
 
-pub const ScaleMode = enum(u32) {
+pub const ScaleMode = enum(i32) {
     nearest = c.SDL_SCALEMODE_NEAREST,
     linear = c.SDL_SCALEMODE_LINEAR,
 };

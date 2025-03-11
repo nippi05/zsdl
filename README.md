@@ -43,22 +43,18 @@ pub fn main() !void {
                 .quit => {
                     break :main_loop;
                 },
-                .window => |w| {
-                    switch (w.data) {
-                        .resized => |size| {
-                            std.debug.print(
-                                "window resized: (w: {any}, h: {any})\n",
-                                .{ size.width, size.height },
-                            );
-                        },
-                        else => {},
-                    }
+                .window_resized => |wr| {
+                    std.debug.print(
+                        "window resized: (w: {any}, h: {any})\n",
+                        .{ wr.size.width, wr.size.height },
+                    );
                 },
                 else => {},
             }
         }
     }
 }
+
 ```
 </details>
 <details>

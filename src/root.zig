@@ -1,6 +1,7 @@
 const std = @import("std");
 
 pub const @"error" = @import("error.zig");
+pub const blendmode = @import("blendmode.zig");
 pub const c = @import("c.zig").c;
 pub const MainThreadCallback = c.SDL_MainThreadCallback;
 pub const camera = @import("camera.zig");
@@ -14,7 +15,6 @@ const internal = @import("internal.zig");
 const errify = internal.errify;
 pub const joystick = @import("joystick.zig");
 pub const keyboard = @import("keyboard.zig");
-pub const blendmode = @import("blendmode.zig");
 pub const log = @import("log.zig");
 pub const mouse = @import("mouse.zig");
 pub const pixels = @import("pixels.zig");

@@ -448,7 +448,7 @@ pub fn main() !void {
 | Init | ✅ | Camera | ✅ | Hints | ❌ |
 | Properties | ❌ | Log | ✅ | Video | 🧪 |
 | Events | ✅ | Keyboard | ✅ | Mouse | ✅ |
-| Touch | ✅ | Gamepad | ✅ | Joystick | 🧪 |
+| Touch | ✅ | Gamepad | ✅ | Joystick | ✅ |
 | Haptic | ✅ | Audio | ❌ | Gpu | ✅ |
 | Clipboard | ✅ | Dialog | ✅ | Filesystem | ❌ |
 | Iostream | ❌ | Atomic | ❌ | Time | ❌ |

@@ -63,7 +63,7 @@ pub inline fn getPlayerIndexForID(instance_id: JoystickID) i32 {
 }
 
 /// Get the implementation-dependent GUID of a joystick.
-pub inline fn getGUIDForID(instance_id: JoystickID) c.SDL_GUID {
+pub inline fn getGUIDForID(instance_id: JoystickID) GUID {
     return c.SDL_GetJoystickGUIDForID(instance_id);
 }
 
@@ -384,7 +384,7 @@ pub inline fn hasJoystick() bool {
 
 /// Get a list of currently connected joysticks.
 pub inline fn getJoysticks() ![]JoystickID {
-    var count: *c_int = undefined;
+    var count: c_int = undefined;
     const joysticks = try errify(c.SDL_GetJoysticks(&count));
     return joysticks[0..@intCast(count)];
 }

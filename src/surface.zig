@@ -77,7 +77,7 @@ pub const Surface = struct {
     }
 
     /// Adds an alternate version of the surface.
-    pub inline fn addAlternateImage(self: *const Surface, image: *Surface) !void {
+    pub inline fn addAlternateImage(self: *const Surface, image: *const Surface) !void {
         try errify(c.SDL_AddSurfaceAlternateImage(self.ptr, image.ptr));
     }
 
@@ -87,8 +87,10 @@ pub const Surface = struct {
     }
 
     /// Gets an array including all versions of the surface.
-    pub inline fn getImages(self: *const Surface, count: ?*c_int) ![]*c.SDL_Surface {
-        return try errify(c.SDL_GetSurfaceImages(self.ptr, count));
+    pub inline fn getImages(self: *const Surface) ![]Surface {
+        var count: c_int = undefined;
+        const images = try errify(c.SDL_GetSurfaceImages(self.ptr, &count));
+        return @ptrCast(images[0..@intCast(count)]);
     }
 
     /// Removes all alternate versions of the surface.
@@ -184,8 +186,8 @@ pub const Surface = struct {
     }
 
     /// Sets the clipping rectangle for the surface.
-    pub inline fn setClipRect(self: *const Surface, rect_opt: ?rect.Rect) void {
-        const rect_ptr = if (rect_opt) |r| &r.toNative() else null;
+    pub inline fn setClipRect(self: *const Surface, rect_opt: ?rect.Rect) !void {
+        const rect_ptr: ?*const c.SDL_Rect = if (rect_opt) |r| @ptrCast(&r) else null;
         try errify(c.SDL_SetSurfaceClipRect(self.ptr, rect_ptr));
     }
 
@@ -193,12 +195,12 @@ pub const Surface = struct {
     pub inline fn getClipRect(self: *const Surface) !rect.Rect {
         var r: c.SDL_Rect = undefined;
         try errify(c.SDL_GetSurfaceClipRect(self.ptr, &r));
-        return rect.Rect.fromNative(r);
+        return @bitCast(r);
     }
 
     /// Flips the surface vertically or horizontally.
     pub inline fn flip(self: *const Surface, flip_mode: FlipMode) !void {
-        try errify(c.SDL_FlipSurface(self.ptr, flip_mode));
+        try errify(c.SDL_FlipSurface(self.ptr, @intFromEnum(flip_mode)));
     }
 
     /// Creates a new surface identical to the existing surface.
@@ -222,25 +224,6 @@ pub const Surface = struct {
         };
     }
 
-    /// Converts the surface to a new format and colorspace.
-    pub inline fn convertAndColorspace(
-        self: *const Surface,
-        format: PixelFormat,
-        palette: ?*const Palette,
-        colorspace: Colorspace,
-        props: c.SDL_PropertiesID,
-    ) !Surface {
-        return Surface{
-            .ptr = try errify(c.SDL_ConvertSurfaceAndColorspace(
-                self.ptr,
-                @intFromEnum(format),
-                @ptrCast(palette),
-                @intFromEnum(colorspace),
-                props,
-            )),
-        };
-    }
-
     /// Clears the surface with a specific color.
     pub inline fn clear(self: *const Surface, r: f32, g: f32, b: f32, a: f32) !void {
         try errify(c.SDL_ClearSurface(self.ptr, r, g, b, a));
@@ -248,7 +231,7 @@ pub const Surface = struct {
 
     /// Performs a fast fill of a rectangle with a specific color.
     pub inline fn fillRect(self: *const Surface, rect_opt: ?rect.Rect, color: u32) !void {
-        const rect_ptr = if (rect_opt) |r| &r.toNative() else null;
+        const rect_ptr: ?*const c.SDL_Rect = if (rect_opt) |r| @ptrCast(&r) else null;
         try errify(c.SDL_FillSurfaceRect(self.ptr, rect_ptr, color));
     }
 
@@ -258,20 +241,19 @@ pub const Surface = struct {
         defer native_rects.deinit();
 
         for (rects) |r| {
-            native_rects.appendAssumeCapacity(r.toNative());
+            // Since rect.Rect is already extern struct matching SDL_Rect,
+            // we can directly bitcast or reinterpret the memory
+            native_rects.appendAssumeCapacity(@bitCast(r));
         }
 
         try errify(c.SDL_FillSurfaceRects(self.ptr, native_rects.items.ptr, @intCast(rects.len), color));
     }
 
     /// Performs a fast blit from the source surface to the destination surface.
-    pub inline fn blit(self: *const Surface, src_rect: ?rect.Rect) !rect.Rect {
-        const src_rect_ptr = if (src_rect) |r| &r else null;
-        var dst: rect.Rect = undefined;
-
-        try errify(c.SDL_BlitSurface(self.ptr, src_rect_ptr, &dst, &dst));
-
-        return dst;
+    pub inline fn blit(self: *const Surface, src_rect: ?rect.Rect, dst: *Surface, dst_rect: ?*rect.Rect) !void {
+        const src_rect_ptr: ?*const c.SDL_Rect = if (src_rect) |*r| @ptrCast(r) else null;
+        const dst_rect_ptr: ?*c.SDL_Rect = if (dst_rect) |r| @ptrCast(r) else null;
+        try errify(c.SDL_BlitSurface(self.ptr, src_rect_ptr, dst.ptr, dst_rect_ptr));
     }
 
     /// Performs a scaled blit from the source surface to the destination surface.
@@ -282,9 +264,15 @@ pub const Surface = struct {
         dst_rect: ?rect.Rect,
         scale_mode: ScaleMode,
     ) !void {
-        const src_rect_ptr = if (src_rect) |r| &r.toNative() else null;
-        const dst_rect_ptr = if (dst_rect) |r| &r.toNative() else null;
-        try errify(c.SDL_BlitSurfaceScaled(self.ptr, src_rect_ptr, dst.ptr, dst_rect_ptr, scale_mode));
+        const src_rect_ptr: ?*const c.SDL_Rect = if (src_rect) |*r| @ptrCast(r) else null;
+        const dst_rect_ptr: ?*const c.SDL_Rect = if (dst_rect) |*r| @ptrCast(r) else null;
+        try errify(c.SDL_BlitSurfaceScaled(
+            self.ptr,
+            src_rect_ptr,
+            dst.ptr,
+            dst_rect_ptr,
+            @intFromEnum(scale_mode),
+        ));
     }
 
     /// Maps an RGB triple to an opaque pixel value for the surface.
@@ -329,23 +317,29 @@ pub const Surface = struct {
 
     /// Performs a low-level surface blitting only.
     pub inline fn blitUnchecked(self: *const Surface, src_rect: rect.Rect, dst: *Surface, dst_rect: rect.Rect) !void {
-        try errify(c.SDL_BlitSurfaceUnchecked(self.ptr, &src_rect.toNative(), dst.ptr, &dst_rect.toNative()));
+        var src_r: c.SDL_Rect = @bitCast(src_rect);
+        var dst_r: c.SDL_Rect = @bitCast(dst_rect);
+        try errify(c.SDL_BlitSurfaceUnchecked(self.ptr, &src_r, dst.ptr, &dst_r));
     }
 
     /// Performs a low-level surface scaled blitting only.
     pub inline fn blitUncheckedScaled(self: *const Surface, src_rect: rect.Rect, dst: *Surface, dst_rect: rect.Rect, scale_mode: ScaleMode) !void {
-        try errify(c.SDL_BlitSurfaceUncheckedScaled(self.ptr, &src_rect.toNative(), dst.ptr, &dst_rect.toNative(), scale_mode));
+        var src_r: c.SDL_Rect = @bitCast(src_rect);
+        var dst_r: c.SDL_Rect = @bitCast(dst_rect);
+        try errify(c.SDL_BlitSurfaceUncheckedScaled(self.ptr, &src_r, dst.ptr, &dst_r, @intFromEnum(scale_mode)));
     }
 
     /// Performs a stretched pixel copy from one surface to another.
     pub inline fn stretch(self: *const Surface, src_rect: rect.Rect, dst: *Surface, dst_rect: rect.Rect, scale_mode: ScaleMode) !void {
-        try errify(c.SDL_StretchSurface(self.ptr, &src_rect.toNative(), dst.ptr, &dst_rect.toNative(), scale_mode));
+        var src_r: c.SDL_Rect = @bitCast(src_rect);
+        var dst_r: c.SDL_Rect = @bitCast(dst_rect);
+        try errify(c.SDL_StretchSurface(self.ptr, &src_r, dst.ptr, &dst_r, @intFromEnum(scale_mode)));
     }
 
     /// Performs a tiled blit to a destination surface.
     pub inline fn blitTiled(self: *const Surface, src_rect: ?rect.Rect, dst: *Surface, dst_rect: ?rect.Rect) !void {
-        const src_rect_ptr = if (src_rect) |r| &r.toNative() else null;
-        const dst_rect_ptr = if (dst_rect) |r| &r.toNative() else null;
+        const src_rect_ptr: ?*const c.SDL_Rect = if (src_rect) |*r| @ptrCast(r) else null;
+        const dst_rect_ptr: ?*const c.SDL_Rect = if (dst_rect) |*r| @ptrCast(r) else null;
         try errify(c.SDL_BlitSurfaceTiled(self.ptr, src_rect_ptr, dst.ptr, dst_rect_ptr));
     }
 
@@ -353,14 +347,21 @@ pub const Surface = struct {
     pub inline fn blitTiledWithScale(
         self: *const Surface,
         src_rect: ?rect.Rect,
-        scal: f32,
+        scale_val: f32,
         scale_mode: ScaleMode,
         dst: *Surface,
         dst_rect: ?rect.Rect,
     ) !void {
-        const src_rect_ptr = if (src_rect) |r| &r.toNative() else null;
-        const dst_rect_ptr = if (dst_rect) |r| &r.toNative() else null;
-        try errify(c.SDL_BlitSurfaceTiledWithScale(self.ptr, src_rect_ptr, scal, scale_mode, dst.ptr, dst_rect_ptr));
+        const src_rect_ptr: ?*const c.SDL_Rect = if (src_rect) |*r| @ptrCast(r) else null;
+        const dst_rect_ptr: ?*const c.SDL_Rect = if (dst_rect) |*r| @ptrCast(r) else null;
+        try errify(c.SDL_BlitSurfaceTiledWithScale(
+            self.ptr,
+            src_rect_ptr,
+            scale_val,
+            @intFromEnum(scale_mode),
+            dst.ptr,
+            dst_rect_ptr,
+        ));
     }
 
     /// Performs a scaled blit using the 9-grid algorithm.
@@ -371,13 +372,13 @@ pub const Surface = struct {
         right_width: usize,
         top_height: usize,
         bottom_height: usize,
-        scal: f32,
+        scale_val: f32,
         scale_mode: ScaleMode,
         dst: *Surface,
         dst_rect: ?rect.Rect,
     ) !void {
-        const src_rect_ptr = if (src_rect) |r| &r.toNative() else null;
-        const dst_rect_ptr = if (dst_rect) |r| &r.toNative() else null;
+        const src_rect_ptr: ?*const c.SDL_Rect = if (src_rect) |*r| @ptrCast(r) else null;
+        const dst_rect_ptr: ?*const c.SDL_Rect = if (dst_rect) |*r| @ptrCast(r) else null;
         try errify(c.SDL_BlitSurface9Grid(
             self.ptr,
             src_rect_ptr,
@@ -385,8 +386,8 @@ pub const Surface = struct {
             @intCast(right_width),
             @intCast(top_height),
             @intCast(bottom_height),
-            scal,
-            scale_mode,
+            scale_val,
+            @intFromEnum(scale_mode),
             dst.ptr,
             dst_rect_ptr,
         ));
@@ -426,12 +427,12 @@ pub inline fn convertPixelsAndColorspace(
     width: usize,
     height: usize,
     src_format: PixelFormat,
-    src_colorspace: c.SDL_Colorspace,
+    src_colorspace: Colorspace,
     src_properties: c.SDL_PropertiesID,
     src: *const anyopaque,
     src_pitch: usize,
     dst_format: PixelFormat,
-    dst_colorspace: c.SDL_Colorspace,
+    dst_colorspace: Colorspace,
     dst_properties: c.SDL_PropertiesID,
     dst: *anyopaque,
     dst_pitch: usize,
@@ -440,12 +441,12 @@ pub inline fn convertPixelsAndColorspace(
         @intCast(width),
         @intCast(height),
         @intFromEnum(src_format),
-        src_colorspace,
+        @intFromEnum(src_colorspace),
         src_properties,
         src,
         @intCast(src_pitch),
         @intFromEnum(dst_format),
-        dst_colorspace,
+        @intFromEnum(dst_colorspace),
         dst_properties,
         dst,
         @intCast(dst_pitch),

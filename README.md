@@ -457,7 +457,7 @@ pub fn main() !void {
 | Clipboard | ✅ | Dialog | ✅ | Filesystem | ❌ |
 | Iostream | ❌ | Atomic | ❌ | Time | ❌ |
 | Timer | ✅ | Render | 🧪 | Pixels | ✅ |
-| Surface | 🧪 | Platform | ❌ | Misc | ❌ |
+| Surface | ✅ | Platform | ❌ | Misc | ❌ |
 | Main | ❌ | Strings | ❌ | CPU | ❌ |
 | Intrinsics | ❌ | Locale | ❌ | System | ❌ |
 | Metal | ❌ | Vulkan | ❌ | Rect | ✅ |

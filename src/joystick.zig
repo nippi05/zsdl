@@ -5,6 +5,8 @@ const errify = internal.errify;
 const errifyWithValue = internal.errifyWithValue;
 const power = @import("power.zig");
 const PowerState = power.PowerState;
+const sensor = @import("sensor.zig");
+const SensorType = sensor.SensorType;
 
 pub const JoystickID = c.SDL_JoystickID;
 pub const JoystickType = enum(u32) {
@@ -18,6 +20,7 @@ pub const JoystickType = enum(u32) {
     drum_kit = c.SDL_JOYSTICK_TYPE_DRUM_KIT,
     arcade_pad = c.SDL_JOYSTICK_TYPE_ARCADE_PAD,
     throttle = c.SDL_JOYSTICK_TYPE_THROTTLE,
+    count = c.SDL_JOYSTICK_TYPE_COUNT,
 };
 pub const JoystickConnectionState = enum(i32) {
     invalid = c.SDL_JOYSTICK_CONNECTION_INVALID,
@@ -26,6 +29,25 @@ pub const JoystickConnectionState = enum(i32) {
     wireless = c.SDL_JOYSTICK_CONNECTION_WIRELESS,
 };
 
+pub const joystick_axis_max = c.SDL_JOYSTICK_AXIS_MAX;
+pub const joystick_axis_min = c.SDL_JOYSTICK_AXIS_MIN;
+
+pub const hat_centered = c.SDL_HAT_CENTERED;
+pub const hat_up = c.SDL_HAT_UP;
+pub const hat_right = c.SDL_HAT_RIGHT;
+pub const hat_down = c.SDL_HAT_DOWN;
+pub const hat_left = c.SDL_HAT_LEFT;
+pub const hat_rightup = c.SDL_HAT_RIGHTUP;
+pub const hat_rightdown = c.SDL_HAT_RIGHTDOWN;
+pub const hat_leftup = c.SDL_HAT_LEFTUP;
+pub const hat_leftdown = c.SDL_HAT_LEFTDOWN;
+
+pub const prop_joystick_cap_mono_led = c.SDL_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN;
+pub const prop_joystick_cap_rgb_led = c.SDL_PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN;
+pub const prop_joystick_cap_player_led = c.SDL_PROP_JOYSTICK_CAP_PLAYER_LED_BOOLEAN;
+pub const prop_joystick_cap_rumble = c.SDL_PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN;
+pub const prop_joystick_cap_trigger_rumble = c.SDL_PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN;
+
 /// Get the implementation dependent name of a joystick.
 pub inline fn getNameForID(instance_id: JoystickID) ![]const u8 {
     return std.mem.span(try errify(c.SDL_GetJoystickNameForID(instance_id)));
@@ -33,7 +55,7 @@ pub inline fn getNameForID(instance_id: JoystickID) ![]const u8 {
 
 /// Get the implementation dependent path of a joystick.
 pub inline fn getPathForID(instance_id: JoystickID) ![]const u8 {
-    return try errify(c.SDL_GetJoystickPathForID(instance_id));
+    return std.mem.span(try errify(c.SDL_GetJoystickPathForID(instance_id)));
 }
 
 /// Get the player index of a joystick.
@@ -66,6 +88,48 @@ pub inline fn getTypeForID(instance_id: JoystickID) JoystickType {
     return @enumFromInt(c.SDL_GetJoystickTypeForID(instance_id));
 }
 
+/// Virtual joystick touchpad descriptor
+pub const VirtualJoystickTouchpadDesc = extern struct {
+    nfingers: u16,
+    padding: [3]u16,
+};
+
+/// Virtual joystick sensor descriptor
+pub const VirtualJoystickSensorDesc = extern struct {
+    type: SensorType,
+    rate: f32,
+};
+
+/// Virtual joystick descriptor
+pub const VirtualJoystickDesc = extern struct {
+    version: u32,
+    type: u16,
+    padding: u16,
+    vendor_id: u16,
+    product_id: u16,
+    naxes: u16,
+    nbuttons: u16,
+    nballs: u16,
+    nhats: u16,
+    ntouchpads: u16,
+    nsensors: u16,
+    padding2: [2]u16,
+    button_mask: u32,
+    axis_mask: u32,
+    name: [*:0]const u8,
+    touchpads: ?[*]const VirtualJoystickTouchpadDesc,
+    sensors: ?[*]const VirtualJoystickSensorDesc,
+    userdata: ?*anyopaque,
+    Update: ?*const fn (?*anyopaque) callconv(.C) void,
+    SetPlayerIndex: ?*const fn (?*anyopaque, i32) callconv(.C) void,
+    Rumble: ?*const fn (?*anyopaque, u16, u16) callconv(.C) bool,
+    RumbleTriggers: ?*const fn (?*anyopaque, u16, u16) callconv(.C) bool,
+    SetLED: ?*const fn (?*anyopaque, u8, u8, u8) callconv(.C) bool,
+    SendEffect: ?*const fn (?*anyopaque, ?*const anyopaque, i32) callconv(.C) bool,
+    SetSensorsEnabled: ?*const fn (?*anyopaque, bool) callconv(.C) bool,
+    Cleanup: ?*const fn (?*anyopaque) callconv(.C) void,
+};
+
 pub const Joystick = struct {
     ptr: *c.SDL_Joystick,
 
@@ -86,12 +150,12 @@ pub const Joystick = struct {
 
     /// Get the implementation dependent name of a joystick.
     pub inline fn getName(self: *const Joystick) ![]const u8 {
-        return try errify(c.SDL_GetJoystickName(self.ptr));
+        return std.mem.span(try errify(c.SDL_GetJoystickName(self.ptr)));
     }
 
     /// Get the implementation dependent path of a joystick.
     pub inline fn getPath(self: *const Joystick) ![]const u8 {
-        return try errify(c.SDL_GetJoystickPath(self.ptr));
+        return std.mem.span(try errify(c.SDL_GetJoystickPath(self.ptr)));
     }
 
     /// Get the player index of an opened joystick.
@@ -131,12 +195,21 @@ pub const Joystick = struct {
 
     /// Get the serial number of an opened joystick, if available.
     pub inline fn getSerial(self: *const Joystick) ?[]const u8 {
-        return c.SDL_GetJoystickSerial(self.ptr);
+        const serial = c.SDL_GetJoystickSerial(self.ptr);
+        if (serial) |s| {
+            return std.mem.span(s);
+        }
+        return null;
     }
 
     /// Get the type of an opened joystick.
     pub inline fn getType(self: *const Joystick) JoystickType {
         return @enumFromInt(c.SDL_GetJoystickType(self.ptr));
+    }
+
+    /// Get the properties associated with a joystick.
+    pub inline fn getProperties(self: *const Joystick) c.SDL_PropertiesID {
+        return c.SDL_GetJoystickProperties(self.ptr);
     }
 
     /// Get the status of a specified joystick.
@@ -214,6 +287,36 @@ pub const Joystick = struct {
         try errify(c.SDL_SendJoystickEffect(self.ptr, data, size));
     }
 
+    /// Set the state of an axis on an opened virtual joystick.
+    pub inline fn setVirtualAxis(self: *const Joystick, axis: i32, value: i16) !bool {
+        return c.SDL_SetJoystickVirtualAxis(self.ptr, axis, value);
+    }
+
+    /// Generate ball motion on an opened virtual joystick.
+    pub inline fn setVirtualBall(self: *const Joystick, ball: i32, xrel: i16, yrel: i16) !bool {
+        return c.SDL_SetJoystickVirtualBall(self.ptr, ball, xrel, yrel);
+    }
+
+    /// Set the state of a button on an opened virtual joystick.
+    pub inline fn setVirtualButton(self: *const Joystick, button: i32, down: bool) !bool {
+        return c.SDL_SetJoystickVirtualButton(self.ptr, button, down);
+    }
+
+    /// Set the state of a hat on an opened virtual joystick.
+    pub inline fn setVirtualHat(self: *const Joystick, hat: i32, value: u8) !bool {
+        return c.SDL_SetJoystickVirtualHat(self.ptr, hat, value);
+    }
+
+    /// Set touchpad finger state on an opened virtual joystick.
+    pub inline fn setVirtualTouchpad(self: *const Joystick, touchpad: i32, finger: i32, down: bool, x: f32, y: f32, pressure: f32) !bool {
+        return c.SDL_SetJoystickVirtualTouchpad(self.ptr, touchpad, finger, down, x, y, pressure);
+    }
+
+    /// Send a sensor update for an opened virtual joystick.
+    pub inline fn sendVirtualSensorData(self: *const Joystick, type_: SensorType, sensor_timestamp: u64, data: [*]const f32, num_values: i32) !bool {
+        return c.SDL_SendJoystickVirtualSensorData(self.ptr, @intFromEnum(type_), sensor_timestamp, data, num_values);
+    }
+
     /// Close a joystick previously opened with SDL_OpenJoystick().
     pub inline fn close(self: *const Joystick) void {
         c.SDL_CloseJoystick(self.ptr);
@@ -258,8 +361,8 @@ pub inline fn getJoysticks(count: *c_int) ![]JoystickID {
 }
 
 /// Attach a new virtual joystick.
-pub inline fn attachVirtualJoystick(desc: *const c.SDL_VirtualJoystickDesc) !JoystickID {
-    return try errify(c.SDL_AttachVirtualJoystick(desc));
+pub inline fn attachVirtualJoystick(desc: *const VirtualJoystickDesc) !JoystickID {
+    return try errify(c.SDL_AttachVirtualJoystick(@ptrCast(desc)));
 }
 
 /// Detach a virtual joystick.

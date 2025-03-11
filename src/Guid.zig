@@ -7,9 +7,9 @@ const Guid = @This();
 data: [16]u8,
 
 /// Converts the GUID to a string representation.
-pub inline fn toString(self: *const Guid) ![33]u8 {
-    var buf: [33]u8 = undefined; // 32 characters + null terminator
-    _ = c.SDL_GUIDToString(@as(GUID, @bitCast(self.data)), &buf[0], buf.len);
+pub inline fn toString(self: Guid) ![33]u8 {
+    var buf: [33]u8 = undefined;
+    _ = c.SDL_GUIDToString(@as(GUID, @bitCast(self.data)), &buf, buf.len);
     return buf;
 }
 

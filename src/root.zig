@@ -22,6 +22,7 @@ pub const pixels = @import("pixels.zig");
 pub const power = @import("power.zig");
 pub const rect = @import("rect.zig");
 pub const render = @import("render.zig");
+pub const sensor = @import("sensor.zig");
 pub const surface = @import("surface.zig");
 pub const timer = @import("timer.zig");
 pub const touch = @import("touch.zig");

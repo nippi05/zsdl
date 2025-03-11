@@ -109,18 +109,12 @@ pub const Gamepad = struct {
 
     /// Get the implementation-dependent name for an opened gamepad.
     pub inline fn getName(self: *const Gamepad) ?[]const u8 {
-        if (c.SDL_GetGamepadName(self.ptr)) |name| {
-            return std.mem.span(name);
-        }
-        return null;
+        return if (c.SDL_GetGamepadName(self.ptr)) |name| std.mem.span(name) else null;
     }
 
     /// Get the implementation-dependent path for an opened gamepad.
     pub inline fn getPath(self: *const Gamepad) ?[]const u8 {
-        if (c.SDL_GetGamepadPath(self.ptr)) |path| {
-            return std.mem.span(path);
-        }
-        return null;
+        return if (c.SDL_GetGamepadPath(self.ptr)) |path| std.mem.span(path) else null;
     }
 
     /// Get the type of an opened gamepad.
@@ -165,10 +159,7 @@ pub const Gamepad = struct {
 
     /// Get the serial number of an opened gamepad, if available.
     pub inline fn getSerial(self: *const Gamepad) ?[]const u8 {
-        if (c.SDL_GetGamepadSerial(self.ptr)) |serial| {
-            return std.mem.span(serial);
-        }
-        return null;
+        return if (c.SDL_GetGamepadSerial(self.ptr)) |serial| std.mem.span(serial) else null;
     }
 
     /// Get the Steam Input handle of an opened gamepad, if available.
@@ -296,18 +287,12 @@ pub const Gamepad = struct {
 
     /// Return the sfSymbolsName for a given button on a gamepad on Apple platforms.
     pub inline fn getAppleSFSymbolsNameForButton(self: *const Gamepad, button: GamepadButton) ?[]const u8 {
-        if (c.SDL_GetGamepadAppleSFSymbolsNameForButton(self.ptr, button)) |name| {
-            return std.mem.span(name);
-        }
-        return null;
+        return if (c.SDL_GetGamepadAppleSFSymbolsNameForButton(self.ptr, button)) |name| std.mem.span(name) else null;
     }
 
     /// Return the sfSymbolsName for a given axis on a gamepad on Apple platforms.
     pub inline fn getAppleSFSymbolsNameForAxis(self: *const Gamepad, axis: GamepadAxis) ?[]const u8 {
-        if (c.SDL_GetGamepadAppleSFSymbolsNameForAxis(self.ptr, axis)) |name| {
-            return std.mem.span(name);
-        }
-        return null;
+        return if (c.SDL_GetGamepadAppleSFSymbolsNameForAxis(self.ptr, axis)) |name| std.mem.span(name) else null;
     }
 };
 
@@ -367,18 +352,12 @@ pub inline fn isGamepad(instance_id: JoystickID) bool {
 
 /// Get the implementation dependent name of a gamepad.
 pub inline fn getGamepadNameForID(instance_id: JoystickID) ?[]const u8 {
-    if (c.SDL_GetGamepadNameForID(instance_id)) |name| {
-        return std.mem.span(name);
-    }
-    return null;
+    return if (c.SDL_GetGamepadNameForID(instance_id)) |name| std.mem.span(name) else null;
 }
 
 /// Get the implementation dependent path of a gamepad.
 pub inline fn getGamepadPathForID(instance_id: JoystickID) ?[]const u8 {
-    if (c.SDL_GetGamepadPathForID(instance_id)) |path| {
-        return std.mem.span(path);
-    }
-    return null;
+    return if (c.SDL_GetGamepadPathForID(instance_id)) |path| std.mem.span(path) else null;
 }
 
 /// Get the player index of a gamepad.
@@ -443,10 +422,7 @@ pub inline fn getGamepadTypeFromString(str: [*:0]const u8) GamepadType {
 
 /// Convert from an GamepadType enum to a string.
 pub inline fn getGamepadStringForType(gamepad_type: GamepadType) ?[]const u8 {
-    if (c.SDL_GetGamepadStringForType(@intFromEnum(gamepad_type))) |str| {
-        return std.mem.span(str);
-    }
-    return null;
+    return if (c.SDL_GetGamepadStringForType(@intFromEnum(gamepad_type))) |str| std.mem.span(str) else null;
 }
 
 /// Convert a string into SDL_GamepadAxis enum.
@@ -456,10 +432,7 @@ pub inline fn getGamepadAxisFromString(str: [*:0]const u8) GamepadAxis {
 
 /// Convert from an SDL_GamepadAxis enum to a string.
 pub inline fn getGamepadStringForAxis(axis: GamepadAxis) ?[]const u8 {
-    if (c.SDL_GetGamepadStringForAxis(@intFromEnum(axis))) |str| {
-        return std.mem.span(str);
-    }
-    return null;
+    return if (c.SDL_GetGamepadStringForAxis(@intFromEnum(axis))) |str| std.mem.span(str) else null;
 }
 
 /// Convert a string into an SDL_GamepadButton enum.
@@ -469,10 +442,7 @@ pub inline fn getGamepadButtonFromString(str: [*:0]const u8) GamepadButton {
 
 /// Convert from an SDL_GamepadButton enum to a string.
 pub inline fn getGamepadStringForButton(button: GamepadButton) ?[]const u8 {
-    if (c.SDL_GetGamepadStringForButton(@intFromEnum(button))) |str| {
-        return std.mem.span(str);
-    }
-    return null;
+    return if (c.SDL_GetGamepadStringForButton(@intFromEnum(button))) |str| std.mem.span(str) else null;
 }
 
 /// Get the label of a button on a gamepad.

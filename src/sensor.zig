@@ -28,8 +28,7 @@ pub inline fn getSensors() ![]SensorID {
 
 /// Get the implementation dependent name of a sensor.
 pub inline fn getNameForID(instance_id: SensorID) ?[]const u8 {
-    const name = c.SDL_GetSensorNameForID(instance_id);
-    return if (name != null) std.mem.span(name) else null;
+    return if (c.SDL_GetSensorNameForID(instance_id)) |name| std.mem.span(name) else null;
 }
 
 /// Get the type of a sensor.
@@ -62,8 +61,7 @@ pub const Sensor = struct {
 
     /// Get the implementation dependent name of a sensor.
     pub inline fn getName(self: *const Sensor) ?[]const u8 {
-        const name = c.SDL_GetSensorName(self.ptr);
-        return if (name) |n| std.mem.span(n) else null;
+        return if (c.SDL_GetSensorName(self.ptr)) |name| std.mem.span(name) else null;
     }
 
     /// Get the type of a sensor.

@@ -1,6 +1,25 @@
 const std = @import("std");
-const internal = @import("internal.zig");
+
 const c = @import("c.zig").c;
+pub const JoystickID = c.SDL_JoystickID;
+pub const joystick_axis_max = c.SDL_JOYSTICK_AXIS_MAX;
+pub const joystick_axis_min = c.SDL_JOYSTICK_AXIS_MIN;
+pub const hat_centered = c.SDL_HAT_CENTERED;
+pub const hat_up = c.SDL_HAT_UP;
+pub const hat_right = c.SDL_HAT_RIGHT;
+pub const hat_down = c.SDL_HAT_DOWN;
+pub const hat_left = c.SDL_HAT_LEFT;
+pub const hat_rightup = c.SDL_HAT_RIGHTUP;
+pub const hat_rightdown = c.SDL_HAT_RIGHTDOWN;
+pub const hat_leftup = c.SDL_HAT_LEFTUP;
+pub const hat_leftdown = c.SDL_HAT_LEFTDOWN;
+pub const prop_joystick_cap_mono_led = c.SDL_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN;
+pub const prop_joystick_cap_rgb_led = c.SDL_PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN;
+pub const prop_joystick_cap_player_led = c.SDL_PROP_JOYSTICK_CAP_PLAYER_LED_BOOLEAN;
+pub const prop_joystick_cap_rumble = c.SDL_PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN;
+pub const prop_joystick_cap_trigger_rumble = c.SDL_PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN;
+const GUID = @import("Guid.zig").GUID;
+const internal = @import("internal.zig");
 const errify = internal.errify;
 const errifyWithValue = internal.errifyWithValue;
 const power = @import("power.zig");
@@ -8,7 +27,6 @@ const PowerState = power.PowerState;
 const sensor = @import("sensor.zig");
 const SensorType = sensor.SensorType;
 
-pub const JoystickID = c.SDL_JoystickID;
 pub const JoystickType = enum(u32) {
     unknown = c.SDL_JOYSTICK_TYPE_UNKNOWN,
     gamepad = c.SDL_JOYSTICK_TYPE_GAMEPAD,
@@ -28,25 +46,6 @@ pub const JoystickConnectionState = enum(i32) {
     wired = c.SDL_JOYSTICK_CONNECTION_WIRED,
     wireless = c.SDL_JOYSTICK_CONNECTION_WIRELESS,
 };
-
-pub const joystick_axis_max = c.SDL_JOYSTICK_AXIS_MAX;
-pub const joystick_axis_min = c.SDL_JOYSTICK_AXIS_MIN;
-
-pub const hat_centered = c.SDL_HAT_CENTERED;
-pub const hat_up = c.SDL_HAT_UP;
-pub const hat_right = c.SDL_HAT_RIGHT;
-pub const hat_down = c.SDL_HAT_DOWN;
-pub const hat_left = c.SDL_HAT_LEFT;
-pub const hat_rightup = c.SDL_HAT_RIGHTUP;
-pub const hat_rightdown = c.SDL_HAT_RIGHTDOWN;
-pub const hat_leftup = c.SDL_HAT_LEFTUP;
-pub const hat_leftdown = c.SDL_HAT_LEFTDOWN;
-
-pub const prop_joystick_cap_mono_led = c.SDL_PROP_JOYSTICK_CAP_MONO_LED_BOOLEAN;
-pub const prop_joystick_cap_rgb_led = c.SDL_PROP_JOYSTICK_CAP_RGB_LED_BOOLEAN;
-pub const prop_joystick_cap_player_led = c.SDL_PROP_JOYSTICK_CAP_PLAYER_LED_BOOLEAN;
-pub const prop_joystick_cap_rumble = c.SDL_PROP_JOYSTICK_CAP_RUMBLE_BOOLEAN;
-pub const prop_joystick_cap_trigger_rumble = c.SDL_PROP_JOYSTICK_CAP_TRIGGER_RUMBLE_BOOLEAN;
 
 /// Get the implementation dependent name of a joystick.
 pub inline fn getNameForID(instance_id: JoystickID) ![]const u8 {
@@ -135,17 +134,23 @@ pub const Joystick = struct {
 
     /// Open a joystick for use.
     pub inline fn open(instance_id: JoystickID) !Joystick {
-        return Joystick{ .ptr = try errify(c.SDL_OpenJoystick(instance_id)) };
+        return .{
+            .ptr = try errify(c.SDL_OpenJoystick(instance_id)),
+        };
     }
 
     /// Get the SDL_Joystick associated with an instance ID, if it has been opened.
     pub inline fn getFromID(instance_id: JoystickID) !Joystick {
-        return Joystick{ .ptr = try errify(c.SDL_GetJoystickFromID(instance_id)) };
+        return .{
+            .ptr = try errify(c.SDL_GetJoystickFromID(instance_id)),
+        };
     }
 
     /// Get the SDL_Joystick associated with a player index.
     pub inline fn getFromPlayerIndex(player_index: i32) !Joystick {
-        return Joystick{ .ptr = try errify(c.SDL_GetJoystickFromPlayerIndex(player_index)) };
+        return .{
+            .ptr = try errify(c.SDL_GetJoystickFromPlayerIndex(player_index)),
+        };
     }
 
     /// Get the implementation dependent name of a joystick.
@@ -169,7 +174,7 @@ pub const Joystick = struct {
     }
 
     /// Get the implementation-dependent GUID for the joystick.
-    pub inline fn getGUID(self: *const Joystick) c.SDL_GUID {
+    pub inline fn getGUID(self: *const Joystick) GUID {
         return c.SDL_GetJoystickGUID(self.ptr);
     }
 
@@ -195,11 +200,7 @@ pub const Joystick = struct {
 
     /// Get the serial number of an opened joystick, if available.
     pub inline fn getSerial(self: *const Joystick) ?[]const u8 {
-        const serial = c.SDL_GetJoystickSerial(self.ptr);
-        if (serial) |s| {
-            return std.mem.span(s);
-        }
-        return null;
+        return if (c.SDL_GetJoystickSerial(self.ptr)) |serial| std.mem.span(serial) else null;
     }
 
     /// Get the type of an opened joystick.
@@ -243,8 +244,8 @@ pub const Joystick = struct {
     }
 
     /// Get the current state of an axis control on a joystick.
-    pub inline fn getAxis(self: *const Joystick, axis: i32) i16 {
-        return c.SDL_GetJoystickAxis(self.ptr, axis);
+    pub inline fn getAxis(self: *const Joystick, axis: i32) !i16 {
+        return try errify(c.SDL_GetJoystickAxis(self.ptr, axis));
     }
 
     /// Get the initial state of an axis control on a joystick.
@@ -288,33 +289,60 @@ pub const Joystick = struct {
     }
 
     /// Set the state of an axis on an opened virtual joystick.
-    pub inline fn setVirtualAxis(self: *const Joystick, axis: i32, value: i16) !bool {
-        return c.SDL_SetJoystickVirtualAxis(self.ptr, axis, value);
+    pub inline fn setVirtualAxis(self: *const Joystick, axis: i32, value: i16) !void {
+        return try errify(c.SDL_SetJoystickVirtualAxis(self.ptr, axis, value));
     }
 
     /// Generate ball motion on an opened virtual joystick.
-    pub inline fn setVirtualBall(self: *const Joystick, ball: i32, xrel: i16, yrel: i16) !bool {
-        return c.SDL_SetJoystickVirtualBall(self.ptr, ball, xrel, yrel);
+    pub inline fn setVirtualBall(self: *const Joystick, ball: i32, xrel: i16, yrel: i16) !void {
+        return try errify(c.SDL_SetJoystickVirtualBall(self.ptr, ball, xrel, yrel));
     }
 
     /// Set the state of a button on an opened virtual joystick.
-    pub inline fn setVirtualButton(self: *const Joystick, button: i32, down: bool) !bool {
-        return c.SDL_SetJoystickVirtualButton(self.ptr, button, down);
+    pub inline fn setVirtualButton(self: *const Joystick, button: i32, down: bool) !void {
+        return try errify(c.SDL_SetJoystickVirtualButton(self.ptr, button, down));
     }
 
     /// Set the state of a hat on an opened virtual joystick.
-    pub inline fn setVirtualHat(self: *const Joystick, hat: i32, value: u8) !bool {
-        return c.SDL_SetJoystickVirtualHat(self.ptr, hat, value);
+    pub inline fn setVirtualHat(self: *const Joystick, hat: i32, value: u8) !void {
+        return try errify(c.SDL_SetJoystickVirtualHat(self.ptr, hat, value));
     }
 
     /// Set touchpad finger state on an opened virtual joystick.
-    pub inline fn setVirtualTouchpad(self: *const Joystick, touchpad: i32, finger: i32, down: bool, x: f32, y: f32, pressure: f32) !bool {
-        return c.SDL_SetJoystickVirtualTouchpad(self.ptr, touchpad, finger, down, x, y, pressure);
+    pub inline fn setVirtualTouchpad(
+        self: *const Joystick,
+        touchpad: i32,
+        finger: i32,
+        down: bool,
+        x: f32,
+        y: f32,
+        pressure: f32,
+    ) !void {
+        return try errify(c.SDL_SetJoystickVirtualTouchpad(
+            self.ptr,
+            touchpad,
+            finger,
+            down,
+            x,
+            y,
+            pressure,
+        ));
     }
 
     /// Send a sensor update for an opened virtual joystick.
-    pub inline fn sendVirtualSensorData(self: *const Joystick, type_: SensorType, sensor_timestamp: u64, data: [*]const f32, num_values: i32) !bool {
-        return c.SDL_SendJoystickVirtualSensorData(self.ptr, @intFromEnum(type_), sensor_timestamp, data, num_values);
+    pub inline fn sendVirtualSensorData(
+        self: *const Joystick,
+        @"type": SensorType,
+        sensor_timestamp: u64,
+        data: []const f32,
+    ) !void {
+        return try errify(c.SDL_SendJoystickVirtualSensorData(
+            self.ptr,
+            @intFromEnum(@"type"),
+            sensor_timestamp,
+            @ptrCast(data.ptr),
+            @intCast(data.len),
+        ));
     }
 
     /// Close a joystick previously opened with SDL_OpenJoystick().
@@ -355,9 +383,10 @@ pub inline fn hasJoystick() bool {
 }
 
 /// Get a list of currently connected joysticks.
-pub inline fn getJoysticks(count: *c_int) ![]JoystickID {
-    const joysticks = try errify(c.SDL_GetJoysticks(count));
-    return @ptrCast(joysticks[0..@intCast(count.*)]);
+pub inline fn getJoysticks() ![]JoystickID {
+    var count: *c_int = undefined;
+    const joysticks = try errify(c.SDL_GetJoysticks(&count));
+    return joysticks[0..@intCast(count)];
 }
 
 /// Attach a new virtual joystick.

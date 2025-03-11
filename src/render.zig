@@ -112,10 +112,7 @@ pub const Renderer = struct {
 
     /// Get the name of a built in 2D rendering driver.
     pub inline fn getRenderDriver(index: c_int) ?[]const u8 {
-        if (c.SDL_GetRenderDriver(index)) |d| {
-            return std.mem.span(d);
-        }
-        return null;
+        return if (c.SDL_GetRenderDriver(index)) |driver| std.mem.span(driver) else null;
     }
 
     /// Create a window and default renderer.

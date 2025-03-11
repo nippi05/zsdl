@@ -599,10 +599,7 @@ pub const Keyboard = struct {
 
     /// Gets the name of a keyboard.
     pub inline fn getName(self: Keyboard) ?[]const u8 {
-        if (c.SDL_GetKeyboardNameForID(self.id)) |name_ptr| {
-            return std.mem.span(name_ptr);
-        }
-        return null;
+        return if (c.SDL_GetKeyboardNameForID(self.id)) |name| std.mem.span(name) else null;
     }
 };
 

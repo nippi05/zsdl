@@ -10,6 +10,7 @@ pub const dialog = @import("dialog.zig");
 pub const events = @import("events.zig");
 pub const gamepad = @import("gamepad.zig");
 pub const gpu = @import("gpu.zig");
+pub const Guid = @import("Guid.zig");
 pub const haptic = @import("haptic.zig");
 const internal = @import("internal.zig");
 const errify = internal.errify;

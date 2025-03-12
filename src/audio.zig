@@ -359,8 +359,3 @@ pub inline fn getAudioFormatName(format: AudioFormat) []const u8 {
 pub inline fn getSilenceValueForFormat(format: AudioFormat) i32 {
     return c.SDL_GetSilenceValueForFormat(@intFromEnum(format));
 }
-
-// Utility functions for handling audio format flags
-pub inline fn audioBitSize(x: u16) u16 {
-    return x & AudioFormat.mask_bitsize;
-}

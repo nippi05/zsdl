@@ -598,11 +598,6 @@ pub const VertexInputState = struct {
     }
 };
 
-/// A structure specifying the parameters of a compute pipeline.
-///
-/// Available properties that can be set through `props`:
-/// - `SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING`: a name that can be displayed
-///   in debugging tools.
 pub const ComputePipelineCreateInfo = struct {
     code: []const u8,
     entrypoint: []const u8,
@@ -638,11 +633,6 @@ pub const ComputePipelineCreateInfo = struct {
     }
 };
 
-/// A structure specifying the parameters of a graphics pipeline.
-///
-/// Available properties that can be set through `props`:
-/// - `SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING`: a name that can be displayed
-///   in debugging tools.
 pub const GraphicsPipelineCreateInfo = struct {
     vertex_shader: *allowzero Shader = std.mem.zeroes(*allowzero Shader),
     fragment_shader: *allowzero Shader = std.mem.zeroes(*allowzero Shader),
@@ -685,12 +675,7 @@ pub const SamplerAddressMode = enum(u32) {
     clamp_to_edge = c.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 };
 
-/// A structure specifying the parameters of a sampler.
-///
-/// Available properties that can be set through `props`:
-/// - `SDL_PROP_GPU_SAMPLER_CREATE_NAME_STRING`: a name that can be displayed
-///   in debugging tools.
-pub const SamplerCreateInfo = extern struct {
+/pub const SamplerCreateInfo = extern struct {
     min_filter: Filter = std.mem.zeroes(Filter),
     mag_filter: Filter = std.mem.zeroes(Filter),
     mipmap_mode: SamplerMipmapMode = std.mem.zeroes(SamplerMipmapMode),
@@ -707,11 +692,6 @@ pub const SamplerCreateInfo = extern struct {
     props: c.SDL_PropertiesID = 0,
 };
 
-/// A structure specifying code and metadata for creating a shader object.
-///
-/// Available properties that can be set through `props`:
-/// - `SDL_PROP_GPU_SHADER_CREATE_NAME_STRING`: a name that can be displayed
-///   in debugging tools.
 pub const ShaderCreateInfo = struct {
     code: []const u8 = &.{},
     entrypoint: []const u8 = &.{},
@@ -739,29 +719,6 @@ pub const ShaderCreateInfo = struct {
     }
 };
 
-/// A structure specifying the parameters of a texture.
-///
-/// Available properties that can be set through `props`:
-/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT`: (Direct3D 12 only) if
-///   the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture
-///   to a color with this red intensity. Defaults to zero.
-/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT`: (Direct3D 12 only) if
-///   the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture
-///   to a color with this green intensity. Defaults to zero.
-/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT`: (Direct3D 12 only) if
-///   the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture
-///   to a color with this blue intensity. Defaults to zero.
-/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT`: (Direct3D 12 only) if
-///   the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture
-///   to a color with this alpha intensity. Defaults to zero.
-/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT`: (Direct3D 12 only)
-///   if the texture usage is SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET, clear
-///   the texture to a depth of this value. Defaults to zero.
-/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_UINT8`: (Direct3D 12
-///   only) if the texture usage is SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
-///   clear the texture to a stencil of this value. Defaults to zero.
-/// - `SDL_PROP_GPU_TEXTURE_CREATE_NAME_STRING`: a name that can be displayed
-///   in debugging tools.
 pub const TextureCreateInfo = extern struct {
     type: TextureType = std.mem.zeroes(TextureType),
     format: TextureFormat = std.mem.zeroes(TextureFormat),
@@ -788,11 +745,6 @@ pub const TextureCreateInfo = extern struct {
     }
 };
 
-/// A structure specifying the parameters of a buffer.
-///
-/// Available properties that can be set through `props`:
-/// - `SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING`: a name that can be displayed
-///   in debugging tools.
 pub const BufferCreateInfo = extern struct {
     usage: BufferUsageFlags = std.mem.zeroes(BufferUsageFlags),
     size: u32 = std.mem.zeroes(u32),
@@ -807,87 +759,12 @@ pub const BufferCreateInfo = extern struct {
     }
 };
 
-/// A structure specifying the parameters of a transfer buffer.
-///
-/// Available properties that can be set through `props`:
-/// - `SDL_PROP_GPU_TRANSFERBUFFER_CREATE_NAME_STRING`: a name that can be
-///   displayed in debugging tools.
 pub const TransferBufferCreateInfo = extern struct {
     usage: TransferBufferUsage = std.mem.zeroes(TransferBufferUsage),
     size: u32 = std.mem.zeroes(u32),
     props: c.SDL_PropertiesID = 0,
 };
 
-/// A structure specifying device properties for GPU device creation.
-///
-/// These properties are used when creating a GPU device to configure its behavior.
-/// Available properties:
-///
-/// - `debug_mode`: Enable debug mode properties and validations.
-/// - `prefer_low_power`: Prefer energy efficiency over maximum GPU performance.
-/// - `name`: The name of the GPU driver to use, if a specific one is desired.
-/// - `shaders_private`: The app is able to provide shaders for an NDA platform.
-/// - `shaders_spirv`: The app is able to provide SPIR-V shaders.
-/// - `shaders_dxbc`: The app is able to provide DXBC shaders.
-/// - `shaders_dxil`: The app is able to provide DXIL shaders.
-/// - `shaders_msl`: The app is able to provide MSL shaders.
-/// - `shaders_metallib`: The app is able to provide Metal shader libraries.
-/// - `d3d12_semantic_name`: The prefix to use for all vertex semantics (D3D12 only).
-/// Property Constants
-/// These constants represent the property keys used with the Properties API.
-
-// Device creation properties
-pub const PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN;
-pub const PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN;
-pub const PROP_GPU_DEVICE_CREATE_NAME_STRING = c.SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING;
-pub const PROP_GPU_DEVICE_CREATE_SHADERS_PRIVATE_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_PRIVATE_BOOLEAN;
-pub const PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN;
-pub const PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN;
-pub const PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN;
-pub const PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN;
-pub const PROP_GPU_DEVICE_CREATE_SHADERS_METALLIB_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_METALLIB_BOOLEAN;
-pub const PROP_GPU_DEVICE_CREATE_D3D12_SEMANTIC_NAME_STRING = c.SDL_PROP_GPU_DEVICE_CREATE_D3D12_SEMANTIC_NAME_STRING;
-
-// Texture creation properties
-pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT;
-pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT;
-pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT;
-pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT;
-pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT;
-pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_UINT8 = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_UINT8;
-pub const PROP_GPU_TEXTURE_CREATE_NAME_STRING = c.SDL_PROP_GPU_TEXTURE_CREATE_NAME_STRING;
-
-// Buffer creation properties
-pub const PROP_GPU_BUFFER_CREATE_NAME_STRING = c.SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING;
-
-// Transfer buffer creation properties
-pub const PROP_GPU_TRANSFERBUFFER_CREATE_NAME_STRING = "SDL.gpu.transferbuffer.create.name";
-
-// Sampler creation properties
-pub const PROP_GPU_SAMPLER_CREATE_NAME_STRING = c.SDL_PROP_GPU_SAMPLER_CREATE_NAME_STRING;
-
-// Shader creation properties
-pub const PROP_GPU_SHADER_CREATE_NAME_STRING = c.SDL_PROP_GPU_SHADER_CREATE_NAME_STRING;
-
-// Pipeline creation properties
-pub const PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING = c.SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING;
-pub const PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING = c.SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING;
-
-/// A structure specifying device properties for GPU device creation.
-///
-/// These properties are used when creating a GPU device to configure its behavior.
-/// Available properties:
-///
-/// - `debug_mode`: Enable debug mode properties and validations.
-/// - `prefer_low_power`: Prefer energy efficiency over maximum GPU performance.
-/// - `name`: The name of the GPU driver to use, if a specific one is desired.
-/// - `shaders_private`: The app is able to provide shaders for an NDA platform.
-/// - `shaders_spirv`: The app is able to provide SPIR-V shaders.
-/// - `shaders_dxbc`: The app is able to provide DXBC shaders.
-/// - `shaders_dxil`: The app is able to provide DXIL shaders.
-/// - `shaders_msl`: The app is able to provide MSL shaders.
-/// - `shaders_metallib`: The app is able to provide Metal shader libraries.
-/// - `d3d12_semantic_name`: The prefix to use for all vertex semantics (D3D12 only).
 pub const DeviceProperties = struct {
     debug_mode: ?bool = null,
     prefer_low_power: ?bool = null,

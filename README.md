@@ -449,7 +449,7 @@ pub fn main() !void {
 | Properties | ❌ | Log | ✅ | Video | ✅ |
 | Events | ✅ | Keyboard | ✅ | Mouse | ✅ |
 | Touch | ✅ | Gamepad | ✅ | Joystick | ✅ |
-| Haptic | ✅ | Audio | ❌ | Gpu | ✅ |
+| Haptic | ✅ | Audio | ✅ | Gpu | ✅ |
 | Clipboard | ✅ | Dialog | ✅ | Filesystem | ❌ |
 | Iostream | ❌ | Atomic | ❌ | Time | ❌ |
 | Timer | ✅ | Render | ✅ | Pixels | ✅ |

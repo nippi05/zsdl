@@ -1,6 +1,7 @@
 const std = @import("std");
 
 pub const @"error" = @import("error.zig");
+pub const audio = @import("audio.zig");
 pub const blendmode = @import("blendmode.zig");
 pub const c = @import("c.zig").c;
 pub const MainThreadCallback = c.SDL_MainThreadCallback;

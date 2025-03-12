@@ -19,7 +19,7 @@ test "SensorType enum values match SDL constants" {
 
 // Test constants
 test "STANDARD_GRAVITY constant matches SDL constant" {
-    try testing.expectEqual(sensor.STANDARD_GRAVITY, c.SDL_STANDARD_GRAVITY);
+    try testing.expectEqual(sensor.standard_gravity, c.SDL_STANDARD_GRAVITY);
 }
 
 // Basic function tests that don't require real sensors

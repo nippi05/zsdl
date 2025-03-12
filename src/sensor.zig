@@ -1,9 +1,10 @@
 const std = @import("std");
-const internal = @import("internal.zig");
-const c = @import("c.zig").c;
-const errify = internal.errify;
 
+const c = @import("c.zig").c;
 pub const SensorID = c.SDL_SensorID;
+pub const standard_gravity = c.SDL_STANDARD_GRAVITY;
+const internal = @import("internal.zig");
+const errify = internal.errify;
 
 pub const SensorType = enum(i32) {
     invalid = c.SDL_SENSOR_INVALID,
@@ -15,9 +16,6 @@ pub const SensorType = enum(i32) {
     accel_r = c.SDL_SENSOR_ACCEL_R,
     gyro_r = c.SDL_SENSOR_GYRO_R,
 };
-
-/// A constant to represent standard gravity for accelerometer sensors.
-pub const STANDARD_GRAVITY = c.SDL_STANDARD_GRAVITY;
 
 /// Get a list of currently connected sensors.
 pub inline fn getSensors() ![]SensorID {

@@ -20,6 +20,7 @@ pub const log = @import("log.zig");
 pub const mouse = @import("mouse.zig");
 pub const pixels = @import("pixels.zig");
 pub const power = @import("power.zig");
+pub const properties = @import("properties.zig");
 pub const rect = @import("rect.zig");
 pub const render = @import("render.zig");
 pub const sensor = @import("sensor.zig");

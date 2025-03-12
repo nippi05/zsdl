@@ -28,10 +28,306 @@ const internal = @import("internal.zig");
 const errify = internal.errify;
 const Rect = @import("rect.zig").Rect;
 const Window = @import("video.zig").Window;
+const Properties = @import("properties.zig").Properties;
 
 pub const TransferBufferUsage = enum(u32) {
     upload = c.SDL_GPU_TRANSFERBUFFERUSAGE_UPLOAD,
     download = c.SDL_GPU_TRANSFERBUFFERUSAGE_DOWNLOAD,
+};
+
+pub const CommandBuffer = struct {
+    ptr: *c.SDL_GPUCommandBuffer,
+
+    /// Push data to a vertex uniform slot on the command buffer.
+    pub inline fn pushVertexUniformData(self: *const CommandBuffer, slot_index: u32, data: *const anyopaque, length: u32) void {
+        c.SDL_PushGPUVertexUniformData(self.ptr, slot_index, data, length);
+    }
+
+    /// Push data to a fragment uniform slot on the command buffer.
+    pub inline fn pushFragmentUniformData(self: *const CommandBuffer, slot_index: u32, data: *const anyopaque, length: u32) void {
+        c.SDL_PushGPUFragmentUniformData(self.ptr, slot_index, data, length);
+    }
+
+    /// Push data to a uniform slot on the command buffer.
+    pub inline fn pushComputeUniformData(self: *const CommandBuffer, slot_index: u32, data: *const anyopaque, length: u32) void {
+        c.SDL_PushGPUComputeUniformData(self.ptr, slot_index, data, length);
+    }
+
+    /// Insert an arbitrary string label into the command buffer callstream.
+    pub inline fn insertDebugLabel(self: *const CommandBuffer, text: [:0]const u8) void {
+        c.SDL_InsertGPUDebugLabel(self.ptr, text);
+    }
+
+    /// Begin a debug group with an arbitrary name.
+    pub inline fn pushDebugGroup(self: *const CommandBuffer, name: [:0]const u8) void {
+        c.SDL_PushGPUDebugGroup(self.ptr, name);
+    }
+
+    /// End the most-recently pushed debug group.
+    pub inline fn popDebugGroup(self: *const CommandBuffer) void {
+        c.SDL_PopGPUDebugGroup(self.ptr);
+    }
+
+    /// Submit command buffer for GPU processing.
+    pub inline fn submit(self: *const CommandBuffer) !void {
+        try errify(c.SDL_SubmitGPUCommandBuffer(self.ptr));
+    }
+
+    /// Submit command buffer and acquire a fence.
+    pub inline fn submitAndAcquireFence(self: *const CommandBuffer) !*Fence {
+        return try errify(c.SDL_SubmitGPUCommandBufferAndAcquireFence(self.ptr));
+    }
+
+    /// Cancel command buffer execution.
+    pub inline fn cancel(self: *const CommandBuffer) !void {
+        try errify(c.SDL_CancelGPUCommandBuffer(self.ptr));
+    }
+
+    /// Begin a render pass on a command buffer.
+    pub inline fn beginRenderPass(
+        self: *const CommandBuffer,
+        color_target_infos: []const ColorTargetInfo,
+        depth_stencil_target_info: ?*const DepthStencilTargetInfo,
+    ) !RenderPass {
+        return .{
+            .ptr = try errify(c.SDL_BeginGPURenderPass(
+                self.ptr,
+                @ptrCast(color_target_infos.ptr),
+                @intCast(color_target_infos.len),
+                @ptrCast(depth_stencil_target_info),
+            )),
+        };
+    }
+
+    /// Begin a compute pass on a command buffer.
+    pub inline fn beginComputePass(
+        self: *const CommandBuffer,
+        storage_texture_bindings: []const StorageTextureReadWriteBinding,
+        storage_buffer_bindings: []const StorageBufferReadWriteBinding,
+    ) !ComputePass {
+        return .{
+            .ptr = try errify(c.SDL_BeginGPUComputePass(
+                self.ptr,
+                @ptrCast(storage_texture_bindings.ptr),
+                @intCast(storage_texture_bindings.len),
+                @ptrCast(storage_buffer_bindings.ptr),
+                @intCast(storage_buffer_bindings.len),
+            )),
+        };
+    }
+
+    /// Begin a copy pass on a command buffer.
+    pub inline fn beginCopyPass(self: *const CommandBuffer) !CopyPass {
+        return .{
+            .ptr = try errify(c.SDL_BeginGPUCopyPass(self.ptr)),
+        };
+    }
+
+    /// Generate mipmaps for the given texture.
+    pub inline fn generateMipmapsForTexture(self: *const CommandBuffer, texture: *Texture) void {
+        c.SDL_GenerateMipmapsForGPUTexture(self.ptr, texture);
+    }
+
+    /// Blit from a source texture region to a destination texture region.
+    pub inline fn blitTexture(self: *const CommandBuffer, info: *const BlitInfo) void {
+        c.SDL_BlitGPUTexture(self.ptr, info);
+    }
+
+    /// Acquire a texture to use in presentation.
+    pub inline fn acquireSwapchainTexture(
+        self: *const CommandBuffer,
+        window: *const Window,
+        swapchain_texture_width: ?*u32,
+        swapchain_texture_height: ?*u32,
+    ) !*Texture {
+        var texture: *Texture = undefined;
+        try errify(c.SDL_AcquireGPUSwapchainTexture(self.ptr, window.ptr, @ptrCast(&texture), swapchain_texture_width, swapchain_texture_height));
+        return texture;
+    }
+
+    /// Wait and acquire a swapchain texture.
+    pub inline fn waitAndAcquireSwapchainTexture(
+        self: *const CommandBuffer,
+        window: Window,
+        swapchain_texture_width: ?*u32,
+        swapchain_texture_height: ?*u32,
+    ) !*Texture {
+        var texture: *Texture = undefined;
+        try errify(c.SDL_WaitAndAcquireGPUSwapchainTexture(self.ptr, window.ptr, @ptrCast(&texture), swapchain_texture_width, swapchain_texture_height));
+        return texture;
+    }
+};
+
+pub const RenderPass = struct {
+    ptr: *c.SDL_GPURenderPass,
+
+    /// Bind a graphics pipeline for use in rendering.
+    pub inline fn bindGraphicsPipeline(self: *const RenderPass, graphics_pipeline: *GraphicsPipeline) void {
+        c.SDL_BindGPUGraphicsPipeline(self.ptr, graphics_pipeline);
+    }
+
+    /// Set the current viewport state.
+    pub inline fn setViewport(self: *const RenderPass, viewport: Viewport) void {
+        c.SDL_SetGPUViewport(self.ptr, @ptrCast(&viewport));
+    }
+
+    /// Set the current scissor state.
+    pub inline fn setScissor(self: *const RenderPass, scissor: Rect) void {
+        c.SDL_SetGPUScissor(self.ptr, @ptrCast(&scissor));
+    }
+
+    /// Set the current blend constants.
+    pub inline fn setBlendConstants(self: *const RenderPass, blend_constants: FColor) void {
+        c.SDL_SetGPUBlendConstants(self.ptr, @bitCast(blend_constants));
+    }
+
+    /// Set the current stencil reference value.
+    pub inline fn setStencilReference(self: *const RenderPass, reference: u8) void {
+        c.SDL_SetGPUStencilReference(self.ptr, reference);
+    }
+
+    /// Bind vertex buffers for use with subsequent draw calls.
+    pub inline fn bindVertexBuffers(self: *const RenderPass, first_slot: u32, bindings: []const BufferBinding) void {
+        c.SDL_BindGPUVertexBuffers(self.ptr, first_slot, @ptrCast(bindings.ptr), @intCast(bindings.len));
+    }
+
+    /// Bind an index buffer for use with subsequent draw calls.
+    pub inline fn bindIndexBuffer(self: *const RenderPass, binding: *const BufferBinding, index_element_size: IndexElementSize) void {
+        c.SDL_BindGPUIndexBuffer(self.ptr, @ptrCast(binding), @intFromEnum(index_element_size));
+    }
+
+    /// Bind texture-sampler pairs for use on the vertex shader.
+    pub inline fn bindVertexSamplers(self: *const RenderPass, first_slot: u32, texture_sampler_bindings: []const TextureSamplerBinding) void {
+        c.SDL_BindGPUVertexSamplers(self.ptr, first_slot, @ptrCast(texture_sampler_bindings.ptr), @intCast(texture_sampler_bindings.len));
+    }
+
+    /// Bind storage textures for use on the vertex shader.
+    pub inline fn bindVertexStorageTextures(self: *const RenderPass, first_slot: u32, storage_textures: []const *Texture) void {
+        c.SDL_BindGPUVertexStorageTextures(self.ptr, first_slot, @ptrCast(storage_textures.ptr), @intCast(storage_textures.len));
+    }
+
+    /// Bind storage buffers for use on the vertex shader.
+    pub inline fn bindVertexStorageBuffers(self: *const RenderPass, first_slot: u32, storage_buffers: []const *Buffer) void {
+        c.SDL_BindGPUVertexStorageBuffers(self.ptr, first_slot, @ptrCast(storage_buffers.ptr), @intCast(storage_buffers.len));
+    }
+
+    /// Bind texture-sampler pairs for use on the fragment shader.
+    pub inline fn bindFragmentSamplers(self: *const RenderPass, first_slot: u32, texture_sampler_bindings: []const TextureSamplerBinding) void {
+        c.SDL_BindGPUFragmentSamplers(self.ptr, first_slot, @ptrCast(texture_sampler_bindings.ptr), @intCast(texture_sampler_bindings.len));
+    }
+
+    /// Bind storage textures for use on the fragment shader.
+    pub inline fn bindFragmentStorageTextures(self: *const RenderPass, first_slot: u32, storage_textures: []const *Texture) void {
+        c.SDL_BindGPUFragmentStorageTextures(self.ptr, first_slot, @ptrCast(storage_textures.ptr), @intCast(storage_textures.len));
+    }
+
+    /// Bind storage buffers for use on the fragment shader.
+    pub inline fn bindFragmentStorageBuffers(self: *const RenderPass, first_slot: u32, storage_buffers: []const *Buffer) void {
+        c.SDL_BindGPUFragmentStorageBuffers(self.ptr, first_slot, @ptrCast(storage_buffers.ptr), @intCast(storage_buffers.len));
+    }
+
+    /// Draw using bound graphics state with an index buffer and instancing enabled.
+    pub inline fn drawIndexedPrimitives(self: *const RenderPass, num_indices: u32, num_instances: u32, first_index: u32, vertex_offset: i32, first_instance: u32) void {
+        c.SDL_DrawGPUIndexedPrimitives(self.ptr, num_indices, num_instances, first_index, vertex_offset, first_instance);
+    }
+
+    /// Draw using bound graphics state.
+    pub inline fn drawPrimitives(self: *const RenderPass, num_vertices: u32, num_instances: u32, first_vertex: u32, first_instance: u32) void {
+        c.SDL_DrawGPUPrimitives(self.ptr, num_vertices, num_instances, first_vertex, first_instance);
+    }
+
+    /// Draw using bound graphics state and with draw parameters set from a buffer.
+    pub inline fn drawPrimitivesIndirect(self: *const RenderPass, buffer: *Buffer, offset: u32, draw_count: u32) void {
+        c.SDL_DrawGPUPrimitivesIndirect(self.ptr, buffer, offset, draw_count);
+    }
+
+    /// Draw using bound graphics state with an index buffer enabled and with draw parameters set from a buffer.
+    pub inline fn drawIndexedPrimitivesIndirect(self: *const RenderPass, buffer: *Buffer, offset: u32, draw_count: u32) void {
+        c.SDL_DrawGPUIndexedPrimitivesIndirect(self.ptr, buffer, offset, draw_count);
+    }
+
+    /// End the current render pass.
+    pub inline fn end(self: *const RenderPass) void {
+        c.SDL_EndGPURenderPass(self.ptr);
+    }
+};
+
+pub const ComputePass = struct {
+    ptr: *c.SDL_GPUComputePass,
+
+    /// Bind a compute pipeline for use in dispatch.
+    pub inline fn bindComputePipeline(self: *const ComputePass, compute_pipeline: *ComputePipeline) void {
+        c.SDL_BindGPUComputePipeline(self.ptr, compute_pipeline);
+    }
+
+    /// Bind texture-sampler pairs for use on the compute shader.
+    pub inline fn bindComputeSamplers(self: *const ComputePass, first_slot: u32, texture_sampler_bindings: []const TextureSamplerBinding) void {
+        c.SDL_BindGPUComputeSamplers(self.ptr, first_slot, @ptrCast(texture_sampler_bindings.ptr), @intCast(texture_sampler_bindings.len));
+    }
+
+    /// Bind storage textures as readonly for use on the compute pipeline.
+    pub inline fn bindComputeStorageTextures(self: *const ComputePass, first_slot: u32, storage_textures: []const *Texture) void {
+        c.SDL_BindGPUComputeStorageTextures(self.ptr, first_slot, @ptrCast(storage_textures.ptr), @intCast(storage_textures.len));
+    }
+
+    /// Bind storage buffers as readonly for use on the compute pipeline.
+    pub inline fn bindComputeStorageBuffers(self: *const ComputePass, first_slot: u32, storage_buffers: []const *Buffer) void {
+        c.SDL_BindGPUComputeStorageBuffers(self.ptr, first_slot, @ptrCast(storage_buffers.ptr), @intCast(storage_buffers.len));
+    }
+
+    /// Dispatch compute work.
+    pub inline fn dispatchCompute(self: *const ComputePass, groupcount_x: u32, groupcount_y: u32, groupcount_z: u32) void {
+        c.SDL_DispatchGPUCompute(self.ptr, groupcount_x, groupcount_y, groupcount_z);
+    }
+
+    /// Dispatch compute work with parameters set from a buffer.
+    pub inline fn dispatchComputeIndirect(self: *const ComputePass, buffer: *Buffer, offset: u32) void {
+        c.SDL_DispatchGPUComputeIndirect(self.ptr, buffer, offset);
+    }
+
+    /// End the current compute pass.
+    pub inline fn end(self: *const ComputePass) void {
+        c.SDL_EndGPUComputePass(self.ptr);
+    }
+};
+
+pub const CopyPass = struct {
+    ptr: *c.SDL_GPUCopyPass,
+
+    /// Upload data from a transfer buffer to a texture.
+    pub inline fn uploadToTexture(self: *const CopyPass, source: *const TextureTransferInfo, destination: *const TextureRegion, cycle: bool) void {
+        c.SDL_UploadToGPUTexture(self.ptr, @ptrCast(source), @ptrCast(destination), cycle);
+    }
+
+    /// Upload data from a transfer buffer to a buffer.
+    pub inline fn uploadToBuffer(self: *const CopyPass, source: *const TransferBufferLocation, destination: *const BufferRegion, cycle: bool) void {
+        c.SDL_UploadToGPUBuffer(self.ptr, @ptrCast(source), @ptrCast(destination), cycle);
+    }
+
+    /// Perform a texture-to-texture copy.
+    pub inline fn copyTextureToTexture(self: *const CopyPass, source: *const TextureLocation, destination: *const TextureLocation, w: u32, h: u32, d: u32, cycle: bool) void {
+        c.SDL_CopyGPUTextureToTexture(self.ptr, @ptrCast(source), @ptrCast(destination), w, h, d, cycle);
+    }
+
+    /// Perform a buffer-to-buffer copy.
+    pub inline fn copyBufferToBuffer(self: *const CopyPass, source: *const BufferLocation, destination: *const BufferLocation, size: u32, cycle: bool) void {
+        c.SDL_CopyGPUBufferToBuffer(self.ptr, @ptrCast(source), @ptrCast(destination), size, cycle);
+    }
+
+    /// Copy data from a texture to a transfer buffer on the GPU timeline.
+    pub inline fn downloadFromTexture(self: *const CopyPass, source: *const TextureRegion, destination: *const TextureTransferInfo) void {
+        c.SDL_DownloadFromGPUTexture(self.ptr, @ptrCast(source), @ptrCast(destination));
+    }
+
+    /// Copy data from a buffer to a transfer buffer on the GPU timeline.
+    pub inline fn downloadFromBuffer(self: *const CopyPass, source: *const BufferRegion, destination: *const TransferBufferLocation) void {
+        c.SDL_DownloadFromGPUBuffer(self.ptr, @ptrCast(source), @ptrCast(destination));
+    }
+
+    /// End the current copy pass.
+    pub inline fn end(self: *const CopyPass) void {
+        c.SDL_EndGPUCopyPass(self.ptr);
+    }
 };
 
 pub const ColorTargetInfo = extern struct {
@@ -302,6 +598,11 @@ pub const VertexInputState = struct {
     }
 };
 
+/// A structure specifying the parameters of a compute pipeline.
+///
+/// Available properties that can be set through `props`:
+/// - `SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING`: a name that can be displayed
+///   in debugging tools.
 pub const ComputePipelineCreateInfo = struct {
     code: []const u8,
     entrypoint: []const u8,
@@ -337,6 +638,11 @@ pub const ComputePipelineCreateInfo = struct {
     }
 };
 
+/// A structure specifying the parameters of a graphics pipeline.
+///
+/// Available properties that can be set through `props`:
+/// - `SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING`: a name that can be displayed
+///   in debugging tools.
 pub const GraphicsPipelineCreateInfo = struct {
     vertex_shader: *allowzero Shader = std.mem.zeroes(*allowzero Shader),
     fragment_shader: *allowzero Shader = std.mem.zeroes(*allowzero Shader),
@@ -379,6 +685,11 @@ pub const SamplerAddressMode = enum(u32) {
     clamp_to_edge = c.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 };
 
+/// A structure specifying the parameters of a sampler.
+///
+/// Available properties that can be set through `props`:
+/// - `SDL_PROP_GPU_SAMPLER_CREATE_NAME_STRING`: a name that can be displayed
+///   in debugging tools.
 pub const SamplerCreateInfo = extern struct {
     min_filter: Filter = std.mem.zeroes(Filter),
     mag_filter: Filter = std.mem.zeroes(Filter),
@@ -393,8 +704,14 @@ pub const SamplerCreateInfo = extern struct {
     max_lod: f32 = std.mem.zeroes(f32),
     enable_anisotropy: bool = std.mem.zeroes(bool),
     enable_compare: bool = std.mem.zeroes(bool),
+    props: c.SDL_PropertiesID = 0,
 };
 
+/// A structure specifying code and metadata for creating a shader object.
+///
+/// Available properties that can be set through `props`:
+/// - `SDL_PROP_GPU_SHADER_CREATE_NAME_STRING`: a name that can be displayed
+///   in debugging tools.
 pub const ShaderCreateInfo = struct {
     code: []const u8 = &.{},
     entrypoint: []const u8 = &.{},
@@ -404,6 +721,7 @@ pub const ShaderCreateInfo = struct {
     num_storage_textures: u32 = std.mem.zeroes(u32),
     num_storage_buffers: u32 = std.mem.zeroes(u32),
     num_uniform_buffers: u32 = std.mem.zeroes(u32),
+    props: c.SDL_PropertiesID = 0,
 
     pub inline fn toNative(self: *const ShaderCreateInfo) c.SDL_GPUShaderCreateInfo {
         return .{
@@ -416,10 +734,34 @@ pub const ShaderCreateInfo = struct {
             .num_storage_textures = self.num_storage_textures,
             .num_storage_buffers = self.num_storage_buffers,
             .num_uniform_buffers = self.num_uniform_buffers,
+            .props = self.props,
         };
     }
 };
 
+/// A structure specifying the parameters of a texture.
+///
+/// Available properties that can be set through `props`:
+/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT`: (Direct3D 12 only) if
+///   the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture
+///   to a color with this red intensity. Defaults to zero.
+/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT`: (Direct3D 12 only) if
+///   the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture
+///   to a color with this green intensity. Defaults to zero.
+/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT`: (Direct3D 12 only) if
+///   the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture
+///   to a color with this blue intensity. Defaults to zero.
+/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT`: (Direct3D 12 only) if
+///   the texture usage is SDL_GPU_TEXTUREUSAGE_COLOR_TARGET, clear the texture
+///   to a color with this alpha intensity. Defaults to zero.
+/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT`: (Direct3D 12 only)
+///   if the texture usage is SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET, clear
+///   the texture to a depth of this value. Defaults to zero.
+/// - `SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_UINT8`: (Direct3D 12
+///   only) if the texture usage is SDL_GPU_TEXTUREUSAGE_DEPTH_STENCIL_TARGET,
+///   clear the texture to a stencil of this value. Defaults to zero.
+/// - `SDL_PROP_GPU_TEXTURE_CREATE_NAME_STRING`: a name that can be displayed
+///   in debugging tools.
 pub const TextureCreateInfo = extern struct {
     type: TextureType = std.mem.zeroes(TextureType),
     format: TextureFormat = std.mem.zeroes(TextureFormat),
@@ -446,24 +788,106 @@ pub const TextureCreateInfo = extern struct {
     }
 };
 
+/// A structure specifying the parameters of a buffer.
+///
+/// Available properties that can be set through `props`:
+/// - `SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING`: a name that can be displayed
+///   in debugging tools.
 pub const BufferCreateInfo = extern struct {
     usage: BufferUsageFlags = std.mem.zeroes(BufferUsageFlags),
     size: u32 = std.mem.zeroes(u32),
+    props: c.SDL_PropertiesID = 0,
 
     pub inline fn toNative(self: *const BufferCreateInfo) c.SDL_GPUBufferCreateInfo {
         return .{
             .usage = self.usage.toInt(),
             .size = self.size,
-            .props = 0,
+            .props = self.props,
         };
     }
 };
 
+/// A structure specifying the parameters of a transfer buffer.
+///
+/// Available properties that can be set through `props`:
+/// - `SDL_PROP_GPU_TRANSFERBUFFER_CREATE_NAME_STRING`: a name that can be
+///   displayed in debugging tools.
 pub const TransferBufferCreateInfo = extern struct {
     usage: TransferBufferUsage = std.mem.zeroes(TransferBufferUsage),
     size: u32 = std.mem.zeroes(u32),
+    props: c.SDL_PropertiesID = 0,
 };
 
+/// A structure specifying device properties for GPU device creation.
+///
+/// These properties are used when creating a GPU device to configure its behavior.
+/// Available properties:
+///
+/// - `debug_mode`: Enable debug mode properties and validations.
+/// - `prefer_low_power`: Prefer energy efficiency over maximum GPU performance.
+/// - `name`: The name of the GPU driver to use, if a specific one is desired.
+/// - `shaders_private`: The app is able to provide shaders for an NDA platform.
+/// - `shaders_spirv`: The app is able to provide SPIR-V shaders.
+/// - `shaders_dxbc`: The app is able to provide DXBC shaders.
+/// - `shaders_dxil`: The app is able to provide DXIL shaders.
+/// - `shaders_msl`: The app is able to provide MSL shaders.
+/// - `shaders_metallib`: The app is able to provide Metal shader libraries.
+/// - `d3d12_semantic_name`: The prefix to use for all vertex semantics (D3D12 only).
+/// Property Constants
+/// These constants represent the property keys used with the Properties API.
+
+// Device creation properties
+pub const PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN;
+pub const PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN;
+pub const PROP_GPU_DEVICE_CREATE_NAME_STRING = c.SDL_PROP_GPU_DEVICE_CREATE_NAME_STRING;
+pub const PROP_GPU_DEVICE_CREATE_SHADERS_PRIVATE_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_PRIVATE_BOOLEAN;
+pub const PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_SPIRV_BOOLEAN;
+pub const PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXBC_BOOLEAN;
+pub const PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_DXIL_BOOLEAN;
+pub const PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_MSL_BOOLEAN;
+pub const PROP_GPU_DEVICE_CREATE_SHADERS_METALLIB_BOOLEAN = c.SDL_PROP_GPU_DEVICE_CREATE_SHADERS_METALLIB_BOOLEAN;
+pub const PROP_GPU_DEVICE_CREATE_D3D12_SEMANTIC_NAME_STRING = c.SDL_PROP_GPU_DEVICE_CREATE_D3D12_SEMANTIC_NAME_STRING;
+
+// Texture creation properties
+pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_R_FLOAT;
+pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_G_FLOAT;
+pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_B_FLOAT;
+pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_A_FLOAT;
+pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_DEPTH_FLOAT;
+pub const PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_UINT8 = c.SDL_PROP_GPU_TEXTURE_CREATE_D3D12_CLEAR_STENCIL_UINT8;
+pub const PROP_GPU_TEXTURE_CREATE_NAME_STRING = c.SDL_PROP_GPU_TEXTURE_CREATE_NAME_STRING;
+
+// Buffer creation properties
+pub const PROP_GPU_BUFFER_CREATE_NAME_STRING = c.SDL_PROP_GPU_BUFFER_CREATE_NAME_STRING;
+
+// Transfer buffer creation properties
+pub const PROP_GPU_TRANSFERBUFFER_CREATE_NAME_STRING = "SDL.gpu.transferbuffer.create.name";
+
+// Sampler creation properties
+pub const PROP_GPU_SAMPLER_CREATE_NAME_STRING = c.SDL_PROP_GPU_SAMPLER_CREATE_NAME_STRING;
+
+// Shader creation properties
+pub const PROP_GPU_SHADER_CREATE_NAME_STRING = c.SDL_PROP_GPU_SHADER_CREATE_NAME_STRING;
+
+// Pipeline creation properties
+pub const PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING = c.SDL_PROP_GPU_COMPUTEPIPELINE_CREATE_NAME_STRING;
+pub const PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING = c.SDL_PROP_GPU_GRAPHICSPIPELINE_CREATE_NAME_STRING;
+
+/// A structure specifying device properties for GPU device creation.
+///
+/// These properties are used when creating a GPU device to configure its behavior.
+/// Available properties:
+///
+/// - `debug_mode`: Enable debug mode properties and validations.
+/// - `prefer_low_power`: Prefer energy efficiency over maximum GPU performance.
+/// - `name`: The name of the GPU driver to use, if a specific one is desired.
+/// - `shaders_private`: The app is able to provide shaders for an NDA platform.
+/// - `shaders_spirv`: The app is able to provide SPIR-V shaders.
+/// - `shaders_dxbc`: The app is able to provide DXBC shaders.
+/// - `shaders_dxil`: The app is able to provide DXIL shaders.
+/// - `shaders_msl`: The app is able to provide MSL shaders.
+/// - `shaders_metallib`: The app is able to provide Metal shader libraries.
+/// - `d3d12_semantic_name`: The prefix to use for all vertex semantics (D3D12 only).
 pub const DeviceProperties = struct {
     debug_mode: ?bool = null,
     prefer_low_power: ?bool = null,
@@ -476,6 +900,7 @@ pub const DeviceProperties = struct {
     shaders_metallib: ?bool = null,
     d3d12_semantic_name: ?[:0]const u8 = null,
 
+    /// Apply the device properties to the given properties object.
     inline fn apply(self: DeviceProperties, props: c.SDL_PropertiesID) void {
         if (self.debug_mode) |dm| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_GPU_DEVICE_CREATE_DEBUGMODE_BOOLEAN, dm);
         if (self.prefer_low_power) |plp| _ = c.SDL_SetBooleanProperty(props, c.SDL_PROP_GPU_DEVICE_CREATE_PREFERLOWPOWER_BOOLEAN, plp);
@@ -783,9 +1208,8 @@ pub const Device = struct {
         const properties = c.SDL_CreateProperties();
         defer c.SDL_DestroyProperties(properties);
         props.apply(properties);
-        const device = try errify(c.SDL_CreateGPUDeviceWithProperties(properties));
-        return Device{
-            .ptr = device,
+        return .{
+            .ptr = try errify(c.SDL_CreateGPUDeviceWithProperties(properties)),
         };
     }
 
@@ -903,7 +1327,7 @@ pub const Device = struct {
 
     /// Check if a window supports the specified swapchain composition.
     pub inline fn windowSupportsSwapchainComposition(self: *const Device, window: *const Window, swapchain_composition: SwapchainComposition) bool {
-        return c.SDL_WindowSupportsGPUSwapchainComposition(self.ptr, window.ptr, swapchain_composition);
+        return c.SDL_WindowSupportsGPUSwapchainComposition(self.ptr, window.ptr, @intFromEnum(swapchain_composition));
     }
 
     /// Check if a window supports the specified present mode.
@@ -999,300 +1423,5 @@ pub const Device = struct {
     /// Block the thread until a swapchain texture is available.
     pub inline fn waitForSwapchain(self: *const Device, window: Window) !void {
         try errify(c.SDL_WaitForGPUSwapchain(self.ptr, window.ptr));
-    }
-};
-
-pub const CommandBuffer = struct {
-    ptr: *c.SDL_GPUCommandBuffer,
-
-    /// Push data to a vertex uniform slot on the command buffer.
-    pub inline fn pushVertexUniformData(self: *const CommandBuffer, slot_index: u32, data: *const anyopaque, length: u32) void {
-        c.SDL_PushGPUVertexUniformData(self.ptr, slot_index, data, length);
-    }
-
-    /// Push data to a fragment uniform slot on the command buffer.
-    pub inline fn pushFragmentUniformData(self: *const CommandBuffer, slot_index: u32, data: *const anyopaque, length: u32) void {
-        c.SDL_PushGPUFragmentUniformData(self.ptr, slot_index, data, length);
-    }
-
-    /// Push data to a uniform slot on the command buffer.
-    pub inline fn pushComputeUniformData(self: *const CommandBuffer, slot_index: u32, data: *const anyopaque, length: u32) void {
-        c.SDL_PushGPUComputeUniformData(self.ptr, slot_index, data, length);
-    }
-
-    /// Insert an arbitrary string label into the command buffer callstream.
-    pub inline fn insertDebugLabel(self: *const CommandBuffer, text: [:0]const u8) void {
-        c.SDL_InsertGPUDebugLabel(self.ptr, text);
-    }
-
-    /// Begin a debug group with an arbitrary name.
-    pub inline fn pushDebugGroup(self: *const CommandBuffer, name: [:0]const u8) void {
-        c.SDL_PushGPUDebugGroup(self.ptr, name);
-    }
-
-    /// End the most-recently pushed debug group.
-    pub inline fn popDebugGroup(self: *const CommandBuffer) void {
-        c.SDL_PopGPUDebugGroup(self.ptr);
-    }
-
-    /// Submit command buffer for GPU processing.
-    pub inline fn submit(self: *const CommandBuffer) !void {
-        try errify(c.SDL_SubmitGPUCommandBuffer(self.ptr));
-    }
-
-    /// Submit command buffer and acquire a fence.
-    pub inline fn submitAndAcquireFence(self: *const CommandBuffer) !*Fence {
-        return try errify(c.SDL_SubmitGPUCommandBufferAndAcquireFence(self.ptr));
-    }
-
-    /// Cancel command buffer execution.
-    pub inline fn cancel(self: *const CommandBuffer) !void {
-        try errify(c.SDL_CancelGPUCommandBuffer(self.ptr));
-    }
-
-    /// Begin a render pass on a command buffer.
-    pub inline fn beginRenderPass(
-        self: *const CommandBuffer,
-        color_target_infos: []const ColorTargetInfo,
-        depth_stencil_target_info: ?*const DepthStencilTargetInfo,
-    ) !RenderPass {
-        return .{
-            .ptr = try errify(c.SDL_BeginGPURenderPass(
-                self.ptr,
-                @ptrCast(color_target_infos.ptr),
-                @intCast(color_target_infos.len),
-                @ptrCast(depth_stencil_target_info),
-            )),
-        };
-    }
-
-    /// Begin a compute pass on a command buffer.
-    pub inline fn beginComputePass(
-        self: *const CommandBuffer,
-        storage_texture_bindings: []const StorageTextureReadWriteBinding,
-        storage_buffer_bindings: []const StorageBufferReadWriteBinding,
-    ) !ComputePass {
-        return .{
-            .ptr = try errify(c.SDL_BeginGPUComputePass(
-                self.ptr,
-                @ptrCast(storage_texture_bindings.ptr),
-                @intCast(storage_texture_bindings.len),
-                @ptrCast(storage_buffer_bindings.ptr),
-                @intCast(storage_buffer_bindings.len),
-            )),
-        };
-    }
-
-    /// Begin a copy pass on a command buffer.
-    pub inline fn beginCopyPass(self: *const CommandBuffer) !CopyPass {
-        return .{
-            .ptr = try errify(c.SDL_BeginGPUCopyPass(self.ptr)),
-        };
-    }
-
-    /// Generate mipmaps for the given texture.
-    pub inline fn generateMipmapsForTexture(self: *const CommandBuffer, texture: *Texture) void {
-        c.SDL_GenerateMipmapsForGPUTexture(self.ptr, texture);
-    }
-
-    /// Blit from a source texture region to a destination texture region.
-    pub inline fn blitTexture(self: *const CommandBuffer, info: *const BlitInfo) void {
-        c.SDL_BlitGPUTexture(self.ptr, info);
-    }
-
-    /// Acquire a texture to use in presentation.
-    pub inline fn acquireSwapchainTexture(
-        self: *const CommandBuffer,
-        window: *const Window,
-        swapchain_texture_width: ?*u32,
-        swapchain_texture_height: ?*u32,
-    ) !*Texture {
-        var texture: *Texture = undefined;
-        try errify(c.SDL_AcquireGPUSwapchainTexture(self.ptr, window.ptr, @ptrCast(&texture), swapchain_texture_width, swapchain_texture_height));
-        return texture;
-    }
-
-    /// Wait and acquire a swapchain texture.
-    pub inline fn waitAndAcquireSwapchainTexture(
-        self: *const CommandBuffer,
-        window: Window,
-        swapchain_texture_width: ?*u32,
-        swapchain_texture_height: ?*u32,
-    ) !*Texture {
-        var texture: *Texture = undefined;
-        try errify(c.SDL_WaitAndAcquireGPUSwapchainTexture(self.ptr, window.ptr, @ptrCast(&texture), swapchain_texture_width, swapchain_texture_height));
-        return texture;
-    }
-};
-
-pub const RenderPass = struct {
-    ptr: *c.SDL_GPURenderPass,
-
-    /// Bind a graphics pipeline for use in rendering.
-    pub inline fn bindGraphicsPipeline(self: *const RenderPass, graphics_pipeline: *GraphicsPipeline) void {
-        c.SDL_BindGPUGraphicsPipeline(self.ptr, graphics_pipeline);
-    }
-
-    /// Set the current viewport state.
-    pub inline fn setViewport(self: *const RenderPass, viewport: Viewport) void {
-        c.SDL_SetGPUViewport(self.ptr, @ptrCast(&viewport));
-    }
-
-    /// Set the current scissor state.
-    pub inline fn setScissor(self: *const RenderPass, scissor: Rect) void {
-        c.SDL_SetGPUScissor(self.ptr, @ptrCast(&scissor));
-    }
-
-    /// Set the current blend constants.
-    pub inline fn setBlendConstants(self: *const RenderPass, blend_constants: FColor) void {
-        c.SDL_SetGPUBlendConstants(self.ptr, blend_constants);
-    }
-
-    /// Set the current stencil reference value.
-    pub inline fn setStencilReference(self: *const RenderPass, reference: u8) void {
-        c.SDL_SetGPUStencilReference(self.ptr, reference);
-    }
-
-    /// Bind vertex buffers for use with subsequent draw calls.
-    pub inline fn bindVertexBuffers(self: *const RenderPass, first_slot: u32, bindings: []const BufferBinding) void {
-        c.SDL_BindGPUVertexBuffers(self.ptr, first_slot, @ptrCast(bindings.ptr), @intCast(bindings.len));
-    }
-
-    /// Bind an index buffer for use with subsequent draw calls.
-    pub inline fn bindIndexBuffer(self: *const RenderPass, binding: *const BufferBinding, index_element_size: IndexElementSize) void {
-        c.SDL_BindGPUIndexBuffer(self.ptr, @ptrCast(binding), @intFromEnum(index_element_size));
-    }
-
-    /// Bind texture-sampler pairs for use on the vertex shader.
-    pub inline fn bindVertexSamplers(self: *const RenderPass, first_slot: u32, texture_sampler_bindings: []const TextureSamplerBinding) void {
-        c.SDL_BindGPUVertexSamplers(self.ptr, first_slot, @ptrCast(texture_sampler_bindings.ptr), @intCast(texture_sampler_bindings.len));
-    }
-
-    /// Bind storage textures for use on the vertex shader.
-    pub inline fn bindVertexStorageTextures(self: *const RenderPass, first_slot: u32, storage_textures: []const *Texture) void {
-        c.SDL_BindGPUVertexStorageTextures(self.ptr, first_slot, @ptrCast(storage_textures.ptr), @intCast(storage_textures.len));
-    }
-
-    /// Bind storage buffers for use on the vertex shader.
-    pub inline fn bindVertexStorageBuffers(self: *const RenderPass, first_slot: u32, storage_buffers: []const *Buffer) void {
-        c.SDL_BindGPUVertexStorageBuffers(self.ptr, first_slot, @ptrCast(storage_buffers.ptr), @intCast(storage_buffers.len));
-    }
-
-    /// Bind texture-sampler pairs for use on the fragment shader.
-    pub inline fn bindFragmentSamplers(self: *const RenderPass, first_slot: u32, texture_sampler_bindings: []const TextureSamplerBinding) void {
-        c.SDL_BindGPUFragmentSamplers(self.ptr, first_slot, @ptrCast(texture_sampler_bindings.ptr), @intCast(texture_sampler_bindings.len));
-    }
-
-    /// Bind storage textures for use on the fragment shader.
-    pub inline fn bindFragmentStorageTextures(self: *const RenderPass, first_slot: u32, storage_textures: []const *Texture) void {
-        c.SDL_BindGPUFragmentStorageTextures(self.ptr, first_slot, @ptrCast(storage_textures.ptr), @intCast(storage_textures.len));
-    }
-
-    /// Bind storage buffers for use on the fragment shader.
-    pub inline fn bindFragmentStorageBuffers(self: *const RenderPass, first_slot: u32, storage_buffers: []const *Buffer) void {
-        c.SDL_BindGPUFragmentStorageBuffers(self.ptr, first_slot, @ptrCast(storage_buffers.ptr), @intCast(storage_buffers.len));
-    }
-
-    /// Draw using bound graphics state with an index buffer and instancing enabled.
-    pub inline fn drawIndexedPrimitives(self: *const RenderPass, num_indices: u32, num_instances: u32, first_index: u32, vertex_offset: i32, first_instance: u32) void {
-        c.SDL_DrawGPUIndexedPrimitives(self.ptr, num_indices, num_instances, first_index, vertex_offset, first_instance);
-    }
-
-    /// Draw using bound graphics state.
-    pub inline fn drawPrimitives(self: *const RenderPass, num_vertices: u32, num_instances: u32, first_vertex: u32, first_instance: u32) void {
-        c.SDL_DrawGPUPrimitives(self.ptr, num_vertices, num_instances, first_vertex, first_instance);
-    }
-
-    /// Draw using bound graphics state and with draw parameters set from a buffer.
-    pub inline fn drawPrimitivesIndirect(self: *const RenderPass, buffer: *Buffer, offset: u32, draw_count: u32) void {
-        c.SDL_DrawGPUPrimitivesIndirect(self.ptr, buffer, offset, draw_count);
-    }
-
-    /// Draw using bound graphics state with an index buffer enabled and with draw parameters set from a buffer.
-    pub inline fn drawIndexedPrimitivesIndirect(self: *const RenderPass, buffer: *Buffer, offset: u32, draw_count: u32) void {
-        c.SDL_DrawGPUIndexedPrimitivesIndirect(self.ptr, buffer, offset, draw_count);
-    }
-
-    /// End the current render pass.
-    pub inline fn end(self: *const RenderPass) void {
-        c.SDL_EndGPURenderPass(self.ptr);
-    }
-};
-
-pub const ComputePass = struct {
-    ptr: *c.SDL_GPUComputePass,
-
-    /// Bind a compute pipeline for use in dispatch.
-    pub inline fn bindComputePipeline(self: *const ComputePass, compute_pipeline: *ComputePipeline) void {
-        c.SDL_BindGPUComputePipeline(self.ptr, compute_pipeline);
-    }
-
-    /// Bind texture-sampler pairs for use on the compute shader.
-    pub inline fn bindComputeSamplers(self: *const ComputePass, first_slot: u32, texture_sampler_bindings: []const TextureSamplerBinding) void {
-        c.SDL_BindGPUComputeSamplers(self.ptr, first_slot, @ptrCast(texture_sampler_bindings.ptr), @intCast(texture_sampler_bindings.len));
-    }
-
-    /// Bind storage textures as readonly for use on the compute pipeline.
-    pub inline fn bindComputeStorageTextures(self: *const ComputePass, first_slot: u32, storage_textures: []const *Texture) void {
-        c.SDL_BindGPUComputeStorageTextures(self.ptr, first_slot, @ptrCast(storage_textures.ptr), @intCast(storage_textures.len));
-    }
-
-    /// Bind storage buffers as readonly for use on the compute pipeline.
-    pub inline fn bindComputeStorageBuffers(self: *const ComputePass, first_slot: u32, storage_buffers: []const *Buffer) void {
-        c.SDL_BindGPUComputeStorageBuffers(self.ptr, first_slot, @ptrCast(storage_buffers.ptr), @intCast(storage_buffers.len));
-    }
-
-    /// Dispatch compute work.
-    pub inline fn dispatchCompute(self: *const ComputePass, groupcount_x: u32, groupcount_y: u32, groupcount_z: u32) void {
-        c.SDL_DispatchGPUCompute(self.ptr, groupcount_x, groupcount_y, groupcount_z);
-    }
-
-    /// Dispatch compute work with parameters set from a buffer.
-    pub inline fn dispatchComputeIndirect(self: *const ComputePass, buffer: *Buffer, offset: u32) void {
-        c.SDL_DispatchGPUComputeIndirect(self.ptr, buffer, offset);
-    }
-
-    /// End the current compute pass.
-    pub inline fn end(self: *const ComputePass) void {
-        c.SDL_EndGPUComputePass(self.ptr);
-    }
-};
-
-pub const CopyPass = struct {
-    ptr: *c.SDL_GPUCopyPass,
-
-    /// Upload data from a transfer buffer to a texture.
-    pub inline fn uploadToTexture(self: *const CopyPass, source: *const TextureTransferInfo, destination: *const TextureRegion, cycle: bool) void {
-        c.SDL_UploadToGPUTexture(self.ptr, @ptrCast(source), @ptrCast(destination), cycle);
-    }
-
-    /// Upload data from a transfer buffer to a buffer.
-    pub inline fn uploadToBuffer(self: *const CopyPass, source: *const TransferBufferLocation, destination: *const BufferRegion, cycle: bool) void {
-        c.SDL_UploadToGPUBuffer(self.ptr, @ptrCast(source), @ptrCast(destination), cycle);
-    }
-
-    /// Perform a texture-to-texture copy.
-    pub inline fn copyTextureToTexture(self: *const CopyPass, source: *const TextureLocation, destination: *const TextureLocation, w: u32, h: u32, d: u32, cycle: bool) void {
-        c.SDL_CopyGPUTextureToTexture(self.ptr, @ptrCast(source), @ptrCast(destination), w, h, d, cycle);
-    }
-
-    /// Perform a buffer-to-buffer copy.
-    pub inline fn copyBufferToBuffer(self: *const CopyPass, source: *const BufferLocation, destination: *const BufferLocation, size: u32, cycle: bool) void {
-        c.SDL_CopyGPUBufferToBuffer(self.ptr, @ptrCast(source), @ptrCast(destination), size, cycle);
-    }
-
-    /// Copy data from a texture to a transfer buffer on the GPU timeline.
-    pub inline fn downloadFromTexture(self: *const CopyPass, source: *const TextureRegion, destination: *const TextureTransferInfo) void {
-        c.SDL_DownloadFromGPUTexture(self.ptr, @ptrCast(source), @ptrCast(destination));
-    }
-
-    /// Copy data from a buffer to a transfer buffer on the GPU timeline.
-    pub inline fn downloadFromBuffer(self: *const CopyPass, source: *const BufferRegion, destination: *const TransferBufferLocation) void {
-        c.SDL_DownloadFromGPUBuffer(self.ptr, @ptrCast(source), @ptrCast(destination));
-    }
-
-    /// End the current copy pass.
-    pub inline fn end(self: *const CopyPass) void {
-        c.SDL_EndGPUCopyPass(self.ptr);
     }
 };

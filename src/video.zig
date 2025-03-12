@@ -144,14 +144,14 @@ pub const Display = packed struct {
     /// Get the display containing a point.
     pub inline fn getForPoint(point: Point) !Display {
         return .{
-            .id = try errify(c.SDL_GetDisplayForPoint(@ptrCast(point))),
+            .id = try errify(c.SDL_GetDisplayForPoint(@ptrCast(&point))),
         };
     }
 
     /// Get the display primarily containing a rect.
     pub inline fn getForRect(rectangle: Rect) !Display {
         return .{
-            .id = try errify(c.SDL_GetDisplayForRect(@ptrCast(rectangle))),
+            .id = try errify(c.SDL_GetDisplayForRect(@ptrCast(&rectangle))),
         };
     }
 
@@ -197,7 +197,7 @@ pub const Display = packed struct {
     }
 
     /// Get the content scale of a display.
-    pub inline fn getContentScale(self: *const Display) f32 {
+    pub inline fn getContentScale(self: *const Display) !f32 {
         return try errify(c.SDL_GetDisplayContentScale(self.id));
     }
 
@@ -235,7 +235,7 @@ pub const Display = packed struct {
     }
 
     /// Get information about the current display mode.
-    pub inline fn getCurrentDisplayMode(self: *const Display) DisplayMode {
+    pub inline fn getCurrentDisplayMode(self: *const Display) !DisplayMode {
         return (try errify(c.SDL_GetCurrentDisplayMode(self.id))).*;
     }
 };
@@ -249,9 +249,8 @@ pub inline fn getDisplays() ![]Display {
 
 /// Return the primary display.
 pub inline fn getPrimaryDisplay() !Display {
-    const display_id = try errify(c.SDL_GetPrimaryDisplay());
     return .{
-        .id = display_id,
+        .id = try errify(c.SDL_GetPrimaryDisplay()),
     };
 }
 
@@ -339,6 +338,11 @@ pub const WindowFlags = packed struct {
         };
     }
 };
+
+/// Get the window that currently has an input grab enabled.
+pub inline fn getGrabbedWindow() ?Window {
+    return if (c.SDL_GetGrabbedWindow()) |window| .{ .ptr = window } else null;
+}
 
 pub const Window = struct {
     ptr: *c.SDL_Window,
@@ -473,7 +477,7 @@ pub const Window = struct {
 
     /// Get the position of a window.
     pub inline fn getPosition(self: *const Window) !Point {
-        var point: Size = undefined;
+        var point: Point = undefined;
         try errify(c.SDL_GetWindowPosition(self.ptr, &point.x, &point.y));
         return point;
     }
@@ -505,7 +509,7 @@ pub const Window = struct {
     /// Get the size of a window's client area.
     pub inline fn getAspectRatio(self: *const Window) !AspectRatio {
         var aspect_ratio: AspectRatio = undefined;
-        try errify(c.SDL_GetWindowAspectRatio(self.ptr, @ptrCast(&aspect_ratio)));
+        try errify(c.SDL_GetWindowAspectRatio(self.ptr, &aspect_ratio.min_aspect, &aspect_ratio.max_aspect));
         return aspect_ratio;
     }
 
@@ -614,7 +618,7 @@ pub const Window = struct {
     }
 
     /// Get the SDL surface associated with the window.
-    pub inline fn getSurface(self: *const Window) Surface {
+    pub inline fn getSurface(self: *const Window) !Surface {
         return .{
             .ptr = try errify(c.SDL_GetWindowSurface(self.ptr)),
         };
@@ -669,25 +673,17 @@ pub const Window = struct {
 
     /// Get the window that currently has an input grab enabled.
     pub inline fn getGrabbedWindow() ?Window {
-        if (c.SDL_GetGrabbedWindow()) |ptr| {
-            return .{
-                .ptr = ptr,
-            };
-        }
-        return null;
+        return if (c.SDL_GetGrabbedWindow()) |window| .{ .ptr = window } else null;
     }
 
     /// Confines the cursor to the specified area of a window.
-    pub inline fn setMouseRect(self: *const Window, rectangle: Rect) !void {
+    pub inline fn setMouseRect(self: *const Window, rectangle: ?Rect) !void {
         try errify(c.SDL_SetWindowMouseRect(self.ptr, @ptrCast(&rectangle)));
     }
 
     /// Get the mouse confinement rectangle of a window.
     pub inline fn getMouseRect(self: *const Window) ?Rect {
-        if (c.SDL_GetWindowMouseRect(self.ptr)) |ptr| {
-            return ptr.*;
-        }
-        return null;
+        return if (c.SDL_GetWindowMouseRect(self.ptr)) |rect_| @bitCast(rect_.*) else null;
     }
 
     /// Set the opacity for a window.

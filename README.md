@@ -446,7 +446,7 @@ pub fn main() !void {
 | Category | Status | Category | Status | Category | Status |
 |:-|:-:|:-|:-:|:-|:-:|
 | Init | ✅ | Camera | ✅ | Hints | ❌ |
-| Properties | ❌ | Log | ✅ | Video | 🧪 |
+| Properties | ❌ | Log | ✅ | Video | ✅ |
 | Events | ✅ | Keyboard | ✅ | Mouse | ✅ |
 | Touch | ✅ | Gamepad | ✅ | Joystick | ✅ |
 | Haptic | ✅ | Audio | ❌ | Gpu | ✅ |

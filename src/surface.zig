@@ -187,8 +187,7 @@ pub const Surface = struct {
 
     /// Sets the clipping rectangle for the surface.
     pub inline fn setClipRect(self: *const Surface, rect_opt: ?rect.Rect) !void {
-        const rect_ptr: ?*const c.SDL_Rect = if (rect_opt) |r| @ptrCast(&r) else null;
-        try errify(c.SDL_SetSurfaceClipRect(self.ptr, rect_ptr));
+        try errify(c.SDL_SetSurfaceClipRect(self.ptr, @ptrCast(&rect_opt)));
     }
 
     /// Gets the clipping rectangle for the surface.
@@ -231,8 +230,7 @@ pub const Surface = struct {
 
     /// Performs a fast fill of a rectangle with a specific color.
     pub inline fn fillRect(self: *const Surface, rect_opt: ?rect.Rect, color: u32) !void {
-        const rect_ptr: ?*const c.SDL_Rect = if (rect_opt) |r| @ptrCast(&r) else null;
-        try errify(c.SDL_FillSurfaceRect(self.ptr, rect_ptr, color));
+        try errify(c.SDL_FillSurfaceRect(self.ptr, @ptrCast(&rect_opt), color));
     }
 
     /// Performs a fast fill of a set of rectangles with a specific color.

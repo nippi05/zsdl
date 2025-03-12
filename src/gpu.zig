@@ -675,7 +675,7 @@ pub const SamplerAddressMode = enum(u32) {
     clamp_to_edge = c.SDL_GPU_SAMPLERADDRESSMODE_CLAMP_TO_EDGE,
 };
 
-/pub const SamplerCreateInfo = extern struct {
+pub const SamplerCreateInfo = extern struct {
     min_filter: Filter = std.mem.zeroes(Filter),
     mag_filter: Filter = std.mem.zeroes(Filter),
     mipmap_mode: SamplerMipmapMode = std.mem.zeroes(SamplerMipmapMode),
